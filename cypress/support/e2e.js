@@ -16,8 +16,12 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 import Notes from './Notes.js';
+import Signup from './Signup.js';
+import Projects from './Projects.js';
 
 export {
-    Notes
+    Notes,
+    Signup,
+    Projects
 };
 
