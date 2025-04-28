@@ -1,0 +1,16 @@
+{
+  "name": "my-cypress-project",
+  "version": "1.0.0",
+  "Description": "Bike4Mind test automation using cypress",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cypress:open": "npx cypress open --e2e --browser chrome"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "cypress": "^14.2.1"
+  }
+}
