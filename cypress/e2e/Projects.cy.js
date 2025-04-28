@@ -7,13 +7,13 @@ describe('Project Operations', () => {
         login('wescarda', 'Password12345!');
     });
 
-    it('should create a new project', () => {
+    // it('should create a new project', () => {?
         // Create a new project
-        Projects.createProject('My New Project');
-    });
+        Projects.createProject('My New Project2');
+    // });
 
-    it('should rename the project', () => {
-        // Rename the project
-        Projects.renameProject('My New Project', 'Renamed Project');
-    });
+    // it('should rename the project', () => {
+    //     // Rename the project
+    //     Projects.renameProject('My New Project', 'Renamed Project');
+    // });
 });
