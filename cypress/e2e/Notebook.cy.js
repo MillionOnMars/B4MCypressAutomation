@@ -1,11 +1,13 @@
 import { login } from '../support/login.js';
-import Notes from '../support/Notes.js'; // Correctly import the default export
+import Notebook from '../support/Notebook.js'; // Correctly import the default export
 
 describe('Notebook Operations', () => {
     // Log in to the application before running the tests
-    beforeEach(() => {login('wescarda', 'Password12345!');});
+    beforeEach(() => {login('wescarda5', 'Password12345!');});
     // Create a new notebook
-    Notes.createNotebook('My New Notebook');
+    Notebook.createNotebook('Enumerate the top 5 prime numbers');
     // Rename the notebook
-    Notes.renameNotebook('My New Notebook', 'Renamed Notebook');
+    Notebook.renameNotebook('Renamed Notebook');
+    // Deletes the notebook
+    Notebook.deleteNotebook('Renamed Notebook');
 });
