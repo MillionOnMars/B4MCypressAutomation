@@ -2,18 +2,14 @@ import { login } from '../support/login.js';
 import Projects from '../support/Projects.js';
 
 describe('Project Operations', () => {
-    before(() => {
+    beforeEach(() => {
         // Log in to the application before running the tests
         login('wescarda', 'Password12345!');
     });
-
-    it('should create a new project', () => {
         // Create a new project
         Projects.createProject('My New Project');
-    });
-
-    it('should rename the project', () => {
         // Rename the project
         Projects.renameProject('My New Project', 'Renamed Project');
-    });
+        // Deletes the project
+        Projects.deleteProject('Renamed Project');
 });
