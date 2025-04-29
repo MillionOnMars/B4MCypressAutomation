@@ -38,6 +38,7 @@ const createNote = (prompt) => {
 const renameNote = (newName) => {
     //clicks notebook
     cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button')
+        .eq(0)
         .should('be.visible')
         .click();
 
@@ -63,6 +64,7 @@ const renameNote = (newName) => {
 const deleteNote = (Name) => {
     //clicks notebook
     cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button')
+        .eq(0)
         .should('be.visible')
         .click();
 
@@ -91,13 +93,11 @@ class Notebook {
             createNote(prompt); // Pass the notebookName argument
         });
     }
-
     static renameNotebook(newName) {
         it('Should rename a notebook', () => {
             renameNote(newName); // Pass the oldName and newName arguments
         });
     }
-
     static deleteNotebook(Name) {
         it('Should delete a notebook', () => {
             deleteNote(Name); 

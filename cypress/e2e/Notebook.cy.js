@@ -5,7 +5,7 @@ describe('Notebook Operations', () => {
     // Log in to the application before running the tests
     beforeEach(() => {login('wescarda5', 'Password12345!');});
     // Create a new notebook
-    Notebook.createNotebook('Enumerate the top 5 prime numbers');
+    Notebook.createNotebook('list down the top 5 prime number from smallest');
     // Rename the notebook
     Notebook.renameNotebook('Renamed Notebook');
     // Deletes the notebook
