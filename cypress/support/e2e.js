@@ -18,10 +18,12 @@ import './commands';
 import Notes from './Notes.js';
 import Signup from './Signup.js';
 import Projects from './Projects.js';
+import Login from './login.js';
 
 export {
     Notes,
     Signup,
-    Projects
+    Projects,
+    Login
 };
 
