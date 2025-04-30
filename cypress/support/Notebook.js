@@ -1,4 +1,9 @@
 const prime = ['2', '3', '5', '7', '11'];
+const textModels = ['claude-3-7-sonnet', 'gpt40', 'o3', 'gpt4o-mini', 'gemini-1-5-pro']; // Add your text models here
+
+const getRandomTextModels = (count) => {
+    return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
+};
 
 const createNote = (prompt) => {
     // Click the "New Chat" button
@@ -33,6 +38,8 @@ const createNote = (prompt) => {
         });
 
     cy.log('Notebook creation completed successfully.');
+
+
 };
 
 const renameNote = (newName) => {
@@ -44,6 +51,7 @@ const renameNote = (newName) => {
 
     //click elipsis button
     cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > div > button')
+        .eq(0)
         .should('be.visible')
         .click();
 
@@ -54,6 +62,7 @@ const renameNote = (newName) => {
 
     //clicks notebook
     cy.get('.MuiInput-sizeSm.Mui-focused.css-b3dpgg')  
+        .eq(0)
         .should('be.visible')
         .type(newName)
         .type('{enter}');
@@ -70,6 +79,7 @@ const deleteNote = (Name) => {
 
     //click elipsis button
     cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > div > button')
+        .eq(0)
         .should('be.visible')
         .click();
 
@@ -87,15 +97,43 @@ const deleteNote = (Name) => {
     cy.contains('Successfully deleted session').should('exist');
 };
 
+const selectTxtModel = (model) => {
+    //select Text model button
+    cy.get('.MuiButton-sizeSm.css-1qb65wz')
+        .should('be.visible')
+        .click();
+
+    // Click model settings
+    cy.get('.MuiStack-root.css-1mi3tt8 > div > div:nth-child(2)')
+        .should('be.visible')
+        .click();
+
+    //click text model dropdown
+    cy.get('.MuiBox-root.css-1vplol6')
+        .should('be.visible')
+        .click();
+
+    //select text model
+    cy.contains(model)
+        .should('exist')
+        .click({ force: true });
+
+    //clicks close button
+    cy.get('.MuiBox-root.css-f0am11 > button')
+        .should('be.visible')
+        .click();
+}
+
 class Notebook {
-    static createNotebook(prompt) {
-        it('Should create a new notebook', () => {
-            createNote(prompt); // Pass the notebookName argument
-        });
+    static createNotebook(prompt,model) {
+        it(`Should select Text model:${model} and create a new notebook`, () => {
+            selectTxtModel(model);
+            createNote(prompt); 
+        }); 
     }
     static renameNotebook(newName) {
         it('Should rename a notebook', () => {
-            renameNote(newName); // Pass the oldName and newName arguments
+            renameNote(newName); 
         });
     }
     static deleteNotebook(Name) {
@@ -103,6 +141,12 @@ class Notebook {
             deleteNote(Name); 
         });
     }
+    static selectTextModel(model) {
+        it(`Should select a text model:${model}`, () => {
+            selectTxtModel(model);
+        });
+    }
 }
 
 export default Notebook;
+export { getRandomTextModels };
