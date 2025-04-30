@@ -19,10 +19,14 @@ import './commands';
 import Notebook from './Notebook.js';
 import Signup from './Signup.js';
 import Projects from './Projects.js';
+import Login from './login.js'; 
+import Auth from './Auth.js';
 
 export {
     Notebook,
     Signup,
-    Projects
+    Projects,
+    Login,
+    Auth
 };
 
