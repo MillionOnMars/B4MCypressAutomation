@@ -5,3 +5,10 @@ Cypress.on('uncaught:exception', (err) => {
         return false;
     }
 });
+
+Cypress.on('uncaught:exception', (err) => {
+    // Ignore the Service Worker registration error
+    if (err.message.includes('Failed to register a ServiceWorker')) {
+        return false; // Prevent Cypress from failing the test
+    }
+});

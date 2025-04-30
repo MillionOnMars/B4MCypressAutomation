@@ -14,15 +14,16 @@
 // ***********************************************************
 
 // Import commands.js using ES2015 syntax:
+// import 'cypress-real-events/support';
 import './commands';
-import Notes from './Notes.js';
+import Notebook from './Notebook.js';
 import Signup from './Signup.js';
 import Projects from './Projects.js';
 import Login from './login.js'; 
 import Auth from './Auth.js';
 
 export {
-    Notes,
+    Notebook,
     Signup,
     Projects,
     Login,
