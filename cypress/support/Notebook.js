@@ -13,7 +13,7 @@ const createNote = (prompt) => {
         .type(prompt);
 
     // Click the "Enter" button
-    cy.get('.MuiButton-sizeMd.css-8yhwlq')
+    cy.get('.MuiButton-sizeMd.css-utr5pu')
         .should('be.visible')
         .click();
 
