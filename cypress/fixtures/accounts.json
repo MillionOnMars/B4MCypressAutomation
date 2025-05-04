@@ -1,4 +1,34 @@
 {
-    "username": "wescarda",
-    "password": "Password12345!"
+    "newUsers": {
+        "user1": {
+            "username": "testuser1",
+            "email": "test1@example.com",
+            "password": "Password12345!",
+            "fullname": "Test User",
+            "code": "DF5F-06B1-636D-52B6"
+        },
+        "user2": {
+            "username": "testuser2",
+            "email": "test2@example.com",
+            "password": "Password123!",
+            "fullname": "Test User",
+            "code": "TESTCODE123"
+        },
+        "user3": {
+            "username": "testuser3",
+            "email": "test3@example.com",
+            "password": "Password123!",
+            "fullname": "Test User",
+            "code": "TESTCODE123"
+        }
+    },
+    "existingUsers": {
+        "admin": {
+            "username": "admin_user",
+            "email": "admin@example.com",
+            "password": "Password123!",
+            "fullname": "Admin User",
+            "code": "ADMINCODE"
+        }
+    }
 }
