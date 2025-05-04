@@ -5,12 +5,16 @@ const getRandomTextModels = (count) => {
     return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
 };
 
-const createNote = (prompt) => {
+const createNote = (prompt,filepath) => {
+    const filename = filepath.split('/').pop()
     // Click the "New Chat" button
     cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
         .eq(0)
         .should('be.visible')
         .click();
+
+    // Upload file if filepath is provided
+    uploadFile(filepath);
 
     // Type the question in the textarea
     cy.get('.MuiTextarea-root')
@@ -23,13 +27,19 @@ const createNote = (prompt) => {
         .should('be.visible');
 
     // Wait until the question appears
-    cy.contains('prime')
+    cy.contains('prime', { timeout: 10000 })
         .should('be.visible');
 
     // Wait until all prime numbers are visible
     prime.forEach((primeNumber) => {
-        cy.contains(primeNumber).should('be.visible');
+        cy.contains(primeNumber,  { timeout: 10000 }).should('be.visible');
     });
+
+    // checks file if uploaded
+    fileOperation('checkFile', filename);
+
+    //Delete file
+    fileOperation('deleteFile', filename);
 
     cy.log('Notebook creation completed successfully.');
 };
@@ -130,11 +140,101 @@ const logCreditsToJSON = (models) => {
     });
 };
 
+const uploadFile = (filepath) => {
+    // Click the upload button
+    cy.get('.MuiMenuButton-sizeMd:nth-child(1)')
+        .should('be.visible')
+        .click();
+
+    //Upload from computer
+    cy.get('li[role="menuitem"]').eq(1)
+        .should('be.visible')
+        .click();
+
+    // Wait for file input to be ready and upload file
+    cy.get('input[type="file"]')
+        .should('exist')
+        .and('not.be.disabled')
+        .wait(2000) // Add wait for upload dialog to fully load
+        .then(($input) => {
+            // Verify input is ready
+            cy.wrap($input)
+                .should('have.prop', 'disabled', false)
+                .selectFile(filepath, { force: true });
+        });
+
+    // Wait for upload completion indicators
+    cy.intercept('POST', '**/createFabFile').as('uploadRequest');
+    cy.wait('@uploadRequest', { timeout: 10000 });
+
+    cy.log('File uploaded successfully.');
+
+};
+
+const fileOperation = (operation, filename, newName) => {
+    //Click on files button
+    cy.get('.css-1ajop3b')
+        .should('be.visible')
+        .click();
+
+    //Checks if file is present
+    cy.get('.css-1d3w5bb').eq(0)
+        .should('have.text', filename) 
+        .should('be.visible') 
+        .click();
+
+    switch (operation) {
+        case 'checkFile':
+            // File presence already verified above
+            cy.log(`File ${filename} found successfully`);
+            break;
+
+        case 'renameFile':
+            //click elipsis button
+            cy.get('.MuiBox-root.css-1qbii0y > div > div > button')
+                .should('be.visible')
+                .click();
+            //click rename button
+            cy.get('li[role="menuitem"]').eq(1)
+                .should('be.visible')
+                .click();
+
+            cy.get('.MuiBox-root.css-8atqhb > div > input')
+                .should('be.visible')
+                .clear()
+                .type(newName)
+                .type('{enter}');
+
+            cy.log(`File ${newName} renamed successfully`);
+            break;
+
+        case 'deleteFile':
+            //Click delete button
+            cy.get('.css-x1bfaw')
+                .should('be.visible')
+                .click();
+
+            //Confirm delete message
+            cy.contains('Non-existent files removed from projects successfully')
+                .should('be.visible')
+                .click();
+            break;
+
+        default:
+            throw new Error(`Invalid file operation: ${operation}`);
+    }
+    //Click Close button
+    cy.get('.css-1122oev')
+        .should('be.visible')
+        .click();
+}
+        
+
 class Notebook {
-    static createNotebook(prompt,model) {
+    static createNotebook(prompt,model,filepath) {
         it(`Should select Text model:${model} and create a new notebook`, () => {
             selectTxtModel(model);
-            createNote(prompt); 
+            createNote(prompt,filepath); 
             
         }); 
         // it('Should log credits for text model', () => {
@@ -154,6 +254,11 @@ class Notebook {
     static selectTextModel(model) {
         it(`Should select a text model:${model}`, () => {
             selectTxtModel(model);
+        });
+    }
+    static uploadFileToNotebook(filepath) {
+        it(`Should upload file: ${filepath}`, () => {
+            uploadFile(filepath);
         });
     }
 }
