@@ -1,4 +1,9 @@
 const prime = ['2', '3', '5', '7', '11'];
+const textModels = ['claude-3-7-sonnet','o3', 'gpt4o-mini']; // Add your text models here
+
+const getRandomTextModels = (count) => {
+    return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
+};
 
 const createNote = (prompt) => {
     // Click the "New Chat" button
@@ -10,27 +15,21 @@ const createNote = (prompt) => {
     // Type the question in the textarea
     cy.get('.MuiTextarea-root')
         .should('be.visible')
-        .type(prompt);
+        .type(prompt)
+        .type('{enter}');
 
-    // Click the "Enter" button
-    cy.get('.MuiButton-sizeMd.css-utr5pu')
-        .should('be.visible')
-        .click();
+    // Wait until the notebook is created
+    cy.contains('New Notebook')
+        .should('be.visible');
 
-     //wait for 3 secs   
-    cy.wait(5000)
+    // Wait until the question appears
+    cy.contains('prime')
+        .should('be.visible');
 
-    // Verify the notebook is created
-    cy.contains('New Notebook').should('be.visible');
-
-    //checks question
-    cy.contains('prime').should('be.visible');
-
-    //checks prompt
-    cy.get('.MuiBox-root.css-pi8h4b > div').eq(0)
-        prime.forEach((prime) => {
-            cy.contains(prime).should('be.visible');
-        });
+    // Wait until all prime numbers are visible
+    prime.forEach((primeNumber) => {
+        cy.contains(primeNumber).should('be.visible');
+    });
 
     cy.log('Notebook creation completed successfully.');
 };
@@ -44,6 +43,7 @@ const renameNote = (newName) => {
 
     //click elipsis button
     cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > div > button')
+        .eq(0)
         .should('be.visible')
         .click();
 
@@ -54,6 +54,7 @@ const renameNote = (newName) => {
 
     //clicks notebook
     cy.get('.MuiInput-sizeSm.Mui-focused.css-b3dpgg')  
+        .eq(0)
         .should('be.visible')
         .type(newName)
         .type('{enter}');
@@ -70,6 +71,7 @@ const deleteNote = (Name) => {
 
     //click elipsis button
     cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > div > button')
+        .eq(0)
         .should('be.visible')
         .click();
 
@@ -87,15 +89,61 @@ const deleteNote = (Name) => {
     cy.contains('Successfully deleted session').should('exist');
 };
 
+const selectTxtModel = (model) => {
+    cy.get('.css-14uw3z2')
+        .should('be.visible')
+        .click();
+
+    cy.get('.css-1fed3lh')
+        .should('be.visible')
+        .click();
+
+    //select text model
+    cy.contains(model)
+        .should('exist')
+        .click({ force: true });
+
+    //clicks close button
+    cy.get('.MuiBox-root.css-f0am11 > button')
+        .should('be.visible')
+        .click();
+}
+
+const logCreditsToJSON = (models) => {
+    const creditsData = [];
+
+    models.forEach((model) => {
+        // Get the credit value
+        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span').eq(0).should('be.visible').click();
+        cy.contains('Credits Used')
+            .should('be.visible')
+            .invoke('text')
+            .then((credits) => {
+                // Push the model name and credits to the array
+                creditsData.push({ textModel: model, Credits: credits });
+
+                // Write to credits.json after all models are processed
+                if (creditsData.length === models.length) {
+                    cy.writeFile('cypress/fixtures/credits.json', creditsData);
+                }
+            });
+    });
+};
+
 class Notebook {
-    static createNotebook(prompt) {
-        it('Should create a new notebook', () => {
-            createNote(prompt); // Pass the notebookName argument
-        });
+    static createNotebook(prompt,model) {
+        it(`Should select Text model:${model} and create a new notebook`, () => {
+            selectTxtModel(model);
+            createNote(prompt); 
+            
+        }); 
+        // it('Should log credits for text model', () => {
+        //     logCreditsToJSON([model])
+        // });
     }
     static renameNotebook(newName) {
         it('Should rename a notebook', () => {
-            renameNote(newName); // Pass the oldName and newName arguments
+            renameNote(newName); 
         });
     }
     static deleteNotebook(Name) {
@@ -103,6 +151,12 @@ class Notebook {
             deleteNote(Name); 
         });
     }
+    static selectTextModel(model) {
+        it(`Should select a text model:${model}`, () => {
+            selectTxtModel(model);
+        });
+    }
 }
 
 export default Notebook;
+export { getRandomTextModels };
