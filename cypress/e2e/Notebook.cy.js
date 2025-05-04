@@ -8,7 +8,7 @@ describe('Notebook Operations', () => {
     beforeEach(() => {login('wescarda5', 'Password12345!');});
     // Choose 3 random text models and create a new notebook
     randomTextModels.forEach((model) => {
-        Notebook.createNotebook('List down the top 5 prime numbers from the smallest', model);
+        Notebook.createNotebook('List down the top 5 prime numbers from the smallest', model, 'cypress/fixtures/upload/cat.png');
     });
     // Rename the notebook
     Notebook.renameNotebook('Renamed Notebook');
