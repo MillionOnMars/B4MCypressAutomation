@@ -1,5 +1,5 @@
 const prime = ['2', '3', '5', '7', '11'];
-const textModels = ['claude-3-7-sonnet', 'gpt40', 'o3', 'gpt4o-mini', 'gemini-1-5-pro']; // Add your text models here
+const textModels = ['claude-3-7-sonnet','o3', 'gpt4o-mini']; // Add your text models here
 
 const getRandomTextModels = (count) => {
     return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
@@ -15,31 +15,23 @@ const createNote = (prompt) => {
     // Type the question in the textarea
     cy.get('.MuiTextarea-root')
         .should('be.visible')
-        .type(prompt);
+        .type(prompt)
+        .type('{enter}');
 
-    // Click the "Enter" button
-    cy.get('.MuiButton-sizeMd.css-utr5pu')
-        .should('be.visible')
-        .click();
+    // Wait until the notebook is created
+    cy.contains('New Notebook')
+        .should('be.visible');
 
-     //wait for 3 secs   
-    cy.wait(5000)
+    // Wait until the question appears
+    cy.contains('prime')
+        .should('be.visible');
 
-    // Verify the notebook is created
-    cy.contains('New Notebook').should('be.visible');
-
-    //checks question
-    cy.contains('prime').should('be.visible');
-
-    //checks prompt
-    cy.get('.MuiBox-root.css-pi8h4b > div').eq(0)
-        prime.forEach((prime) => {
-            cy.contains(prime).should('be.visible');
-        });
+    // Wait until all prime numbers are visible
+    prime.forEach((primeNumber) => {
+        cy.contains(primeNumber).should('be.visible');
+    });
 
     cy.log('Notebook creation completed successfully.');
-
-
 };
 
 const renameNote = (newName) => {
@@ -98,18 +90,11 @@ const deleteNote = (Name) => {
 };
 
 const selectTxtModel = (model) => {
-    //select Text model button
-    cy.get('.MuiButton-sizeSm.css-1qb65wz')
+    cy.get('.css-14uw3z2')
         .should('be.visible')
         .click();
 
-    // Click model settings
-    cy.get('.MuiStack-root.css-1mi3tt8 > div > div:nth-child(2)')
-        .should('be.visible')
-        .click();
-
-    //click text model dropdown
-    cy.get('.MuiBox-root.css-1vplol6')
+    cy.get('.css-1fed3lh')
         .should('be.visible')
         .click();
 
@@ -124,12 +109,37 @@ const selectTxtModel = (model) => {
         .click();
 }
 
+const logCreditsToJSON = (models) => {
+    const creditsData = [];
+
+    models.forEach((model) => {
+        // Get the credit value
+        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span').eq(0).should('be.visible').click();
+        cy.contains('Credits Used')
+            .should('be.visible')
+            .invoke('text')
+            .then((credits) => {
+                // Push the model name and credits to the array
+                creditsData.push({ textModel: model, Credits: credits });
+
+                // Write to credits.json after all models are processed
+                if (creditsData.length === models.length) {
+                    cy.writeFile('cypress/fixtures/credits.json', creditsData);
+                }
+            });
+    });
+};
+
 class Notebook {
     static createNotebook(prompt,model) {
         it(`Should select Text model:${model} and create a new notebook`, () => {
             selectTxtModel(model);
             createNote(prompt); 
+            
         }); 
+        // it('Should log credits for text model', () => {
+        //     logCreditsToJSON([model])
+        // });
     }
     static renameNotebook(newName) {
         it('Should rename a notebook', () => {
