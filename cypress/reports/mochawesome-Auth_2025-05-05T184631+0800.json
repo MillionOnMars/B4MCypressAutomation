@@ -1,0 +1,166 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 4,
+    "passes": 4,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-05-05T10:46:09.770Z",
+    "end": "2025-05-05T10:46:31.035Z",
+    "duration": 21265,
+    "testsRegistered": 4,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "09c95ac8-5007-4fce-8363-467d8f9fd2f4",
+      "title": "",
+      "fullFile": "cypress/e2e/Auth.cy.js",
+      "file": "cypress/e2e/Auth.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "47c0bee4-7321-4b28-ba96-312d0e629730",
+          "title": "Auth",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "Should log in with correct credentials",
+              "fullTitle": "Auth Should log in with correct credentials",
+              "timedOut": null,
+              "duration": 7294,
+              "state": "passed",
+              "speed": "medium",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "navigateToLoginPage();\nauthenticateUser('wescarda', 'Password12345!');\nverifySuccessfulLogin('wescarda!');",
+              "err": {},
+              "uuid": "fa63954d-c068-42e7-9463-f646df208c3e",
+              "parentUUID": "47c0bee4-7321-4b28-ba96-312d0e629730",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should not log in with incorrect credentials",
+              "fullTitle": "Auth Should not log in with incorrect credentials",
+              "timedOut": null,
+              "duration": 2906,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "navigateToLoginPage();\nauthenticateUser('Test', 'IncorrectPassword.');\ncy.contains('Invalid username or password').should('exist');\ncy.url().should('contain', '/login');",
+              "err": {},
+              "uuid": "30f8fb29-8a0e-43ab-a294-05c7c6968626",
+              "parentUUID": "47c0bee4-7321-4b28-ba96-312d0e629730",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should redirect to login when accessing notebook without authentication",
+              "fullTitle": "Auth Should redirect to login when accessing notebook without authentication",
+              "timedOut": null,
+              "duration": 3721,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.visit('https://app.bike4mind.com/notebooks/67e0b7c5995108235f62b359');\nverifyLogout();",
+              "err": {},
+              "uuid": "707d6c7c-cdfe-4f41-b309-cb9a964e7438",
+              "parentUUID": "47c0bee4-7321-4b28-ba96-312d0e629730",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should log out a user successfully",
+              "fullTitle": "Auth Should log out a user successfully",
+              "timedOut": null,
+              "duration": 5549,
+              "state": "passed",
+              "speed": "medium",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "navigateToLoginPage();\nauthenticateUser('wescarda', 'Password12345!');\nverifySuccessfulLogin('wescarda!');\nlogoutUser();\nverifyLogout();",
+              "err": {},
+              "uuid": "3540133e-1f8e-4103-9435-7a446e83c74b",
+              "parentUUID": "47c0bee4-7321-4b28-ba96-312d0e629730",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "fa63954d-c068-42e7-9463-f646df208c3e",
+            "30f8fb29-8a0e-43ab-a294-05c7c6968626",
+            "707d6c7c-cdfe-4f41-b309-cb9a964e7438",
+            "3540133e-1f8e-4103-9435-7a446e83c74b"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 19470,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.0.1"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome-[name]",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "/Users/Automation/Documents/B4MCypressAutomation/cypress/reports",
+        "overwrite": false,
+        "html": false,
+        "json": true,
+        "timestamp": true,
+        "reportFilename": "mochawesome-[name]",
+        "charts": true,
+        "embeddedScreenshots": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}
