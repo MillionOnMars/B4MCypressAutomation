@@ -1,20 +1,17 @@
 const prime = ['2', '3', '5', '7', '11'];
-const textModels = ['claude-3-7-sonnet','o3', 'gpt4o-mini']; // Add your text models here
+const textModels = ['claude-3-7-sonnet', 'o3', 'gpt4o-mini']; // Add your text models here
 
 const getRandomTextModels = (count) => {
     return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
 };
 
-const createNote = (prompt,filepath) => {
+const createNote = (prompt, filepath) => {
     const filename = filepath.split('/').pop()
     // Click the "New Chat" button
     cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
         .eq(0)
         .should('be.visible')
         .click();
-
-    // Upload file if filepath is provided
-    uploadFile(filepath);
 
     // Type the question in the textarea
     cy.get('.MuiTextarea-root')
@@ -32,14 +29,8 @@ const createNote = (prompt,filepath) => {
 
     // Wait until all prime numbers are visible
     prime.forEach((primeNumber) => {
-        cy.contains(primeNumber,  { timeout: 10000 }).should('be.visible');
+        cy.contains(primeNumber, { timeout: 10000 }).should('be.visible');
     });
-
-    // checks file if uploaded
-    fileOperation('checkFile', filename);
-
-    //Delete file
-    fileOperation('deleteFile', filename);
 
     cy.log('Notebook creation completed successfully.');
 };
@@ -60,10 +51,10 @@ const renameNote = (newName) => {
     //click rename button
     cy.get('li[role="menuitem"]').eq(1)
         .should('be.visible')
-        .click();   
+        .click();
 
     //clicks notebook
-    cy.get('.MuiInput-sizeSm.Mui-focused.css-b3dpgg')  
+    cy.get('.MuiInput-sizeSm.Mui-focused.css-b3dpgg')
         .eq(0)
         .should('be.visible')
         .type(newName)
@@ -88,7 +79,7 @@ const deleteNote = (Name) => {
     //click delete button
     cy.get('li[role="menuitem"]').eq(10)
         .should('be.visible')
-        .click();   
+        .click();
 
     //confirm delete
     cy.get('.MuiButton-sizeMd.css-25d5g8')
@@ -119,6 +110,7 @@ const selectTxtModel = (model) => {
         .click();
 }
 
+
 let creditLogCounter = 0;
 
 const logCreditsToJSON = (models) => {
@@ -130,11 +122,11 @@ const logCreditsToJSON = (models) => {
         }
 
         const model = models[index];
-        if(creditLogCounter == 1){
+        if (creditLogCounter == 1) {
             cy.writeFile('cypress/fixtures/credits.json', []);
             cy.log('Cleaned credits.json file');
         }
-        
+
         // Click to view credits
         cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span')
             .eq(0)
@@ -151,10 +143,10 @@ const logCreditsToJSON = (models) => {
                 // Read existing data first
                 cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
                     const newData = existingData || [];
-                    
+
                     // Add new credit data
-                    newData.push({ 
-                        textModel: model, 
+                    newData.push({
+                        textModel: model,
                         Credits: parseInt(creditsNumber)
                     });
 
@@ -198,11 +190,29 @@ const uploadFile = (filepath) => {
     cy.intercept('POST', '**/createFabFile').as('uploadRequest');
     cy.wait('@uploadRequest', { timeout: 10000 });
 
+    // Click the upload button
+    cy.get('.css-ilpbvj > .MuiIconButton-root')
+        .should('be.visible')
+        .click();
+
+    //Verify file uploaded
+    cy.contains(filepath.split('/').pop());
+
     cy.log('File uploaded successfully.');
 
+    //close files modal
+    cy.get('.css-1122oev > .MuiIconButton-root')
+        .should('be.visible')
+        .click();
 };
 
-const fileOperation = (operation, filename, newName) => {
+const fileOperation = (operation, filepath, newName) => {
+
+    const filename = filepath.split('/').pop()
+
+    //resize the window
+    cy.viewport(1280, 800);
+
     //Click on files button
     cy.get('.css-1ajop3b')
         .should('be.visible')
@@ -210,25 +220,30 @@ const fileOperation = (operation, filename, newName) => {
 
     //Checks if file is present
     cy.get('.css-1d3w5bb').eq(0)
-        .should('have.text', filename) 
-        .should('be.visible') 
+        .should('have.text', filename)
+        .should('be.visible')
         .click();
 
     switch (operation) {
         case 'checkFile':
             // File presence already verified above
             cy.log(`File ${filename} found successfully`);
+            //Click Close button
+            cy.get('.css-1122oev')
+                .should('be.visible')
+                .click();
             break;
 
         case 'renameFile':
             //click elipsis button
             cy.get('.MuiBox-root.css-1qbii0y > div > div > button')
+                .eq(0)
                 .should('be.visible')
                 .click();
             //click rename button
             cy.get('li[role="menuitem"]').eq(1)
                 .should('be.visible')
-                .click();
+                .click({ force: true });
 
             cy.get('.MuiBox-root.css-8atqhb > div > input')
                 .should('be.visible')
@@ -237,6 +252,10 @@ const fileOperation = (operation, filename, newName) => {
                 .type('{enter}');
 
             cy.log(`File ${newName} renamed successfully`);
+            //Click Close button
+            cy.get('.css-1122oev')
+                .should('be.visible')
+                .click();
             break;
 
         case 'deleteFile':
@@ -249,37 +268,67 @@ const fileOperation = (operation, filename, newName) => {
             cy.contains('Non-existent files removed from projects successfully')
                 .should('be.visible')
                 .click();
+
+            //Click Close button
+            cy.get('.css-1122oev')
+                .should('be.visible')
+                .click();
+            break;
+
+        case 'addFile':
+
+            //click add file
+            cy.get('.css-1r0lsol > .MuiBox-root > .MuiButton-colorPrimary')
+                .should('be.visible')
+                .click();
+
+            //close files modal
+            cy.get('.css-1122oev > .MuiIconButton-root')
+                .should('be.visible')
+                .click();
+
+            //wait for file to be added
+            cy.wait(2000);
+
+            //verify file added
+            cy.get('.MuiChip-action')
+                .should('be.visible')
+
+            //delete added file
+            cy.get('[data-testid="CancelIcon"]')
+                .eq(0)
+                .should('be.visible')
+                .click();
+
+            cy.log('File added to Notebook Successfully.');
             break;
 
         default:
             throw new Error(`Invalid file operation: ${operation}`);
     }
-    //Click Close button
-    cy.get('.css-1122oev')
-        .should('be.visible')
-        .click();
+
 }
-        
+
 
 class Notebook {
-    static createNotebook(prompt,model,filepath) {
+    static createNotebook(prompt, model) {
         it(`Should select Text model:${model} and create a new notebook`, () => {
             selectTxtModel(model);
-            createNote(prompt,filepath); 
-            
-        }); 
+            createNote(prompt);
+
+        });
         it(`Should log credits for ${model}.`, () => {
             logCreditsToJSON([model])
         });
     }
     static renameNotebook(newName) {
         it('Should rename a notebook', () => {
-            renameNote(newName); 
+            renameNote(newName);
         });
     }
     static deleteNotebook(Name) {
         it('Should delete a notebook', () => {
-            deleteNote(Name); 
+            deleteNote(Name);
         });
     }
     static selectTextModel(model) {
@@ -287,10 +336,15 @@ class Notebook {
             selectTxtModel(model);
         });
     }
-    static uploadFileToNotebook(filepath) {
-        it(`Should upload file: ${filepath}`, () => {
+    static Files(filepath) {
+        it('Verify Files Operations', () => {
             uploadFile(filepath);
+            fileOperation('checkFile', filepath);
+            fileOperation('addFile', filepath);
+            fileOperation('renameFile', filepath, 'RenamedFile');
+            fileOperation('deleteFile', filepath);
         });
+
     }
 }
 
