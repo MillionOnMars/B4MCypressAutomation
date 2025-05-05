@@ -119,25 +119,56 @@ const selectTxtModel = (model) => {
         .click();
 }
 
-const logCreditsToJSON = (models) => {
-    const creditsData = [];
+let creditLogCounter = 0;
 
-    models.forEach((model) => {
-        // Get the credit value
-        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span').eq(0).should('be.visible').click();
+const logCreditsToJSON = (models) => {
+    creditLogCounter++ // Increment counter
+
+    const processModel = (index) => {
+        if (index >= models.length) {
+            return;
+        }
+
+        const model = models[index];
+        if(creditLogCounter == 1){
+            cy.writeFile('cypress/fixtures/credits.json', []);
+            cy.log('Cleaned credits.json file');
+        }
+        
+        // Click to view credits
+        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span')
+            .eq(0)
+            .should('be.visible')
+            .click();
+
+        // Get credits value
         cy.contains('Credits Used')
             .should('be.visible')
             .invoke('text')
             .then((credits) => {
-                // Push the model name and credits to the array
-                creditsData.push({ textModel: model, Credits: credits });
+                // Extract only the number using regex
+                const creditsNumber = credits.match(/\d+/)[0];
+                // Read existing data first
+                cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
+                    const newData = existingData || [];
+                    
+                    // Add new credit data
+                    newData.push({ 
+                        textModel: model, 
+                        Credits: parseInt(creditsNumber)
+                    });
 
-                // Write to credits.json after all models are processed
-                if (creditsData.length === models.length) {
-                    cy.writeFile('cypress/fixtures/credits.json', creditsData);
-                }
+                    // Write back the combined data
+                    cy.writeFile('cypress/fixtures/credits.json', newData);
+                });
+
+                // Process next model
+                processModel(index + 1);
             });
-    });
+    };
+
+    // Start processing with first model
+    processModel(0);
 };
 
 const uploadFile = (filepath) => {
@@ -237,9 +268,9 @@ class Notebook {
             createNote(prompt,filepath); 
             
         }); 
-        // it('Should log credits for text model', () => {
-        //     logCreditsToJSON([model])
-        // });
+        it(`Should log credits for ${model}.`, () => {
+            logCreditsToJSON([model])
+        });
     }
     static renameNotebook(newName) {
         it('Should rename a notebook', () => {
