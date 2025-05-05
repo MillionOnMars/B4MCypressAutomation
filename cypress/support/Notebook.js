@@ -311,10 +311,10 @@ const fileOperation = (operation, filepath, newName) => {
 
 
 class Notebook {
-    static createNotebook(prompt, model, filepath) {
+    static createNotebook(prompt, model) {
         it(`Should select Text model:${model} and create a new notebook`, () => {
             selectTxtModel(model);
-            createNote(prompt, filepath);
+            createNote(prompt);
 
         });
         it(`Should log credits for ${model}.`, () => {
