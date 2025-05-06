@@ -5,14 +5,14 @@
             "email": "test1@example.com",
             "password": "Password12345!",
             "fullname": "Test User",
-            "code": "DF5F-06B1-636D-52B6"
+            "code": "7C56-FC86-2F39-52EC"
         },
         "user2": {
             "username": "testuser2",
             "email": "test2@example.com",
             "password": "Password123!",
             "fullname": "Test User",
-            "code": "TESTCODE123"
+            "code": "884D-8940-F669-7349"
         },
         "user3": {
             "username": "testuser3",
@@ -24,10 +24,10 @@
     },
     "existingUsers": {
         "admin": {
-            "username": "admin_user",
-            "email": "admin@example.com",
-            "password": "Password123!",
-            "fullname": "Admin User",
+            "username": "wescarda5",
+            "email": "wilfred+5@milliononmars.com",
+            "password": "Password12345!",
+            "fullname": "Test User",
             "code": "ADMINCODE"
         }
     }

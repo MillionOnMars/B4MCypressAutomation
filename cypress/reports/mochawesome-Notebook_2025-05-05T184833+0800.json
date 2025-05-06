@@ -1,0 +1,251 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 8,
+    "passes": 6,
+    "pending": 0,
+    "failures": 2,
+    "start": "2025-05-05T10:46:35.910Z",
+    "end": "2025-05-05T10:48:33.194Z",
+    "duration": 117284,
+    "testsRegistered": 8,
+    "passPercent": 75,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "b44e225b-eaaf-44e3-9eee-3ea868198952",
+      "title": "",
+      "fullFile": "cypress/e2e/Notebook.cy.js",
+      "file": "cypress/e2e/Notebook.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "36884d58-0bec-4a9d-b80f-d305ded16658",
+          "title": "Notebook Operations",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "Should select Text model:o3 and create a new notebook",
+              "fullTitle": "Notebook Operations Should select Text model:o3 and create a new notebook",
+              "timedOut": null,
+              "duration": 27364,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
+              "pending": false,
+              "context": null,
+              "code": "selectTxtModel(model);\ncreateNote(prompt, filepath);",
+              "err": {
+                "message": "AssertionError: Timed out retrying after 10000ms: Expected to find content: '11' but never did.",
+                "estack": "AssertionError: Timed out retrying after 10000ms: Expected to find content: '11' but never did.\n    at eval (webpack://my-cypress-project/./cypress/support/Notebook.js:35:54)\nat Array.forEach (<anonymous>)\n    at createNote (webpack://my-cypress-project/./cypress/support/Notebook.js:34:10)\n    at Context.eval (webpack://my-cypress-project/./cypress/support/Notebook.js:268:12)",
+                "diff": null
+              },
+              "uuid": "aad95f2d-6598-4527-80ab-945a2e69363c",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should log credits for o3.",
+              "fullTitle": "Notebook Operations Should log credits for o3.",
+              "timedOut": null,
+              "duration": 11845,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
+              "pending": false,
+              "context": null,
+              "code": "logCreditsToJSON([model]);",
+              "err": {
+                "message": "AssertionError: Timed out retrying after 4000ms: Expected to find content: 'Credits Used' but never did.",
+                "estack": "AssertionError: Timed out retrying after 4000ms: Expected to find content: 'Credits Used' but never did.\n    at processModel (webpack://my-cypress-project/./cypress/support/Notebook.js:146:13)\n    at logCreditsToJSON (webpack://my-cypress-project/./cypress/support/Notebook.js:171:4)\n    at Context.eval (webpack://my-cypress-project/./cypress/support/Notebook.js:272:12)",
+                "diff": null
+              },
+              "uuid": "6d3e92da-ee89-40f5-be4e-1bcbe7ad15a0",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should select Text model:claude-3-7-sonnet and create a new notebook",
+              "fullTitle": "Notebook Operations Should select Text model:claude-3-7-sonnet and create a new notebook",
+              "timedOut": null,
+              "duration": 24861,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "selectTxtModel(model);\ncreateNote(prompt, filepath);",
+              "err": {},
+              "uuid": "69a930de-ec6b-4489-9ed3-8eca88ebe62d",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should log credits for claude-3-7-sonnet.",
+              "fullTitle": "Notebook Operations Should log credits for claude-3-7-sonnet.",
+              "timedOut": null,
+              "duration": 8090,
+              "state": "passed",
+              "speed": "medium",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "logCreditsToJSON([model]);",
+              "err": {},
+              "uuid": "0f6109d3-ce97-4b28-8634-63000f22b6b1",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should select Text model:gpt4o-mini and create a new notebook",
+              "fullTitle": "Notebook Operations Should select Text model:gpt4o-mini and create a new notebook",
+              "timedOut": null,
+              "duration": 20291,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "selectTxtModel(model);\ncreateNote(prompt, filepath);",
+              "err": {},
+              "uuid": "c38bb821-d6be-4f5f-831b-79753075784c",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should log credits for gpt4o-mini.",
+              "fullTitle": "Notebook Operations Should log credits for gpt4o-mini.",
+              "timedOut": null,
+              "duration": 7904,
+              "state": "passed",
+              "speed": "medium",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "logCreditsToJSON([model]);",
+              "err": {},
+              "uuid": "f37c0c03-01eb-4449-a293-5717847c8e29",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should rename a notebook",
+              "fullTitle": "Notebook Operations Should rename a notebook",
+              "timedOut": null,
+              "duration": 7862,
+              "state": "passed",
+              "speed": "medium",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "renameNote(newName);",
+              "err": {},
+              "uuid": "7040b2bf-69c8-415a-8bbf-d54233002185",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "Should delete a notebook",
+              "fullTitle": "Notebook Operations Should delete a notebook",
+              "timedOut": null,
+              "duration": 8017,
+              "state": "passed",
+              "speed": "medium",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "deleteNote(Name);",
+              "err": {},
+              "uuid": "946fc2f7-529d-48ca-863d-a198b8081e69",
+              "parentUUID": "36884d58-0bec-4a9d-b80f-d305ded16658",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "69a930de-ec6b-4489-9ed3-8eca88ebe62d",
+            "0f6109d3-ce97-4b28-8634-63000f22b6b1",
+            "c38bb821-d6be-4f5f-831b-79753075784c",
+            "f37c0c03-01eb-4449-a293-5717847c8e29",
+            "7040b2bf-69c8-415a-8bbf-d54233002185",
+            "946fc2f7-529d-48ca-863d-a198b8081e69"
+          ],
+          "failures": [
+            "aad95f2d-6598-4527-80ab-945a2e69363c",
+            "6d3e92da-ee89-40f5-be4e-1bcbe7ad15a0"
+          ],
+          "pending": [],
+          "skipped": [],
+          "duration": 116234,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.0.1"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome-[name]",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "/Users/Automation/Documents/B4MCypressAutomation/cypress/reports",
+        "overwrite": false,
+        "html": false,
+        "json": true,
+        "timestamp": true,
+        "reportFilename": "mochawesome-[name]",
+        "charts": true,
+        "embeddedScreenshots": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}
