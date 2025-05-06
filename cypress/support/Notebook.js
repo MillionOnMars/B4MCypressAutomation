@@ -5,8 +5,7 @@ const getRandomTextModels = (count) => {
     return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
 };
 
-const createNote = (prompt, filepath) => {
-    const filename = filepath.split('/').pop()
+const createNote = (prompt) => {
     // Click the "New Chat" button
     cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
         .eq(0)

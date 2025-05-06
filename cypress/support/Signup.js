@@ -8,18 +8,35 @@ before(() => {
     });
 });
 
+const verifyPage = (page) => {
+    // Verify we're on the signup page and it loads correctly
+    cy.url().should('include', `https://app.bike4mind.com/${page}`);
+    cy.request({
+        url: `https://app.bike4mind.com/${page}`,
+        failOnStatusCode: true
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        if (response.status === 200) {
+            // Fill in the signup form
+            // ...existing code...
+        } else {
+            cy.log(`Registration page failed to load. Status: ${response.status}`);
+            throw new Error(`Registration page failed to load with status: ${response.status}`);
+        }
+    });
+}
 const signUpUser = () => {
     const account = testUser;
-
-    // Verify account data is loaded
     cy.log(`Signing up user: ${account.username}`);
 
     // Visit the home page
     cy.visit('https://app.bike4mind.com/login');
-    cy.wait(3000)
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
+
+    // Verify we're on the signup page
+    verifyPage('register'); 
 
     // Fill in the signup form
     cy.get('#username').should('be.visible').type(account.username);
@@ -47,6 +64,9 @@ const signUpWithInvalidEmail = () => {
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
 
+    // Verify we're on the signup page
+    verifyPage('register'); 
+
     // Fill in the signup form with invalid email
     cy.get('#username').should('be.visible').type(account.username);
     cy.get('.MuiInput-root > #email').should('be.visible').type(invalidEmail);
@@ -64,6 +84,9 @@ const signUpWithMismatchedPasswords = () => {
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
+
+    // Verify we're on the signup page
+    verifyPage('register'); 
 
     // Fill in the signup form with mismatched passwords
     cy.get('#username').should('be.visible').type(account.username);
@@ -84,6 +107,9 @@ const signUpWithLess8CharPass = () => {
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
+
+    // Verify we're on the signup page
+    verifyPage('register'); 
 
     // Fill in the signup form with mismatched passwords
     cy.get('#username').should('be.visible').type(account.username);

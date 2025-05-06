@@ -5,7 +5,13 @@ describe('Notebook Operations', () => {
     const randomTextModels = getRandomTextModels(3); 
     // Log in to the application before running the tests
     
-    beforeEach(() => {login('wescarda5', 'Password12345!');});
+    beforeEach(() => {
+        // Load existing user credentials from accounts.json
+        cy.fixture('accounts.json').then((accounts) => {
+            const { username, password } = accounts.existingUsers.admin;
+            login(username, password);
+        });
+    });
     //Choose 3 random text models and create a new notebook
     randomTextModels.forEach((model) => {
         Notebook.createNotebook('List down the top 5 prime numbers from the smallest', model);

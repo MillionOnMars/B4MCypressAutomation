@@ -1,10 +1,14 @@
 [
   {
     "textModel": "claude-3-7-sonnet",
-    "Credits": 54
+    "Credits": 6
   },
   {
     "textModel": "gpt4o-mini",
     "Credits": 1
+  },
+  {
+    "textModel": "o3",
+    "Credits": 6
   }
 ]
