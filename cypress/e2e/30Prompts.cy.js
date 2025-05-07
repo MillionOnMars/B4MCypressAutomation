@@ -1,7 +1,7 @@
 import { login } from '../support/login.js';
 import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Correctly import the default export
 
-describe('Notebook Operations', () => {
+describe('30 Prompts', () => {
     const randomTextModels = getRandomTextModels(3); 
     // Log in to the application before running the tests
     
@@ -14,12 +14,8 @@ describe('Notebook Operations', () => {
     });
     //Choose 3 random text models and create a new notebook
     randomTextModels.forEach((model) => {
-        Notebook.createNotebook('prime', model);
+        Notebook.multiPrompts('capital',model,30);
+        Notebook.multiUpload('recipe',model,4)
     });
-    // Rename the notebook
-    Notebook.renameNotebook('Renamed Notebook');
-    // Deletes the notebook
-    Notebook.deleteNotebook('Renamed Notebook');
-    //add a file to the notebook
-    Notebook.Files('prime');
+    
 });
