@@ -1,11 +1,22 @@
 const prime = ['2', '3', '5', '7', '11'];
-const textModels = ['claude-3-7-sonnet', 'o3', 'gpt4o-mini']; // Add your text models here
+const capital = "Paris"
+const textModels = ['claude-3-7-sonnet', 'o3', 'gpt-4.1']; // Add your text models here
+// const textModels = ['gpt-4.1']; // Add your text models here
+
+let prompts;
+
+before(() => {
+    cy.fixture('prompts.json').then((promptsData) => {
+        prompts = promptsData;
+    });
+});
 
 const getRandomTextModels = (count) => {
     return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
 };
 
-const createNote = (prompt) => {
+const createNote = (promptType) => {
+    const testCase = prompts[promptType];
     // Click the "New Chat" button
     cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
         .eq(0)
@@ -15,7 +26,7 @@ const createNote = (prompt) => {
     // Type the question in the textarea
     cy.get('.MuiTextarea-root')
         .should('be.visible')
-        .type(prompt)
+        .type(testCase.prompt)
         .type('{enter}');
 
     // Wait until the notebook is created
@@ -26,12 +37,90 @@ const createNote = (prompt) => {
     cy.contains('prime', { timeout: 10000 })
         .should('be.visible');
 
-    // Wait until all prime numbers are visible
-    prime.forEach((primeNumber) => {
-        cy.contains(primeNumber, { timeout: 10000 }).should('be.visible');
-    });
+    // Handle both array and string answers
+    if (Array.isArray(testCase.answer)) {
+        testCase.answer.forEach((answer) => {
+            cy.contains(answer, { timeout: 10000 }).should('be.visible');
+        });
+    } else {
+        cy.contains(testCase.answer, { timeout: 10000 }).should('be.visible');
+    }
 
     cy.log('Notebook creation completed successfully.');
+};
+
+
+const sendPrompt = (promptType, promptNo, model) => {
+    const testCase = prompts[promptType];
+
+    // Click the "New Chat" button
+    cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
+        .eq(0)
+        .should('be.visible')
+        .click();
+
+    // Send multiple prompts using recursion since Cypress commands are async
+    const sendSinglePrompt = (currentPrompt) => {
+        if (currentPrompt >= promptNo) {
+            cy.log('All prompts completed successfully');
+            return;
+        }
+
+        // Handle both single prompt and array of prompts
+        const currentPromptData = testCase.queries ? 
+            testCase.queries[currentPrompt % testCase.queries.length] : 
+            testCase;
+
+        //enter prompt
+        cy.get('.MuiTextarea-root')
+            .should('be.visible')
+            .type(currentPromptData.prompt)
+            .type('{enter}');
+        
+        if(model == 'claude-3-7-sonnet'){
+            // Initial longer wait for model initialization
+            // Use longer wait for first prompt, shorter for subsequent ones
+            if (currentPrompt === 0) {
+                cy.wait(5000); // First prompt
+            } else {
+                cy.wait(2000); // Subsequent prompts
+            }
+            // Wait for the response to appear
+            cy.get('.css-18sok60')
+                .should('be.visible', { timeout: 10000 });
+
+            // Shorter wait for subsequent operations
+            cy.wait(2000);
+
+            //scrolls down to the bottom of the chat container
+            cy.get('.css-1aau1w6')
+                .should('be.visible')
+                .scrollTo('bottom', { ensureScrollable: true })
+                .then(($container) => {
+                    $container[0].scrollTop = $container[0].scrollHeight;
+                });
+        }
+
+        // Handle both array and single answer verification
+        if (Array.isArray(currentPromptData.answer)) {
+            // For array of answers, check each one
+            currentPromptData.answer.forEach((answer) => {
+                cy.contains(answer, { timeout: 50000 })
+                    .should('be.visible');
+            });
+        } else {
+            // For single answer
+            cy.contains(currentPromptData.answer, { timeout: 50000 })
+                .should('be.visible');
+        }
+
+        cy.log(`Completed prompt ${currentPrompt + 1} of ${promptNo}`);
+        // Send next prompt
+        sendSinglePrompt(currentPrompt + 1);
+    };
+
+    // Start sending prompts
+    sendSinglePrompt(0);
 };
 
 const renameNote = (newName) => {
@@ -162,7 +251,8 @@ const logCreditsToJSON = (models) => {
     processModel(0);
 };
 
-const uploadFile = (filepath) => {
+const uploadFile = (promptType) => {
+    const testCase = prompts[promptType];
     // Click the upload button
     cy.get('.MuiMenuButton-sizeMd:nth-child(1)')
         .should('be.visible')
@@ -182,7 +272,7 @@ const uploadFile = (filepath) => {
             // Verify input is ready
             cy.wrap($input)
                 .should('have.prop', 'disabled', false)
-                .selectFile(filepath, { force: true });
+                .selectFile(testCase.filepath, { force: true });
         });
 
     // Wait for upload completion indicators
@@ -195,7 +285,7 @@ const uploadFile = (filepath) => {
         .click();
 
     //Verify file uploaded
-    cy.contains(filepath.split('/').pop());
+    cy.contains(testCase.filepath.split('/').pop());
 
     cy.log('File uploaded successfully.');
 
@@ -205,9 +295,9 @@ const uploadFile = (filepath) => {
         .click();
 };
 
-const fileOperation = (operation, filepath, newName) => {
-
-    const filename = filepath.split('/').pop()
+const fileOperation = (operation, promptType, newName) => {
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split('/').pop()
 
     //resize the window
     cy.viewport(1280, 800);
@@ -344,6 +434,20 @@ class Notebook {
             fileOperation('deleteFile', filepath);
         });
 
+    }
+    static multiPrompts(promptType, model, promptNo) {
+        it(`Text model:${model} Prompts: ${promptNo}`, () => {
+            selectTxtModel(model);
+            sendPrompt(promptType,promptNo,model)
+        });
+    }
+    static multiUpload(promptType,model,promptNo) {
+        it(`Upload file and validate reply for ${model}.`, () => {
+            selectTxtModel(model);
+            uploadFile(promptType);
+            fileOperation('addFile', promptType);
+            sendPrompt(promptType,promptNo,model);
+        });
     }
 }
 
