@@ -23,3 +23,12 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('checkConsoleErrors', () => {
+  cy.window().then((win) => {
+    const consoleErrors = Cypress._.get(win, 'consoleErrors', []);
+    if (consoleErrors.length > 0) {
+      cy.writeFile('cypress/fixtures/console-errors.json', consoleErrors);
+    }
+  });
+});

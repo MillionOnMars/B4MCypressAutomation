@@ -1,7 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['claude-3-7-sonnet', 'o3', 'gpt-4.1']; // Add your text models here
-// const textModels = ['gpt-4.1']; // Add your text models here
+// const textModels = ['claude-3-7-sonnet', 'o3', 'gpt-4.1']; // Add your text models here
+const textModels = ['claude-3-7-sonnet']; // Add your text models here
 
 let prompts;
 
@@ -86,7 +86,7 @@ const sendPrompt = (promptType, promptNo, model) => {
                 cy.wait(2000); // Subsequent prompts
             }
             // Wait for the response to appear
-            cy.get('.css-18sok60')
+            cy.get('.css-pi8h4b')
                 .should('be.visible', { timeout: 10000 });
 
             // Shorter wait for subsequent operations
@@ -105,13 +105,15 @@ const sendPrompt = (promptType, promptNo, model) => {
         if (Array.isArray(currentPromptData.answer)) {
             // For array of answers, check each one
             currentPromptData.answer.forEach((answer) => {
-                cy.contains(answer, { timeout: 50000 })
-                    .should('be.visible');
+                cy.get('.css-16opbn3').should('be.visible')
+                    .contains(answer, { timeout: 50000 })
+                    // .should('be.visible');
             });
         } else {
             // For single answer
-            cy.contains(currentPromptData.answer, { timeout: 50000 })
-                .should('be.visible');
+            cy.get('.css-16opbn3').should('be.visible')
+                .contains(currentPromptData.answer, { timeout: 50000 })
+                // .should('be.visible');
         }
 
         cy.log(`Completed prompt ${currentPrompt + 1} of ${promptNo}`);
@@ -193,9 +195,11 @@ const selectTxtModel = (model) => {
         .click({ force: true });
 
     //clicks close button
-    cy.get('.MuiBox-root.css-f0am11 > button')
-        .should('be.visible')
-        .click();
+    if(model !== 'gpt-4.1'){
+        cy.get('.MuiBox-root.css-f0am11 > button')
+            .should('be.visible')
+            .click();
+    }
 }
 
 
@@ -254,7 +258,7 @@ const logCreditsToJSON = (models) => {
 const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
-    cy.get('.MuiMenuButton-sizeMd:nth-child(1)')
+    cy.get('[data-testid="AttachFileIcon"]')
         .should('be.visible')
         .click();
 

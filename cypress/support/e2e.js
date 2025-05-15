@@ -22,6 +22,28 @@ import Projects from './Projects.js';
 import Login from './login.js'; 
 import Auth from './Auth.js';
 
+// Capture console errors
+Cypress.on('window:console', (msg) => {
+  if (msg.type === 'error') {
+    cy.log(`Console Error: ${msg.message}`);
+  }
+});
+
+beforeEach(() => {
+  cy.window().then((win) => {
+    cy.spy(win.console, 'error').as('consoleError');
+  });
+});
+
+afterEach(() => {
+  cy.get('@consoleError').then((spy) => {
+    const errors = spy.getCalls().map(call => call.args[0]);
+    if (errors.length > 0) {
+      Cypress.env('consoleErrors', errors);
+    }
+  });
+});
+
 export {
     Notebook,
     Signup,

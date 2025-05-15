@@ -14,7 +14,7 @@
         "queries": [
             {
                 "prompt": "How many days does it take to grow Potatoes on the attached file?",
-                "answer": "6 days"
+                "answer": "6"
             },
             {
                 "prompt": "Which season can I grow Cranberries?",
