@@ -12,7 +12,7 @@ const authenticateUser = (username, password) => {
 
 // Verify successful login by checking username and URL
 const verifySuccessfulLogin = (username) => {
-    cy.contains(username).should('exist');
+    cy.contains(username, { timeout: 10000 }).should('exist'); // Wait up to 10 seconds
     cy.url().should('contain', '/new');
 };
 

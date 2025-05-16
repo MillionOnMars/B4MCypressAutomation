@@ -37,12 +37,19 @@ const cleanupReports = async (reportsDir) => {
     }
 };
 
+const formatConsoleErrors = (errors) => {
+    if (!errors || errors.length === 0) return 'No console errors detected';
+    return errors.map((error, index) => 
+        `${index + 1}. ${error.message}`
+    ).join('\n');
+};
+
 async function runTests() {
     try {
         const projectRoot = path.resolve(__dirname, '..');
         const reportsDir = path.join(projectRoot, 'cypress', 'reports');
         const creditsPath = path.join(projectRoot, 'cypress', 'fixtures', 'credits.json');
-        const webhook = new IncomingWebhook('https://hooks.slack.com/services/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');
+        const webhook = new IncomingWebhook('https://hooks.slack.com/services/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');
 
         // Clean up reports before running tests
         await cleanupReports(reportsDir);
@@ -99,6 +106,11 @@ async function runTests() {
             return `• File: ${run.spec.name}\n  ↳ Total: ${run.stats.tests}\n  ↳ Passing: ${run.stats.passes}\n  ↳ Failing: ${run.stats.failures}`;
         }).join('\n\n');
 
+        // Read console errors if they exist
+        const consoleErrors = await fs.readFile('cypress/results/console-errors.json')
+            .catch(() => '[]');
+        const errors = JSON.parse(consoleErrors);
+
         // Find available port
         const port = await findAvailablePort(8080);
         
@@ -141,7 +153,7 @@ async function runTests() {
                     type: "section",
                     text: {
                         type: "mrkdwn",
-                        text: `*Test Run Summary*\n${specResults}\n\n*Credits Usage*\n${creditsResults}\n\n*Overall Results*\n• Total: ${results.totalTests}\n• Passing: ${results.totalPassed}\n• Failing: ${results.totalFailed}\n\n*Full Report*\n<${reportUrl}|View Full Report> _(Report will be available for 1 hour)_`
+                        text: `*Test Run Summary*\n${specResults}\n\n*Console Errors*\n${formatConsoleErrors(errors)}\n\n*Credits Usage*\n${creditsResults}\n\n*Overall Results*\n• Total: ${results.totalTests}\n• Passing: ${results.totalPassed}\n• Failing: ${results.totalFailed}\n\n*Full Report*\n<${reportUrl}|View Full Report>`
                     }
                 }
             ]

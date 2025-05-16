@@ -12,3 +12,22 @@ Cypress.on('uncaught:exception', (err) => {
         return false; // Prevent Cypress from failing the test
     }
 });
+
+let consoleErrors = [];
+
+Cypress.on('window:before:load', (win) => {
+  const originalError = win.console.error;
+  win.console.error = function (...args) {
+    consoleErrors.push(args.join(' '));
+    if (originalError) {
+      originalError.apply(win.console, args);
+    }
+  };
+});
+
+afterEach(() => {
+  if (consoleErrors.length) {
+    cy.writeFile('cypress/fixtures/console-errors.json', consoleErrors, { flag: 'a+' });
+    consoleErrors = [];
+  }
+});
