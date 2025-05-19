@@ -15,16 +15,16 @@ jobs:
     
     steps:
     - name: CHECK SECRET SLACK VALUE
-      run: echo "My Secret Slack value ${{ secrets.SLACK_WEBHOOK_URL }}"
+      run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
 
     - name: CHECK SECRET VARS VALUE
-      run: echo "My Secret Slack value ${{ vars.SLACK_WEBHOOK_URL }}"
+      run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
 
     - name: CHECK SECRET VARS CYPRESS_APP_URL VALUE
-      run: echo "My Secret Slack value ${{ vars.CYPRESS_APP_URL_PROD }}"
+      run: echo "My Secret Slack value ${{ production.env.CYPRESS_APP_URL_PROD }}"
 
     - name: CHECK SECRET CYPRESS_APP_URL VALUE
-      run: echo "My Secret Slack value ${{ vars.SLACK_WEBHOOK_URL_PROD }}"
+      run: echo "My Secret Slack value ${{ production.secrets.SLACK_WEBHOOK_URL_PROD }}"
     
     - name: Checkout
       uses: actions/checkout@v4
