@@ -116,8 +116,8 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data as a bulleted list for Slack
-          CREDITS=$(jq -r 'map("• *\(.textModel)*: \(.Credits) credits") | join("\n")' cypress/fixtures/credits.json)
+          # Format credits data with custom format and credit(s)
+          CREDITS=$(jq -r 'map("\(.textModel): \(.Credits) credit" + (if .Credits == "1" then "(s)" else "(s)" end)) | join("\n")' cypress/fixtures/credits.json)
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
           echo "Found credits data:"
           echo "$CREDITS"
