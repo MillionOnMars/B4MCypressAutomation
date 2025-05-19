@@ -26,18 +26,6 @@ jobs:
         fi
         echo "✅ Required secrets are configured"
 
-    # - name: CHECK SECRET SLACK VALUE
-    #   run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
-
-    # - name: CHECK SECRET VARS VALUE
-    #   run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
-
-    # - name: CHECK SECRET VARS CYPRESS_APP_URL VALUE
-    #   run: echo "My Secret Slack value ${{ production.env.CYPRESS_APP_URL_PROD }}"
-
-    # - name: CHECK SECRET CYPRESS_APP_URL VALUE
-    #   run: echo "My Secret Slack value ${{ production.secrets.SLACK_WEBHOOK_URL_PROD }}"
-    
     - name: Checkout
       uses: actions/checkout@v4
 
@@ -75,16 +63,22 @@ jobs:
       with:
         payload: |
           {
+            "text": "*🤖 Cypress Test Results*",
             "channel": "#b4m-automation-results",
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "blocks": [
+            "attachments": [
               {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Run Details:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
-                }
+                "color": "${{ steps.cypress.outcome == 'success' && '#36a64f' || '#dc3545' }}",
+                "blocks": [
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Run Details:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                    }
+                  }
+                ]
               }
             ]
           }
