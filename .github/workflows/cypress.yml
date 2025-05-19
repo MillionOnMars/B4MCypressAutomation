@@ -45,7 +45,6 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
-        record: true
         install: false
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
@@ -56,9 +55,20 @@ jobs:
       id: test-results
       if: always()
       run: |
-        echo "total=$(find cypress/reports -name 'results.json' -exec jq '.stats.tests' {} \;)" >> $GITHUB_OUTPUT
-        echo "passed=$(find cypress/reports -name 'results.json' -exec jq '.stats.passes' {} \;)" >> $GITHUB_OUTPUT
-        echo "failed=$(find cypress/reports -name 'results.json' -exec jq '.stats.failures' {} \;)" >> $GITHUB_OUTPUT
+        # Create reports directory if it doesn't exist
+        mkdir -p cypress/reports
+        
+        # Check if mochawesome report exists
+        if [ -f "mochawesome-report/mochawesome.json" ]; then
+          echo "total=$(jq '.stats.tests' mochawesome-report/mochawesome.json)" >> $GITHUB_OUTPUT
+          echo "passed=$(jq '.stats.passes' mochawesome-report/mochawesome.json)" >> $GITHUB_OUTPUT
+          echo "failed=$(jq '.stats.failures' mochawesome-report/mochawesome.json)" >> $GITHUB_OUTPUT
+        else
+          echo "total=0" >> $GITHUB_OUTPUT
+          echo "passed=0" >> $GITHUB_OUTPUT
+          echo "failed=0" >> $GITHUB_OUTPUT
+          echo "Warning: No test results found in mochawesome-report/mochawesome.json"
+        fi
 
     - name: Upload test results
       if: always()
