@@ -61,61 +61,12 @@ jobs:
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
       with:
+        # Simplified payload structure
         payload: |
           {
-            "text": "Cypress Test Results",
-            "blocks": [
-              {
-                "type": "header",
-                "text": {
-                  "type": "plain_text",
-                  "text": "🤖 Cypress Test Run Report",
-                  "emoji": true
-                }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Environment:*\n${{ env.CYPRESS_APP_URL || 'Staging' }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Status:*\n${{ steps.cypress.outcome }}"
-                  }
-                ]
-              },
-              {
-                "type": "section",
-                "fields": [
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Total Tests:*\n${{ steps.cypress.outputs.totalTests || '0' }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Passed Tests:*\n${{ steps.cypress.outputs.passedTests || '0' }}"
-                  }
-                ]
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
-                }
-              },
-              {
-                "type": "context",
-                "elements": [
-                  {
-                    "type": "mrkdwn",
-                    "text": "Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}"
-                  }
-                ]
-              }
-            ]
+            "username": "GitHub Actions",
+            "icon_emoji": ":github:",
+            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Total Tests:* ${{ steps.cypress.outputs.totalTests || '0' }}\n*Passed Tests:* ${{ steps.cypress.outputs.passedTests || '0' }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
