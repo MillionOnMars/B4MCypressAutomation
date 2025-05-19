@@ -44,9 +44,21 @@ jobs:
       with:
         browser: chrome
         config-file: cypress.config.js
+        publish-summary: true
+        record: true
+        install: false
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      continue-on-error: true
+
+    - name: Get test results
+      id: test-results
+      if: always()
+      run: |
+        echo "total=$(find cypress/reports -name 'results.json' -exec jq '.stats.tests' {} \;)" >> $GITHUB_OUTPUT
+        echo "passed=$(find cypress/reports -name 'results.json' -exec jq '.stats.passes' {} \;)" >> $GITHUB_OUTPUT
+        echo "failed=$(find cypress/reports -name 'results.json' -exec jq '.stats.failures' {} \;)" >> $GITHUB_OUTPUT
 
     - name: Upload test results
       if: always()
@@ -61,12 +73,11 @@ jobs:
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        # Simplified payload structure
         payload: |
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Total Tests:* ${{ steps.cypress.outputs.totalTests || '0' }}\n*Passed Tests:* ${{ steps.cypress.outputs.passedTests || '0' }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
+            "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Total Tests:* ${{ steps.test-results.outputs.total }}\n*Passed Tests:* ${{ steps.test-results.outputs.passed }}\n*Failed Tests:* ${{ steps.test-results.outputs.failed }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
