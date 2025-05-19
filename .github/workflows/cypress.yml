@@ -55,20 +55,34 @@ jobs:
       id: test-results
       if: always()
       run: |
-        # Create reports directory if it doesn't exist
-        mkdir -p cypress/reports
-        
-        # Check if mochawesome report exists
-        if [ -f "mochawesome-report/mochawesome.json" ]; then
-          echo "total=$(jq '.stats.tests' mochawesome-report/mochawesome.json)" >> $GITHUB_OUTPUT
-          echo "passed=$(jq '.stats.passes' mochawesome-report/mochawesome.json)" >> $GITHUB_OUTPUT
-          echo "failed=$(jq '.stats.failures' mochawesome-report/mochawesome.json)" >> $GITHUB_OUTPUT
+        # Try multiple possible locations for test results
+        if [ -f "cypress/results/results.json" ]; then
+          RESULTS_FILE="cypress/results/results.json"
+        elif [ -f "mochawesome-report/mochawesome.json" ]; then
+          RESULTS_FILE="mochawesome-report/mochawesome.json"
+        elif [ -f "cypress/reports/mochawesome.json" ]; then
+          RESULTS_FILE="cypress/reports/mochawesome.json"
         else
-          echo "total=0" >> $GITHUB_OUTPUT
-          echo "passed=0" >> $GITHUB_OUTPUT
-          echo "failed=0" >> $GITHUB_OUTPUT
-          echo "Warning: No test results found in mochawesome-report/mochawesome.json"
+          echo "No test results file found"
+          exit 1
         fi
+
+        # Debug: Show file contents
+        echo "Found results file at: $RESULTS_FILE"
+        cat $RESULTS_FILE
+
+        # Extract test counts
+        TOTAL=$(jq -r '.stats.tests // .totalTests // 0' $RESULTS_FILE)
+        PASSED=$(jq -r '.stats.passes // .passes // 0' $RESULTS_FILE)
+        FAILED=$(jq -r '.stats.failures // .failures // 0' $RESULTS_FILE)
+
+        # Set outputs
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "passed=$PASSED" >> $GITHUB_OUTPUT
+        echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
+        # Debug: Show what we're setting
+        echo "Setting total: $TOTAL, passed: $PASSED, failed: $FAILED"
 
     - name: Upload test results
       if: always()
