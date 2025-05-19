@@ -5,9 +5,9 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:
   schedule:
-    - cron: '0 7,13,22 * * *' # Runs at 7 AM, 1 PM, and 10 PM UTC
+    - cron: '0 7,13,22 * * *'
 
 jobs:
   cypress-run:
@@ -15,32 +15,32 @@ jobs:
     
     steps:
     - name: CHECK SECRET SLACK VALUE
-      uses: echo "My Secret Slack value ${{ secrets.SLACK_WEBHOOK_URL }}"
+      run: echo "My Secret Slack value ${{ secrets.SLACK_WEBHOOK_URL }}"
 
     - name: CHECK SECRET VARS VALUE
-      uses: echo "My Secret Slack value ${{ vars.SLACK_WEBHOOK_URL }}"
+      run: echo "My Secret Slack value ${{ vars.SLACK_WEBHOOK_URL }}"
 
     - name: CHECK SECRET VARS CYPRESS_APP_URL VALUE
-      uses: echo "My Secret Slack value ${{ vars.CYPRESS_APP_URL }}"
+      run: echo "My Secret Slack value ${{ vars.CYPRESS_APP_URL }}"
 
     - name: CHECK SECRET CYPRESS_APP_URL VALUE
-      uses: echo "My Secret Slack value ${{ secret.CYPRESS_APP_URL }}"
+      run: echo "My Secret Slack value ${{ secrets.CYPRESS_APP_URL }}"
     
     - name: Checkout
-      uses: actions/checkout@v4  # Updated to v4
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4  # Updated to v4
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'  # Added caching
+        cache: 'npm'
         
     - name: Install dependencies
       run: npm ci
 
     - name: Run Cypress tests
       id: cypress
-      uses: cypress-io/github-action@v5  # Changed to v5 which is more stable
+      uses: cypress-io/github-action@v5
       with:
         browser: chrome
         config-file: cypress.config.js
@@ -50,18 +50,17 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4  # Updated to v4
+      uses: actions/upload-artifact@v4
       with:
         name: cypress-results
         path: cypress/reports
-        if-no-files-found: warn  # Added error handling
-        retention-days: 14  # Added retention period
+        if-no-files-found: warn
+        retention-days: 14
 
     - name: Send Slack notification
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        # Updated payload format with proper Slack message structure
         payload: |
           {
             "channel": "#b4m-automation-results",
@@ -78,4 +77,4 @@ jobs:
             ]
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # Use secrets instead of hardcoded URL
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
