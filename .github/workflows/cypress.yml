@@ -14,17 +14,29 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: CHECK SECRET SLACK VALUE
-      run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
+    - name: Validate required secrets
+      run: |
+        if [ -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+          echo "Error: SLACK_WEBHOOK_URL secret is not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.CYPRESS_APP_URL }}" ]; then
+          echo "Error: CYPRESS_APP_URL secret is not set"
+          exit 1
+        fi
+        echo "✅ Required secrets are configured"
 
-    - name: CHECK SECRET VARS VALUE
-      run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
+    # - name: CHECK SECRET SLACK VALUE
+    #   run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
 
-    - name: CHECK SECRET VARS CYPRESS_APP_URL VALUE
-      run: echo "My Secret Slack value ${{ production.env.CYPRESS_APP_URL_PROD }}"
+    # - name: CHECK SECRET VARS VALUE
+    #   run: echo "My Secret Slack value ${{ staging.secrets.SLACK_WEBHOOK_URL }}"
 
-    - name: CHECK SECRET CYPRESS_APP_URL VALUE
-      run: echo "My Secret Slack value ${{ production.secrets.SLACK_WEBHOOK_URL_PROD }}"
+    # - name: CHECK SECRET VARS CYPRESS_APP_URL VALUE
+    #   run: echo "My Secret Slack value ${{ production.env.CYPRESS_APP_URL_PROD }}"
+
+    # - name: CHECK SECRET CYPRESS_APP_URL VALUE
+    #   run: echo "My Secret Slack value ${{ production.secrets.SLACK_WEBHOOK_URL_PROD }}"
     
     - name: Checkout
       uses: actions/checkout@v4
