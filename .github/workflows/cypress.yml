@@ -14,6 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: CHECK SECRET SLACK VALUE
+      uses: echo "My Secret Slack value ${{ secrets.SLACK_WEBHOOK_URL }}"
+
+    - name: CHECK SECRET VARS VALUE
+      uses: echo "My Secret Slack value ${{ vars.SLACK_WEBHOOK_URL }}"
+
+    - name: CHECK SECRET CYPRESS_APP_URL VALUE
+      uses: echo "My Secret Slack value ${{ secret.CYPRESS_APP_URL }}"
+    
     - name: Checkout
       uses: actions/checkout@v4  # Updated to v4
 
