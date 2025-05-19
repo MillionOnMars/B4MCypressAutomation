@@ -63,20 +63,55 @@ jobs:
       with:
         payload: |
           {
-            "text": "*🤖 Cypress Test Results*",
-            "channel": "#b4m-automation-results",
-            "username": "GitHub Actions",
-            "icon_emoji": ":github:",
-            "attachments": [
+            "text": "Cypress Test Results",
+            "blocks": [
               {
-                "color": "${{ steps.cypress.outcome == 'success' && '#36a64f' || '#dc3545' }}",
-                "blocks": [
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "🤖 Cypress Test Run Report",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
                   {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Run Details:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
-                    }
+                    "type": "mrkdwn",
+                    "text": "*Environment:*\n${{ env.CYPRESS_APP_URL || 'Staging' }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Status:*\n${{ steps.cypress.outcome }}"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Total Tests:*\n${{ steps.cypress.outputs.totalTests || '0' }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Passed Tests:*\n${{ steps.cypress.outputs.passedTests || '0' }}"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+                }
+              },
+              {
+                "type": "context",
+                "elements": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}"
                   }
                 ]
               }
