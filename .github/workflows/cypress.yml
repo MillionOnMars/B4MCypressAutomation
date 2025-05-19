@@ -27,6 +27,7 @@ jobs:
       run: npm ci
 
     - name: Run Cypress tests
+      id: cypress
       uses: cypress-io/github-action@v5  # Changed to v5 which is more stable
       with:
         browser: chrome
@@ -43,3 +44,14 @@ jobs:
         path: cypress/reports
         if-no-files-found: warn  # Added error handling
         retention-days: 14  # Added retention period
+
+    - name: Send Slack notification
+      if: always()
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "🤖 Cypress Test Results\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Run URL:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
