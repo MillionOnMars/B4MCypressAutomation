@@ -111,18 +111,28 @@ jobs:
         if-no-files-found: warn
         retention-days: 14
 
+    - name: Get credits data
+      id: credits
+      if: always()
+      run: |
+        if [ -f "credits.json" ]; then
+          CREDITS=$(cat credits.json)
+          echo "credits=$CREDITS" >> $GITHUB_OUTPUT
+          echo "Found credits data: $CREDITS"
+        else
+          echo "No credits.json file found"
+          echo "credits=No credits data available" >> $GITHUB_OUTPUT
+        fi
+
     - name: Send Slack notification
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        # payload: |
-        #   {
-        #     "username": "GitHub Actions",
-        #     "icon_emoji": ":github:",
-        #     "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Total Tests:* ${{ steps.test-results.outputs.total }}\n*Passed Tests:* ${{ steps.test-results.outputs.passed }}\n*Failed Tests:* ${{ steps.test-results.outputs.failed }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
-        #   }
-      status: ${{ job.status }}
-      fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-
+        payload: |
+          {
+            "username": "GitHub Actions",
+            "icon_emoji": ":github:",
+            "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Test Results*\n• Total Tests: ${{ steps.test-results.outputs.total }}\n• Passed Tests: ${{ steps.test-results.outputs.passed }}\n• Failed Tests: ${{ steps.test-results.outputs.failed }}\n\n*Credits Usage*\n${{ steps.credits.outputs.credits }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
+          }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
