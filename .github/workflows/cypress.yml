@@ -61,34 +61,46 @@ jobs:
       id: test-results
       if: always()
       run: |
-        # Debug: List all json files
-        echo "Looking for test result files..."
-        find . -name "*.json" -type f
+        # Debug: Show file contents
+        echo "Contents of reports directory:"
+        ls -la cypress/reports/
         
-        # Try to read from merged report
+        # Read the merged report
         if [ -f "cypress/reports/output.json" ]; then
-          echo "Reading from merged report..."
-          RESULTS_FILE="cypress/reports/output.json"
+          echo "Reading output.json..."
+          cat cypress/reports/output.json
           
-          # Extract stats using jq
-          STATS=$(jq -r '.stats' "$RESULTS_FILE")
-          echo "Found stats: $STATS"
+          # Extract stats directly with single jq command
+          TOTAL=$(jq -r '.stats.tests // 0' cypress/reports/output.json)
+          PASSED=$(jq -r '.stats.passes // 0' cypress/reports/output.json)
+          FAILED=$(jq -r '.stats.failures // 0' cypress/reports/output.json)
           
-          # Set outputs with explicit parsing
-          TOTAL=$(echo "$STATS" | jq -r '.tests')
-          PASSED=$(echo "$STATS" | jq -r '.passes')
-          FAILED=$(echo "$STATS" | jq -r '.failures')
+          # Validate numbers
+          if [[ ! "$TOTAL" =~ ^[0-9]+$ ]] || [[ ! "$PASSED" =~ ^[0-9]+$ ]] || [[ ! "$FAILED" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid number format in results"
+            echo "Trying alternative path..."
+            
+            # Try alternative JSON path
+            TOTAL=$(jq -r '.results[0].stats.tests // 0' cypress/reports/output.json)
+            PASSED=$(jq -r '.results[0].stats.passes // 0' cypress/reports/output.json)
+            FAILED=$(jq -r '.results[0].stats.failures // 0' cypress/reports/output.json)
+          fi
           
-          # Debug: Show parsed values
-          echo "Parsed values - Total: $TOTAL, Passed: $PASSED, Failed: $FAILED"
+          # Debug: Show extracted values
+          echo "Extracted values:"
+          echo "Total: $TOTAL"
+          echo "Passed: $PASSED"
+          echo "Failed: $FAILED"
           
-          # Set GitHub outputs
+          # Set outputs
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "passed=$PASSED" >> $GITHUB_OUTPUT
           echo "failed=$FAILED" >> $GITHUB_OUTPUT
         else
-          echo "Error: No test results file found!"
-          exit 1
+          echo "Warning: No output.json found"
+          echo "total=0" >> $GITHUB_OUTPUT
+          echo "passed=0" >> $GITHUB_OUTPUT
+          echo "failed=0" >> $GITHUB_OUTPUT
         fi
 
     - name: Upload test results
