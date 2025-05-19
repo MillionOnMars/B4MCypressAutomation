@@ -20,6 +20,9 @@ jobs:
     - name: CHECK SECRET VARS VALUE
       uses: echo "My Secret Slack value ${{ vars.SLACK_WEBHOOK_URL }}"
 
+    - name: CHECK SECRET VARS CYPRESS_APP_URL VALUE
+      uses: echo "My Secret Slack value ${{ vars.CYPRESS_APP_URL }}"
+
     - name: CHECK SECRET CYPRESS_APP_URL VALUE
       uses: echo "My Secret Slack value ${{ secret.CYPRESS_APP_URL }}"
     
