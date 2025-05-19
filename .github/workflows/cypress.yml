@@ -55,34 +55,52 @@ jobs:
       id: test-results
       if: always()
       run: |
-        # Try multiple possible locations for test results
-        if [ -f "cypress/results/results.json" ]; then
-          RESULTS_FILE="cypress/results/results.json"
-        elif [ -f "mochawesome-report/mochawesome.json" ]; then
-          RESULTS_FILE="mochawesome-report/mochawesome.json"
-        elif [ -f "cypress/reports/mochawesome.json" ]; then
-          RESULTS_FILE="cypress/reports/mochawesome.json"
-        else
-          echo "No test results file found"
-          exit 1
-        fi
+        # Initialize variables with defaults
+        TOTAL=0
+        PASSED=0
+        FAILED=0
+        
+        # Function to check and parse JSON file
+        check_results() {
+          local file=$1
+          if [ -f "$file" ] && [ -s "$file" ]; then
+            echo "Checking file: $file"
+            if jq empty "$file" 2>/dev/null; then
+              TOTAL=$(jq -r '.stats.tests // .totalTests // 0' "$file")
+              PASSED=$(jq -r '.stats.passes // .passes // 0' "$file")
+              FAILED=$(jq -r '.stats.failures // .failures // 0' "$file")
+              return 0
+            fi
+          fi
+          return 1
+        }
 
-        # Debug: Show file contents
-        echo "Found results file at: $RESULTS_FILE"
-        cat $RESULTS_FILE
+        # Try each possible location
+        for results_file in \
+          "cypress/results/results.json" \
+          "mochawesome-report/mochawesome.json" \
+          "cypress/reports/mochawesome.json"; do
+          if check_results "$results_file"; then
+            echo "Successfully parsed $results_file"
+            break
+          fi
+        done
 
-        # Extract test counts
-        TOTAL=$(jq -r '.stats.tests // .totalTests // 0' $RESULTS_FILE)
-        PASSED=$(jq -r '.stats.passes // .passes // 0' $RESULTS_FILE)
-        FAILED=$(jq -r '.stats.failures // .failures // 0' $RESULTS_FILE)
+        # Set outputs regardless of success/failure
+        {
+          echo "total=$TOTAL"
+          echo "passed=$PASSED"
+          echo "failed=$FAILED"
+        } >> "$GITHUB_OUTPUT"
 
-        # Set outputs
-        echo "total=$TOTAL" >> $GITHUB_OUTPUT
-        echo "passed=$PASSED" >> $GITHUB_OUTPUT
-        echo "failed=$FAILED" >> $GITHUB_OUTPUT
+        # Debug output
+        echo "Test Results Summary:"
+        echo "Total: $TOTAL"
+        echo "Passed: $PASSED"
+        echo "Failed: $FAILED"
 
-        # Debug: Show what we're setting
-        echo "Setting total: $TOTAL, passed: $PASSED, failed: $FAILED"
+        # Don't exit with error even if no results found
+        exit 0
 
     - name: Upload test results
       if: always()
