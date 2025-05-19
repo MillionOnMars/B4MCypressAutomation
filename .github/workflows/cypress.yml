@@ -44,64 +44,63 @@ jobs:
       with:
         browser: chrome
         config-file: cypress.config.js
-        # Generate Mochawesome report
-        command: npx cypress run --reporter mochawesome --reporter-options reportDir=cypress/reports,overwrite=false,html=true,json=true
+        publish-summary: true
+        install: false
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       continue-on-error: true
 
-    - name: Generate test report
-      if: always()
-      run: |
-        npx mochawesome-merge cypress/reports/*.json > cypress/reports/output.json
-        echo "::set-output name=report::$(cat cypress/reports/output.json)"
-
     - name: Get test results
       id: test-results
       if: always()
       run: |
-        # Debug: Show file contents
-        echo "Contents of reports directory:"
-        ls -la cypress/reports/
+        # Initialize variables with defaults
+        TOTAL=0
+        PASSED=0
+        FAILED=0
         
-        # Read the merged report
-        if [ -f "cypress/reports/output.json" ]; then
-          echo "Reading output.json..."
-          cat cypress/reports/output.json
-          
-          # Extract stats directly with single jq command
-          TOTAL=$(jq -r '.stats.tests // 0' cypress/reports/output.json)
-          PASSED=$(jq -r '.stats.passes // 0' cypress/reports/output.json)
-          FAILED=$(jq -r '.stats.failures // 0' cypress/reports/output.json)
-          
-          # Validate numbers
-          if [[ ! "$TOTAL" =~ ^[0-9]+$ ]] || [[ ! "$PASSED" =~ ^[0-9]+$ ]] || [[ ! "$FAILED" =~ ^[0-9]+$ ]]; then
-            echo "Error: Invalid number format in results"
-            echo "Trying alternative path..."
-            
-            # Try alternative JSON path
-            TOTAL=$(jq -r '.results[0].stats.tests // 0' cypress/reports/output.json)
-            PASSED=$(jq -r '.results[0].stats.passes // 0' cypress/reports/output.json)
-            FAILED=$(jq -r '.results[0].stats.failures // 0' cypress/reports/output.json)
+        # Function to check and parse JSON file
+        check_results() {
+          local file=$1
+          if [ -f "$file" ] && [ -s "$file" ]; then
+            echo "Checking file: $file"
+            if jq empty "$file" 2>/dev/null; then
+              TOTAL=$(jq -r '.stats.tests // .totalTests // 0' "$file")
+              PASSED=$(jq -r '.stats.passes // .passes // 0' "$file")
+              FAILED=$(jq -r '.stats.failures // .failures // 0' "$file")
+              return 0
+            fi
           fi
-          
-          # Debug: Show extracted values
-          echo "Extracted values:"
-          echo "Total: $TOTAL"
-          echo "Passed: $PASSED"
-          echo "Failed: $FAILED"
-          
-          # Set outputs
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passed=$PASSED" >> $GITHUB_OUTPUT
-          echo "failed=$FAILED" >> $GITHUB_OUTPUT
-        else
-          echo "Warning: No output.json found"
-          echo "total=0" >> $GITHUB_OUTPUT
-          echo "passed=0" >> $GITHUB_OUTPUT
-          echo "failed=0" >> $GITHUB_OUTPUT
-        fi
+          return 1
+        }
+
+        # Try each possible location
+        for results_file in \
+          "cypress/results/results.json" \
+          "mochawesome-report/mochawesome.json" \
+          "cypress/reports/mochawesome.json"; do
+          if check_results "$results_file"; then
+            echo "Successfully parsed $results_file"
+            break
+          fi
+        done
+
+        # Set outputs regardless of success/failure
+        {
+          echo "total=$TOTAL"
+          echo "passed=$PASSED"
+          echo "failed=$FAILED"
+        } >> "$GITHUB_OUTPUT"
+
+        # Debug output
+        echo "Test Results Summary:"
+        echo "Total: $TOTAL"
+        echo "Passed: $PASSED"
+        echo "Failed: $FAILED"
+
+        # Don't exit with error even if no results found
+        exit 0
 
     - name: Upload test results
       if: always()
@@ -116,11 +115,14 @@ jobs:
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        payload: |
-          {
-            "username": "GitHub Actions",
-            "icon_emoji": ":github:",
-            "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Total Tests:* ${{ steps.test-results.outputs.total }}\n*Passed Tests:* ${{ steps.test-results.outputs.passed }}\n*Failed Tests:* ${{ steps.test-results.outputs.failed }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
-          }
+        # payload: |
+        #   {
+        #     "username": "GitHub Actions",
+        #     "icon_emoji": ":github:",
+        #     "text": "*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Total Tests:* ${{ steps.test-results.outputs.total }}\n*Passed Tests:* ${{ steps.test-results.outputs.passed }}\n*Failed Tests:* ${{ steps.test-results.outputs.failed }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊\n\n_Triggered by: ${{ github.actor }} | Branch: ${{ github.ref_name }}_"
+        #   }
+      status: ${{ job.status }}
+      fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
