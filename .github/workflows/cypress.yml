@@ -54,4 +54,4 @@ jobs:
             "text": "🤖 Cypress Test Results\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n*Run URL:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
