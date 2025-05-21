@@ -1,5 +1,11 @@
 const { defineConfig } = require("cypress");
 
+// Define global environment URLs
+const environments = {
+  staging: 'https://app.staging.bike4mind.com/',
+  production: 'https://app.bike4mind.com/'
+};
+
 module.exports = defineConfig({
   e2e: {    
     specPattern: [
@@ -11,7 +17,8 @@ module.exports = defineConfig({
     ],
     supportFile: 'cypress/support/index.js',
     env: {
-      appUrl: process.env.CYPRESS_APP_URL || 'https://app.staging.bike4mind.com/'
+      //set appURL to production or staging
+      appUrl: process.env.CYPRESS_APP_URL || environments.staging
     },
   },
 });

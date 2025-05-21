@@ -5,41 +5,139 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:
   schedule:
-    - cron: '0 7,13,22 * * *' # Runs at 7 AM, 1 PM, and 10 PM UTC
+    - cron: '0 7,13,22 * * *'
 
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Validate required secrets
+      run: |
+        if [ -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+          echo "Error: SLACK_WEBHOOK_URL secret is not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.CYPRESS_APP_URL }}" ]; then
+          echo "Error: CYPRESS_APP_URL secret is not set"
+          exit 1
+        fi
+        echo "✅ Required secrets are configured"
+
     - name: Checkout
-      uses: actions/checkout@v4  # Updated to v4
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4  # Updated to v4
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'  # Added caching
+        cache: 'npm'
         
     - name: Install dependencies
       run: npm ci
 
     - name: Run Cypress tests
-      uses: cypress-io/github-action@v5  # Changed to v5 which is more stable
+      id: cypress
+      uses: cypress-io/github-action@v5
       with:
         browser: chrome
         config-file: cypress.config.js
+        publish-summary: true
+        reporter: mochawesome
+        reporter-options: "reportDir=cypress/reports,overwrite=true,json=true,jsonReport=true"
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      continue-on-error: true
+
+    - name: Process test results
+      if: always()
+      run: |
+        mkdir -p cypress/reports
+        
+        # Clean up any existing results first
+        rm -f cypress/reports/results.json
+        
+        # Find the most recent JSON report
+        LATEST_REPORT=$(find cypress/reports -name '*.json' -type f -exec ls -t {} + | head -n 1)
+        
+        if [ -n "$LATEST_REPORT" ]; then
+          echo "Processing latest report: $LATEST_REPORT"
+          
+          # Extract stats directly from the latest report
+          jq -n \
+            --arg total "$(jq '.stats.tests' "$LATEST_REPORT")" \
+            --arg passed "$(jq '.stats.passes' "$LATEST_REPORT")" \
+            --arg failed "$(jq '.stats.failures' "$LATEST_REPORT")" \
+            '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+            
+          # Debug output
+          echo "Test counts from latest report:"
+          cat cypress/reports/results.json
+        else
+          echo "No test report files found!"
+          exit 1
+        fi
+
+    - name: Get test results
+      id: test-results
+      if: always()
+      run: |
+        if [ -f "cypress/reports/results.json" ]; then
+          echo "Reading results summary..."
+          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
+          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
+          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
+          
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          
+          echo "Test Results Summary:"
+          echo "Total: $TOTAL"
+          echo "Passed: $PASSED"
+          echo "Failed: $FAILED"
+        else
+          echo "Error: results.json not found"
+          exit 1
+        fi
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4  # Updated to v4
+      uses: actions/upload-artifact@v4
       with:
         name: cypress-results
         path: cypress/reports
-        if-no-files-found: warn  # Added error handling
-        retention-days: 14  # Added retention period
+        if-no-files-found: warn
+        retention-days: 14
+
+    - name: Get credits data
+      id: credits
+      if: always()
+      run: |
+        if [ -f "cypress/fixtures/credits.json" ]; then
+          # Format credits data using jq
+          CREDITS=$(jq -r 'map("Text Model: \(.textModel)\nCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
+          # Escape newlines for GitHub Actions output
+          CREDITS="${CREDITS//$'\n'/'\n'}"
+          echo "credits=$CREDITS" >> $GITHUB_OUTPUT
+          echo "Found credits data:"
+          echo "$CREDITS"
+        else
+          echo "No credits.json file found"
+          echo "credits=No credits data available" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Send Slack notification
+      if: always()
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "username": "GitHub Actions",
+            "icon_emoji": ":github:",
+            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credits Usage*\n${{ steps.credits.outputs.credits }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
