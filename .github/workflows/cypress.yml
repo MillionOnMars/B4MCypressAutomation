@@ -45,7 +45,8 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
-        install: false
+        reporter: json
+        reporter-options: "reportDir=cypress/reports,overwrite=true,json=true,html=false"
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -55,74 +56,39 @@ jobs:
       id: test-results
       if: always()
       run: |
-        # Initialize variables with defaults
-        TOTAL=0
-        PASSED=0
-        FAILED=0
+        # Debug: Show available files
+        echo "Available report files:"
+        find cypress -type f -name "*.json"
         
-        # Function to check and parse JSON file with debug output
-        check_results() {
-          local file=$1
-          if [ -f "$file" ] && [ -s "$file" ]; then
-            echo "Found results file: $file"
-            echo "File contents:"
-            cat "$file"
-            
-            # Try different JSON paths for different report formats
-            if jq empty "$file" 2>/dev/null; then
-              # Try Cypress native format first
-              if jq -e '.totalTests' "$file" > /dev/null 2>&1; then
-                TOTAL=$(jq -r '.totalTests' "$file")
-                PASSED=$(jq -r '.totalPassed' "$file")
-                FAILED=$(jq -r '.totalFailed' "$file")
-              # Try Mochawesome format next
-              elif jq -e '.stats' "$file" > /dev/null 2>&1; then
-                TOTAL=$(jq -r '.stats.tests' "$file")
-                PASSED=$(jq -r '.stats.passes' "$file")
-                FAILED=$(jq -r '.stats.failures' "$file")
-              fi
-              
-              # Verify we got numbers
-              if [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
-                echo "Successfully parsed counts:"
-                echo "Total: $TOTAL"
-                echo "Passed: $PASSED"
-                echo "Failed: $FAILED"
-                return 0
-              fi
-            fi
-          fi
-          return 1
-        }
-
-        # Try each possible location
-        for results_file in \
-          "cypress/reports/results.json" \
-          "cypress/results/results.json" \
-          "mochawesome-report/mochawesome.json" \
-          "cypress/reports/mochawesome.json"; do
-          if check_results "$results_file"; then
-            break
-          fi
-        done
-
-        # Set outputs with validation
-        if [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
-          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+        # Try to read from Cypress built-in summary
+        if [ -f "cypress/reports/results.json" ]; then
+          echo "Reading Cypress results summary..."
+          
+          # Extract stats using jq with debug output
+          echo "File contents:"
+          cat cypress/reports/results.json
+          
+          # Parse test counts directly from results
+          TOTAL=$(jq -r '.totalTests // 0' cypress/reports/results.json)
+          PASSED=$(jq -r '.totalPassed // 0' cypress/reports/results.json)
+          FAILED=$(jq -r '.totalFailed // 0' cypress/reports/results.json)
+          
+          echo "Extracted counts from Cypress summary:"
+          echo "Total: $TOTAL"
+          echo "Passed: $PASSED"
+          echo "Failed: $FAILED"
         else
-          echo "Warning: Invalid test counts detected"
-          echo "total=0" >> "$GITHUB_OUTPUT"
-          echo "passed=0" >> "$GITHUB_OUTPUT"
-          echo "failed=0" >> "$GITHUB_OUTPUT"
+          echo "Warning: Could not find Cypress results summary"
+          echo "Falling back to default values"
+          TOTAL=0
+          PASSED=0
+          FAILED=0
         fi
-
-        # Debug output
-        echo "Final Test Results Summary:"
-        echo "Total: $TOTAL"
-        echo "Passed: $PASSED"
-        echo "Failed: $FAILED"
+        
+        # Set outputs with validation
+        echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+        echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+        echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
 
     - name: Upload test results
       if: always()
