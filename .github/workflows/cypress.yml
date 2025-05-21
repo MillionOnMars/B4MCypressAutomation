@@ -60,16 +60,36 @@ jobs:
         PASSED=0
         FAILED=0
         
-        # Function to check and parse JSON file
+        # Function to check and parse JSON file with debug output
         check_results() {
           local file=$1
           if [ -f "$file" ] && [ -s "$file" ]; then
-            echo "Checking file: $file"
+            echo "Found results file: $file"
+            echo "File contents:"
+            cat "$file"
+            
+            # Try different JSON paths for different report formats
             if jq empty "$file" 2>/dev/null; then
-              TOTAL=$(jq -r '.stats.tests // .totalTests // 0' "$file")
-              PASSED=$(jq -r '.stats.passes // .passes // 0' "$file")
-              FAILED=$(jq -r '.stats.failures // .failures // 0' "$file")
-              return 0
+              # Try Cypress native format first
+              if jq -e '.totalTests' "$file" > /dev/null 2>&1; then
+                TOTAL=$(jq -r '.totalTests' "$file")
+                PASSED=$(jq -r '.totalPassed' "$file")
+                FAILED=$(jq -r '.totalFailed' "$file")
+              # Try Mochawesome format next
+              elif jq -e '.stats' "$file" > /dev/null 2>&1; then
+                TOTAL=$(jq -r '.stats.tests' "$file")
+                PASSED=$(jq -r '.stats.passes' "$file")
+                FAILED=$(jq -r '.stats.failures' "$file")
+              fi
+              
+              # Verify we got numbers
+              if [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
+                echo "Successfully parsed counts:"
+                echo "Total: $TOTAL"
+                echo "Passed: $PASSED"
+                echo "Failed: $FAILED"
+                return 0
+              fi
             fi
           fi
           return 1
@@ -77,30 +97,32 @@ jobs:
 
         # Try each possible location
         for results_file in \
+          "cypress/reports/results.json" \
           "cypress/results/results.json" \
           "mochawesome-report/mochawesome.json" \
           "cypress/reports/mochawesome.json"; do
           if check_results "$results_file"; then
-            echo "Successfully parsed $results_file"
             break
           fi
         done
 
-        # Set outputs regardless of success/failure
-        {
-          echo "total=$TOTAL"
-          echo "passed=$PASSED"
-          echo "failed=$FAILED"
-        } >> "$GITHUB_OUTPUT"
+        # Set outputs with validation
+        if [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+        else
+          echo "Warning: Invalid test counts detected"
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "passed=0" >> "$GITHUB_OUTPUT"
+          echo "failed=0" >> "$GITHUB_OUTPUT"
+        fi
 
         # Debug output
-        echo "Test Results Summary:"
+        echo "Final Test Results Summary:"
         echo "Total: $TOTAL"
         echo "Passed: $PASSED"
         echo "Failed: $FAILED"
-
-        # Don't exit with error even if no results found
-        exit 0
 
     - name: Upload test results
       if: always()
@@ -117,7 +139,7 @@ jobs:
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
           # Format credits data using jq
-          CREDITS=$(jq -r 'map("\(.textModel):\n\tCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
+          CREDITS=$(jq -r 'map("Text Model: \(.textModel)\nCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
