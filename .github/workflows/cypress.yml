@@ -55,12 +55,30 @@ jobs:
       if: always()
       run: |
         mkdir -p cypress/reports
-        # Create a summary JSON with test counts
-        jq -n \
-          --arg total "$(find cypress/reports -name '*.json' -exec jq '.stats.tests' {} \; | awk '{s+=$1} END {print s}')" \
-          --arg passed "$(find cypress/reports -name '*.json' -exec jq '.stats.passes' {} \; | awk '{s+=$1} END {print s}')" \
-          --arg failed "$(find cypress/reports -name '*.json' -exec jq '.stats.failures' {} \; | awk '{s+=$1} END {print s}')" \
-          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+        
+        # Clean up any existing results first
+        rm -f cypress/reports/results.json
+        
+        # Find the most recent JSON report
+        LATEST_REPORT=$(find cypress/reports -name '*.json' -type f -exec ls -t {} + | head -n 1)
+        
+        if [ -n "$LATEST_REPORT" ]; then
+          echo "Processing latest report: $LATEST_REPORT"
+          
+          # Extract stats directly from the latest report
+          jq -n \
+            --arg total "$(jq '.stats.tests' "$LATEST_REPORT")" \
+            --arg passed "$(jq '.stats.passes' "$LATEST_REPORT")" \
+            --arg failed "$(jq '.stats.failures' "$LATEST_REPORT")" \
+            '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+            
+          # Debug output
+          echo "Test counts from latest report:"
+          cat cypress/reports/results.json
+        else
+          echo "No test report files found!"
+          exit 1
+        fi
 
     - name: Get test results
       id: test-results
