@@ -56,24 +56,42 @@ jobs:
       run: |
         mkdir -p cypress/reports
         
-        # Clean up any existing results first
-        rm -f cypress/reports/results.json
+        # Debug: Show all JSON reports
+        echo "Available JSON reports:"
+        find cypress/reports -name '*.json' -type f -ls
         
         # Find the most recent JSON report
         LATEST_REPORT=$(find cypress/reports -name '*.json' -type f -exec ls -t {} + | head -n 1)
         
         if [ -n "$LATEST_REPORT" ]; then
           echo "Processing latest report: $LATEST_REPORT"
+          echo "Report contents:"
+          cat "$LATEST_REPORT"
           
-          # Extract stats directly from the latest report
+          # Extract stats with explicit null checks
+          TOTAL=$(jq -r '.stats.tests // 0' "$LATEST_REPORT")
+          PASSED=$(jq -r '.stats.passes // 0' "$LATEST_REPORT")
+          FAILED=$(jq -r '.stats.failures // 0' "$LATEST_REPORT")
+          
+          echo "Raw counts - Total: $TOTAL, Passed: $PASSED, Failed: $FAILED"
+          
+          # Validate counts
+          if [[ "$TOTAL" -eq "$(($PASSED + $FAILED))" ]]; then
+            echo "Counts validated successfully"
+          else
+            echo "Warning: Total tests doesn't match sum of passed and failed"
+            # Recalculate total from sum
+            TOTAL=$((PASSED + FAILED))
+          fi
+          
+          # Store validated results
           jq -n \
-            --arg total "$(jq '.stats.tests' "$LATEST_REPORT")" \
-            --arg passed "$(jq '.stats.passes' "$LATEST_REPORT")" \
-            --arg failed "$(jq '.stats.failures' "$LATEST_REPORT")" \
+            --arg total "$TOTAL" \
+            --arg passed "$PASSED" \
+            --arg failed "$FAILED" \
             '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
             
-          # Debug output
-          echo "Test counts from latest report:"
+          echo "Final test counts:"
           cat cypress/reports/results.json
         else
           echo "No test report files found!"
