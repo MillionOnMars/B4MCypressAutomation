@@ -1,13 +1,13 @@
 // Navigate to the login page
 const navigateToLoginPage = () => {
-    cy.visit('https://app.bike4mind.com/login');
+    cy.visit(Cypress.env('appUrl'))
 };
 
 // Authenticate a user with provided credentials
 const authenticateUser = (username, password) => {
-    cy.get('[id="username"]').type(username);
-    cy.get('[id="password"]').type(password);
-    cy.get('[type="submit"]').click();
+    cy.get('[id="username"]', { timeout: 5000 }).type(username);
+    cy.get('[id="password"]', { timeout: 5000 }).type(password);
+    cy.get('[type="submit"]', { timeout: 5000 }).click();
 };
 
 // Verify successful login by checking username and URL
@@ -55,7 +55,7 @@ class Auth {
 
     static directNotebookAccessWithoutLogin() {
         it('Should redirect to login when accessing notebook without authentication', () => {
-            cy.visit('https://app.bike4mind.com/notebooks/67e0b7c5995108235f62b359');
+            cy.visit(`${Cypress.env('appUrl')}notebooks/67e0b7c5995108235f62b359`);
             verifyLogout();
         });
     }
