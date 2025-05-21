@@ -117,7 +117,7 @@ jobs:
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
           # Format credits data using jq
-          CREDITS=$(jq -r 'map("Text Model: \(.textModel)\nCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
+          CREDITS=$(jq -r 'map("\(.textModel):\n\tCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
