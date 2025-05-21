@@ -116,15 +116,12 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data using jq
-          CREDITS=$(jq -r 'map("Text Model: \(.textModel)\nCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
-          # Escape newlines for GitHub Actions output
-          CREDITS="${CREDITS//$'\n'/'%0A'}"
-          echo "credits=$CREDITS" >> $GITHUB_OUTPUT
-          echo "Found credits data:"
-          echo "$CREDITS"
+          # Format credits data for Slack's markdown
+          CREDITS=$(jq -r 'map("\(.textModel): \(.Credits) credit(s)") | join("\n")' cypress/fixtures/credits.json)
+          echo "credits<<EOF" >> $GITHUB_OUTPUT
+          echo "$CREDITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         else
-          echo "No credits.json file found"
           echo "credits=No credits data available" >> $GITHUB_OUTPUT
         fi
 
