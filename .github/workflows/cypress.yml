@@ -132,14 +132,50 @@ jobs:
       with:
         payload: |
           {
+            "text": "Cypress Test Results",
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
             "blocks": [
               {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "🤖 Cypress Test Results",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Environment*\n${{ env.CYPRESS_APP_URL || 'Staging' }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Status*\n${{ steps.cypress.outcome }}"
+                  }
+                ]
+              },
+              {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Test Results*\n• Total Tests: ${{ steps.test-results.outputs.total }}\n• Passed Tests: ${{ steps.test-results.outputs.passed }}\n• Failed Tests: ${{ steps.test-results.outputs.failed }}\n\n*Credits Usage*\n${{ steps.credits.outputs.credits }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+                  "text": "*Test Results*\n• Total Tests: ${{ steps.test-results.outputs.total }}\n• Passed Tests: ${{ steps.test-results.outputs.passed }}\n• Failed Tests: ${{ steps.test-results.outputs.failed }}"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Credits Usage*\n${{ steps.credits.outputs.credits }}"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📊"
                 }
               }
             ]
