@@ -1,7 +1,9 @@
 export function login(username, password) {
 
       cy.visit(Cypress.env('appUrl'))
-      cy.get('[name="username"]').type(username);
+      cy.get('[name="username"]', { timeout: 10000 })
+        .should('be.visible')
+        .type(username);
       cy.get('[name="password"]').type(password);
       cy.get('button[type="submit"]').click();
       cy.wait(5000)
