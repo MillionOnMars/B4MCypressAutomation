@@ -256,7 +256,7 @@ const logCreditsToJSON = (models) => {
 const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
-    cy.get('.MuiMenuButton-sizeMd:nth-child(1)')
+    cy.get('[data-testid="AttachFileIcon"]')
         .should('be.visible')
         .click();
 
