@@ -30,7 +30,7 @@ const signUpUser = () => {
     cy.log(`Signing up user: ${account.username}`);
 
     // Visit the home page
-    cy.visit('https://app.bike4mind.com/login');
+    cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
@@ -59,7 +59,7 @@ const signUpWithInvalidEmail = () => {
     const invalidEmail = 'bike4mind-email.com'; // Set invalid email format
 
     // Visit the home page
-    cy.visit('https://app.bike4mind.com/login');
+    cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
@@ -80,7 +80,7 @@ const signUpWithMismatchedPasswords = () => {
     const mismatchedPassword = 'DifferentPassword123!';
 
     // Visit the home page
-    cy.visit('https://app.bike4mind.com/login');
+    cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();
@@ -103,7 +103,7 @@ const signUpWithLess8CharPass = () => {
     const less8Char = '12345!';
 
     // Visit the home page
-    cy.visit('https://app.bike4mind.com/login');
+    cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
     cy.get('.css-1uc3zfw').should('be.visible').click();

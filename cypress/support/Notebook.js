@@ -193,9 +193,11 @@ const selectTxtModel = (model) => {
         .click({ force: true });
 
     //clicks close button
-    cy.get('.MuiBox-root.css-f0am11 > button')
-        .should('be.visible')
-        .click();
+    if(model !== 'gpt-4.1'){
+        cy.get('.MuiBox-root.css-f0am11 > button')
+            .should('be.visible')
+            .click();
+    }
 }
 
 
@@ -254,7 +256,7 @@ const logCreditsToJSON = (models) => {
 const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
-    cy.get('.MuiMenuButton-sizeMd:nth-child(1)')
+    cy.get('[data-testid="AttachFileIcon"]')
         .should('be.visible')
         .click();
 
