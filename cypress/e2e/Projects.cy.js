@@ -3,8 +3,11 @@ import Projects from '../support/Projects.js';
 
 describe('Project Operations', () => {
     beforeEach(() => {
-        // Log in to the application before running the tests
-        login('wescarda', 'Password12345!');
+        // Load existing user credentials from accounts.json
+        cy.fixture('accounts.json').then((accounts) => {
+            const { username, password } = accounts.existingUsers.admin;
+            login(username, password);
+        });
     });
         // Create a new project
         Projects.createProject('My New Project');

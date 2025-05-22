@@ -10,9 +10,9 @@ before(() => {
 
 const verifyPage = (page) => {
     // Verify we're on the signup page and it loads correctly
-    cy.url().should('include', `https://app.bike4mind.com/${page}`);
+    cy.url().should('include', `${Cypress.env('appUrl')}${page}`);
     cy.request({
-        url: `https://app.bike4mind.com/${page}`,
+        url: `${Cypress.env('appUrl')}${page}`,
         failOnStatusCode: true
     }).then((response) => {
         expect(response.status).to.eq(200);
