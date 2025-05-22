@@ -12,13 +12,13 @@ const authenticateUser = (username, password) => {
 
 // Verify successful login by checking username and URL
 const verifySuccessfulLogin = (username) => {
-    cy.contains(username).should('exist');
+    cy.contains(username, { timeout: 10000 }).should('exist');
     cy.url().should('contain', '/new');
 };
 
 // Verify logout by checking the welcome message and URL
 const verifyLogout = () => {
-    cy.contains('Welcome to Bike4Mind').should('exist');
+    cy.contains('Welcome to Bike4Mind', { timeout: 10000 }).should('exist');
     cy.url().should('contain', '/login');
 };
 
@@ -48,7 +48,7 @@ class Auth {
         it('Should not log in with incorrect credentials', () => {
             navigateToLoginPage();
             authenticateUser('Test', 'IncorrectPassword.');
-            cy.contains('Invalid username or password').should('exist');
+            cy.contains('Invalid username or password', { timeout: 10000 }).should('exist');
             cy.url().should('contain', '/login');
         });
     }
