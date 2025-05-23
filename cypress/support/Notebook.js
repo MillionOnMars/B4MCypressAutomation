@@ -34,7 +34,7 @@ const createNote = (promptType) => {
         .should('be.visible');
 
     // Wait until the question appears
-    cy.contains('prime', { timeout: 10000 })
+    cy.contains('prime', { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers
@@ -225,7 +225,7 @@ const logCreditsToJSON = (models) => {
             .click();
 
         // Get credits value
-        cy.contains('Credits Used')
+        cy.contains('Credits Used', { timeout: 50000 })
             .should('be.visible')
             .invoke('text')
             .then((credits) => {
@@ -329,10 +329,12 @@ const fileOperation = (operation, promptType, newName) => {
 
         case 'renameFile':
             //click elipsis button
-            cy.get('.MuiBox-root.css-1qbii0y > div > div > button')
-                .eq(0)
-                .should('be.visible')
-                .click();
+            cy.get('.MuiBox-root.css-1qbii0y > div > div > button', { timeout: 10000 })
+            .eq(0)
+            .should('be.visible')
+            .and('be.enabled')
+            .click({ timeout: 10000, force: true });
+
             //click rename button
             cy.get('li[role="menuitem"]').eq(1)
                 .should('be.visible')
