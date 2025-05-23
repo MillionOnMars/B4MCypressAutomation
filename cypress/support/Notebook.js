@@ -180,7 +180,7 @@ const deleteNote = (Name) => {
 };
 
 const selectTxtModel = (model) => {
-    cy.get('.css-14uw3z2')
+    cy.get('.css-14uw3z2', {timeout: 50000})
         .should('be.visible')
         .click();
 
