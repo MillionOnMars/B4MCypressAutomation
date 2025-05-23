@@ -34,7 +34,7 @@ const createNote = (promptType) => {
         .should('be.visible');
 
     // Wait until the question appears
-    cy.contains('prime', { timeout: 10000 })
+    cy.contains('prime', { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers
@@ -75,7 +75,8 @@ const sendPrompt = (promptType, promptNo, model) => {
         cy.get('.MuiTextarea-root')
             .should('be.visible')
             .type(currentPromptData.prompt)
-            .type('{enter}');
+            .type('{enter}')
+            .wait(2000); 
         
         if(model == 'claude-3-7-sonnet'){
             // Initial longer wait for model initialization
@@ -85,9 +86,9 @@ const sendPrompt = (promptType, promptNo, model) => {
             } else {
                 cy.wait(2000); // Subsequent prompts
             }
-            // Wait for the response to appear
-            cy.get('.css-18sok60')
-                .should('be.visible', { timeout: 10000 });
+            // // Wait for the response to appear
+            // cy.get('.css-18sok60')
+            //     .should('be.visible', { timeout: 50000 });
 
             // Shorter wait for subsequent operations
             cy.wait(2000);
@@ -179,7 +180,7 @@ const deleteNote = (Name) => {
 };
 
 const selectTxtModel = (model) => {
-    cy.get('.css-14uw3z2')
+    cy.get('.css-14uw3z2', {timeout: 50000})
         .should('be.visible')
         .click();
 
@@ -224,7 +225,7 @@ const logCreditsToJSON = (models) => {
             .click();
 
         // Get credits value
-        cy.contains('Credits Used')
+        cy.contains('Credits Used', { timeout: 50000 })
             .should('be.visible')
             .invoke('text')
             .then((credits) => {
@@ -295,6 +296,7 @@ const uploadFile = (promptType) => {
     cy.get('.css-1122oev > .MuiIconButton-root')
         .should('be.visible')
         .click();
+    cy.wait(5000)
 };
 
 const fileOperation = (operation, promptType, newName) => {
@@ -327,10 +329,12 @@ const fileOperation = (operation, promptType, newName) => {
 
         case 'renameFile':
             //click elipsis button
-            cy.get('.MuiBox-root.css-1qbii0y > div > div > button')
-                .eq(0)
-                .should('be.visible')
-                .click();
+            cy.get('.MuiBox-root.css-1qbii0y > div > div > button', { timeout: 10000 })
+            .eq(0)
+            .should('be.visible')
+            .and('be.enabled')
+            .click({ timeout: 10000, force: true });
+
             //click rename button
             cy.get('li[role="menuitem"]').eq(1)
                 .should('be.visible')

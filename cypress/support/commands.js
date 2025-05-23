@@ -23,3 +23,15 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+Cypress.Commands.add('verifyPageLoad', (url) => {
+    cy.intercept('GET', '**/auth/me').as('authCheck');
+    cy.visit(url, {
+        timeout: 10000,
+        onBeforeLoad: (win) => {
+            win.sessionStorage.clear();
+        },
+    });
+    cy.wait('@authCheck')
+        .its('response.statusCode')
+        .should('be.oneOf', [200, 401]); // Accept both authenticated and non-authenticated responses
+});
