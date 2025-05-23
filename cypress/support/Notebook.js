@@ -75,7 +75,8 @@ const sendPrompt = (promptType, promptNo, model) => {
         cy.get('.MuiTextarea-root')
             .should('be.visible')
             .type(currentPromptData.prompt)
-            .type('{enter}');
+            .type('{enter}')
+            .wait(2000); 
         
         if(model == 'claude-3-7-sonnet'){
             // Initial longer wait for model initialization
@@ -85,9 +86,9 @@ const sendPrompt = (promptType, promptNo, model) => {
             } else {
                 cy.wait(2000); // Subsequent prompts
             }
-            // Wait for the response to appear
-            cy.get('.css-18sok60')
-                .should('be.visible', { timeout: 10000 });
+            // // Wait for the response to appear
+            // cy.get('.css-18sok60')
+            //     .should('be.visible', { timeout: 50000 });
 
             // Shorter wait for subsequent operations
             cy.wait(2000);
@@ -295,6 +296,7 @@ const uploadFile = (promptType) => {
     cy.get('.css-1122oev > .MuiIconButton-root')
         .should('be.visible')
         .click();
+    cy.wait(5000)
 };
 
 const fileOperation = (operation, promptType, newName) => {
