@@ -121,8 +121,14 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: cypress-results
-        path: cypress/reports
+        name: cypress-results-${{ github.run_id }}
+        path: |
+          cypress/reports/**
+          cypress/screenshots/**
+          cypress/videos/**
+          cypress/fixtures/credits.json
+          cypress/reports/consoleErrors.json
+          cypress/reports/results.json
         if-no-files-found: warn
         retention-days: 14
 
