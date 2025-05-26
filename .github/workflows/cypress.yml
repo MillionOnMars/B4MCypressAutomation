@@ -121,18 +121,49 @@ jobs:
     - name: Generate HTML report
       if: always()
       run: |
-        # Install mochawesome-merge and mochawesome-report-generator if needed
+        # Install required packages
         npm install -g mochawesome-merge mochawesome-report-generator
         
-        # Clean up old reports
-        rm -rf cypress/reports/mochawesome-html
+        # Ensure reports directory exists
         mkdir -p cypress/reports/mochawesome-html
         
-        # Merge JSON reports
-        mochawesome-merge cypress/reports/*.json > cypress/reports/mochawesome-html/mochawesome.json
+        # Clean previous reports
+        rm -rf cypress/reports/mochawesome-html/*
         
-        # Generate HTML report
-        marge cypress/reports/mochawesome-html/mochawesome.json --reportDir cypress/reports/mochawesome-html --inline
+        # Debug: List all JSON files
+        echo "Available JSON files:"
+        find cypress/reports -name '*.json' -type f -ls
+        
+        # Only merge mochawesome JSON reports
+        echo "Merging mochawesome JSON reports..."
+        find cypress/reports -name 'mochawesome*.json' -type f > /tmp/report-list.txt
+        if [ -s /tmp/report-list.txt ]; then
+          mochawesome-merge $(cat /tmp/report-list.txt) > cypress/reports/mochawesome-html/mochawesome.json
+          
+          # Generate HTML with custom options
+          echo "Generating HTML report..."
+          marge cypress/reports/mochawesome-html/mochawesome.json \
+            --reportDir cypress/reports/mochawesome-html \
+            --reportTitle "Cypress Test Results" \
+            --charts true \
+            --code false \
+            --reportPageTitle "B4M Test Report" \
+            --inline true \
+            --overwrite true
+          
+          # Verify report was created
+          if [ -f "cypress/reports/mochawesome-html/mochawesome.html" ]; then
+            echo "✅ HTML report generated successfully"
+          else
+            echo "❌ Failed to generate HTML report"
+            exit 1
+          fi
+        else
+          echo "No mochawesome JSON reports found"
+          echo "Creating empty report..."
+          echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0}}' > cypress/reports/mochawesome-html/mochawesome.json
+          marge cypress/reports/mochawesome-html/mochawesome.json --reportDir cypress/reports/mochawesome-html
+        fi
 
     - name: Upload test results
       if: always()
