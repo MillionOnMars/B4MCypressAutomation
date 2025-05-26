@@ -46,7 +46,7 @@ jobs:
         config-file: cypress.config.js
         publish-summary: true
         reporter: mochawesome
-        reporter-options: "reportDir=cypress/reports,overwrite=true,json=true,jsonReport=true"
+        reporter-options: 'reportDir=cypress/reports,overwrite=false,html=false,json=true'
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
@@ -56,25 +56,21 @@ jobs:
       run: |
         mkdir -p cypress/reports
         
-        # Clean up any existing results first
-        rm -f cypress/reports/results.json
-        
-        # Find the most recent JSON report
         LATEST_REPORT=$(find cypress/reports -name '*.json' -type f -exec ls -t {} + | head -n 1)
         
         if [ -n "$LATEST_REPORT" ]; then
           echo "Processing latest report: $LATEST_REPORT"
           
-          # Extract stats directly from the latest report
+          # Extract stats with null checking
+          TOTAL=$(jq -r '.stats.tests // 0' "$LATEST_REPORT")
+          PASSED=$(jq -r '.stats.passes // 0' "$LATEST_REPORT")
+          FAILED=$(jq -r '.stats.failures // 0' "$LATEST_REPORT")
+          
           jq -n \
-            --arg total "$(jq '.stats.tests' "$LATEST_REPORT")" \
-            --arg passed "$(jq '.stats.passes' "$LATEST_REPORT")" \
-            --arg failed "$(jq '.stats.failures' "$LATEST_REPORT")" \
+            --arg total "$TOTAL" \
+            --arg passed "$PASSED" \
+            --arg failed "$FAILED" \
             '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
-            
-          # Debug output
-          echo "Test counts from latest report:"
-          cat cypress/reports/results.json
         else
           echo "No test report files found!"
           exit 1
@@ -175,7 +171,7 @@ jobs:
           cypress/reports/**/*.json
           cypress/reports/mochawesome-html/**
           cypress/screenshots/**/*.png
-          cypress/videos/**/*.mp4
+          cypress/videos/*.mp4
           cypress/fixtures/credits.json
           cypress/reports/consoleErrors.json
           cypress/reports/results.json
