@@ -56,23 +56,31 @@ jobs:
       run: |
         mkdir -p cypress/reports
         
-        LATEST_REPORT=$(find cypress/reports -name '*.json' -type f -exec ls -t {} + | head -n 1)
+        # Find the latest mochawesome report
+        LATEST_REPORT=$(find cypress/reports -name 'mochawesome*.json' -type f -exec ls -t {} + | head -n 1)
         
         if [ -n "$LATEST_REPORT" ]; then
-          echo "Processing latest report: $LATEST_REPORT"
+          echo "Processing report: $LATEST_REPORT"
           
-          # Extract stats with null checking
-          TOTAL=$(jq -r '.stats.tests // 0' "$LATEST_REPORT")
-          PASSED=$(jq -r '.stats.passes // 0' "$LATEST_REPORT")
-          FAILED=$(jq -r '.stats.failures // 0' "$LATEST_REPORT")
+          # Extract stats with proper path and null checking
+          TOTAL=$(jq -r '.results[0].suites[0].tests | length // 0' "$LATEST_REPORT")
+          PASSED=$(jq -r '[.results[0].suites[0].tests[] | select(.pass == true)] | length // 0' "$LATEST_REPORT")
+          FAILED=$(jq -r '[.results[0].suites[0].tests[] | select(.fail == true)] | length // 0' "$LATEST_REPORT")
           
+          echo "Stats found - Total: $TOTAL, Passed: $PASSED, Failed: $FAILED"
+          
+          # Save results
           jq -n \
             --arg total "$TOTAL" \
             --arg passed "$PASSED" \
             --arg failed "$FAILED" \
             '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+            
+          echo "Results saved to results.json"
         else
-          echo "No test report files found!"
+          echo "Error: No mochawesome reports found!"
+          echo "Available files in reports directory:"
+          ls -la cypress/reports/
           exit 1
         fi
 
