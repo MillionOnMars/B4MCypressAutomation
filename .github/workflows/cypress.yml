@@ -117,15 +117,34 @@ jobs:
           echo "No consoleErrors.json found"
         fi
 
+    # Add step to merge and generate HTML report
+    - name: Generate HTML report
+      if: always()
+      run: |
+        # Install mochawesome-merge and mochawesome-report-generator if needed
+        npm install -g mochawesome-merge mochawesome-report-generator
+        
+        # Clean up old reports
+        rm -rf cypress/reports/mochawesome-html
+        mkdir -p cypress/reports/mochawesome-html
+        
+        # Merge JSON reports
+        mochawesome-merge cypress/reports/*.json > cypress/reports/mochawesome-html/mochawesome.json
+        
+        # Generate HTML report
+        marge cypress/reports/mochawesome-html/mochawesome.json --reportDir cypress/reports/mochawesome-html --inline
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: cypress-results-${{ github.run_id }}
         path: |
-          cypress/reports/**
-          cypress/screenshots/**
-          cypress/videos/**
+          cypress/reports/**/*.html
+          cypress/reports/**/*.json
+          cypress/reports/mochawesome-html/**
+          cypress/screenshots/**/*.png
+          cypress/videos/**/*.mp4
           cypress/fixtures/credits.json
           cypress/reports/consoleErrors.json
           cypress/reports/results.json
