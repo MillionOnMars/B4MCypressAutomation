@@ -1,3 +1,6 @@
+import './commands';
+import { setupGlobalErrorTracking } from './consoleErrorTracker';
+
 // filepath: /Users/Automation/Documents/my-cypress-project/cypress/support/index.js
 Cypress.on('uncaught:exception', (err) => {
     if (err.message.includes('ResizeObserver loop completed with undelivered notifications')) {
@@ -11,4 +14,20 @@ Cypress.on('uncaught:exception', (err) => {
     if (err.message.includes('Failed to register a ServiceWorker')) {
         return false; // Prevent Cypress from failing the test
     }
+});
+
+// Set up global error tracking for all tests
+setupGlobalErrorTracking();
+
+// Add custom error handling for uncaught exceptions
+Cypress.on('uncaught:exception', (err) => {
+    // Log the error to our console errors file
+    cy.writeFile('cypress/reports/consoleErrors.json', {
+        type: 'Uncaught Exception',
+        message: err.message,
+        timestamp: new Date().toISOString(),
+        stack: err.stack
+    }, { flag: 'a+' });
+    
+    return false;
 });

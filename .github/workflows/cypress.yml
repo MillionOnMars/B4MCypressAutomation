@@ -103,6 +103,20 @@ jobs:
           exit 1
         fi
 
+      # Add step to get console errors count
+    - name: Get console errors
+      id: console-errors
+      if: always()
+      run: |
+        if [ -f "cypress/reports/consoleErrors.json" ]; then
+          TOTAL_ERRORS=$(jq -r '.totalErrors' cypress/reports/consoleErrors.json)
+          echo "total=$TOTAL_ERRORS" >> "$GITHUB_OUTPUT"
+          echo "Found $TOTAL_ERRORS console errors"
+        else
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "No consoleErrors.json found"
+        fi
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
@@ -118,7 +132,7 @@ jobs:
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
           # Format credits data using jq
-          CREDITS=$(jq -r 'map("Text Model: \(.textModel)\nCredits Used: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
+          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits)") | join("\n")' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
@@ -137,7 +151,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credits Usage*\n${{ steps.credits.outputs.credits }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credits Usage*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
