@@ -45,11 +45,41 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
+        # Update reporter configuration
         reporter: mochawesome
-        reporter-options: 'reportDir=cypress/reports,overwrite=false,html=false,json=true'
+        reporter-options: >-
+          reportDir=cypress/reports,
+          overwrite=false,
+          html=false,
+          json=true,
+          reportFilename=cypress-[hash],
+          timestamp=true
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
+
+    # Add step to process Cypress run results
+    - name: Process Cypress results
+      if: always()
+      run: |
+        SPEC_OUTPUT=$(cat cypress/reports/cypress-run-output.txt || echo "No output file found")
+        
+        # Extract test counts using grep and awk
+        TOTAL=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $2}')
+        PASSING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $3}')
+        FAILING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $4}')
+        
+        echo "Test Results Summary:"
+        echo "Total: ${TOTAL:-0}"
+        echo "Passing: ${PASSING:-0}"
+        echo "Failing: ${FAILING:-0}"
+        
+        # Save to results.json
+        jq -n \
+          --arg total "${TOTAL:-0}" \
+          --arg passed "${PASSING:-0}" \
+          --arg failed "${FAILING:-0}" \
+          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
 
     - name: Process test results
       if: always()
