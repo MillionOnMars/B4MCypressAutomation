@@ -1,6 +1,6 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['claude-3-7-sonnet', 'o3', 'gpt-4.1']; // Add your text models here
+const textModels = ['claude 3.7 sonnet', 'o3', 'gpt-4.1']; // Add your text models here
 // const textModels = ['gpt-4.1']; // Add your text models here
 
 let prompts;
@@ -40,7 +40,7 @@ const createNote = (promptType) => {
     // Handle both array and string answers
     if (Array.isArray(testCase.answer)) {
         testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 10000 }).should('be.visible');
+            cy.contains(answer, { timeout: 20000 }).should('be.visible');
         });
     } else {
         cy.contains(testCase.answer, { timeout: 10000 }).should('be.visible');
@@ -181,21 +181,24 @@ const deleteNote = (Name) => {
 
 const selectTxtModel = (model) => {
     cy.get('.css-14uw3z2', {timeout: 50000})
+        .eq(0)
         .should('be.visible')
         .click();
 
     cy.get('.css-1fed3lh')
+        .eq(1)
         .should('be.visible')
         .click();
 
     //select text model
-    cy.contains(model)
+    cy.contains('div', model, { timeout: 50000, matchCase: false })
         .should('exist')
         .click({ force: true });
 
     //clicks close button
     if(model !== 'gpt-4.1'){
         cy.get('.MuiBox-root.css-f0am11 > button')
+            .eq(1)
             .should('be.visible')
             .click();
     }
@@ -219,7 +222,7 @@ const logCreditsToJSON = (models) => {
         }
 
         // Click to view credits
-        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span')
+        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span', {timeout: 10000})
             .eq(0)
             .should('be.visible')
             .click();

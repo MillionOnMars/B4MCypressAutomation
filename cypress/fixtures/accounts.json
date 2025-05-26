@@ -24,8 +24,8 @@
     },
     "existingUsers": {
         "admin": {
-            "username": "wescarda5",
-            "email": "wilfred+5@milliononmars.com",
+            "username": "b4m-auto",
+            "email": "b4m-automation@milliononmars.com",
             "password": "Password12345!",
             "fullname": "Test User",
             "code": "ADMINCODE"
