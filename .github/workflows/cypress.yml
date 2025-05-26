@@ -45,15 +45,14 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
-        # Update reporter configuration
         reporter: mochawesome
         reporter-options: >-
-          reportDir=cypress/reports,
+          reportDir=cypress/reports/mochawesome,
           overwrite=false,
-          html=false,
+          html=true,
           json=true,
-          reportFilename=cypress-[hash],
-          timestamp=true
+          quiet=true,
+          reportFilename=mochawesome-[datetime]
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
@@ -158,45 +157,34 @@ jobs:
         # Install required packages
         npm install -g mochawesome-merge mochawesome-report-generator
         
-        # Ensure reports directory exists
+        # Create directories
+        mkdir -p cypress/reports/mochawesome
         mkdir -p cypress/reports/mochawesome-html
         
-        # Clean previous reports
-        rm -rf cypress/reports/mochawesome-html/*
+        echo "Checking for Mochawesome reports..."
+        find cypress/reports/mochawesome -type f -name "mochawesome*.json" -ls
         
-        # Debug: List all JSON files
-        echo "Available JSON files:"
-        find cypress/reports -name '*.json' -type f -ls
-        
-        # Only merge mochawesome JSON reports
-        echo "Merging mochawesome JSON reports..."
-        find cypress/reports -name 'mochawesome*.json' -type f > /tmp/report-list.txt
-        if [ -s /tmp/report-list.txt ]; then
-          mochawesome-merge $(cat /tmp/report-list.txt) > cypress/reports/mochawesome-html/mochawesome.json
+        # Merge JSON reports if they exist
+        if compgen -G "cypress/reports/mochawesome/mochawesome*.json" > /dev/null; then
+          echo "Merging Mochawesome reports..."
+          mochawesome-merge "cypress/reports/mochawesome/mochawesome*.json" > cypress/reports/mochawesome-html/mochawesome.json
           
-          # Generate HTML with custom options
           echo "Generating HTML report..."
           marge cypress/reports/mochawesome-html/mochawesome.json \
             --reportDir cypress/reports/mochawesome-html \
+            --inline \
+            --charts \
             --reportTitle "Cypress Test Results" \
-            --charts true \
-            --code false \
-            --reportPageTitle "B4M Test Report" \
-            --inline true \
-            --overwrite true
-          
-          # Verify report was created
-          if [ -f "cypress/reports/mochawesome-html/mochawesome.html" ]; then
-            echo "✅ HTML report generated successfully"
-          else
-            echo "❌ Failed to generate HTML report"
-            exit 1
-          fi
+            --reportPageTitle "B4M Test Report"
+            
+          echo "✅ HTML report generated successfully"
         else
-          echo "No mochawesome JSON reports found"
+          echo "⚠️ No Mochawesome reports found in cypress/reports/mochawesome/"
           echo "Creating empty report..."
-          echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0}}' > cypress/reports/mochawesome-html/mochawesome.json
-          marge cypress/reports/mochawesome-html/mochawesome.json --reportDir cypress/reports/mochawesome-html
+          echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0},"results":[]}' \
+            > cypress/reports/mochawesome-html/mochawesome.json
+          marge cypress/reports/mochawesome-html/mochawesome.json \
+            --reportDir cypress/reports/mochawesome-html
         fi
 
     - name: Upload test results
@@ -205,11 +193,10 @@ jobs:
       with:
         name: cypress-results-${{ github.run_id }}
         path: |
-          cypress/reports/**/*.html
-          cypress/reports/**/*.json
           cypress/reports/mochawesome-html/**
+          cypress/reports/mochawesome/*.json
           cypress/screenshots/**/*.png
-          cypress/videos/*.mp4
+          cypress/videos/**/*.mp4
           cypress/fixtures/credits.json
           cypress/reports/consoleErrors.json
           cypress/reports/results.json
