@@ -46,37 +46,70 @@ jobs:
         config-file: cypress.config.js
         publish-summary: true
         reporter: mochawesome
-        reporter-options: "reportDir=cypress/reports,overwrite=true,json=true,jsonReport=true"
+        reporter-options: >-
+          reportDir=cypress/reports/mochawesome,
+          overwrite=false,
+          html=true,
+          json=true,
+          quiet=true,
+          reportFilename=mochawesome-[datetime]
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
+
+    # Add step to process Cypress run results
+    - name: Process Cypress results
+      if: always()
+      run: |
+        SPEC_OUTPUT=$(cat cypress/reports/cypress-run-output.txt || echo "No output file found")
+        
+        # Extract test counts using grep and awk
+        TOTAL=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $2}')
+        PASSING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $3}')
+        FAILING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $4}')
+        
+        echo "Test Results Summary:"
+        echo "Total: ${TOTAL:-0}"
+        echo "Passing: ${PASSING:-0}"
+        echo "Failing: ${FAILING:-0}"
+        
+        # Save to results.json
+        jq -n \
+          --arg total "${TOTAL:-0}" \
+          --arg passed "${PASSING:-0}" \
+          --arg failed "${FAILING:-0}" \
+          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
 
     - name: Process test results
       if: always()
       run: |
         mkdir -p cypress/reports
         
-        # Clean up any existing results first
-        rm -f cypress/reports/results.json
-        
-        # Find the most recent JSON report
-        LATEST_REPORT=$(find cypress/reports -name '*.json' -type f -exec ls -t {} + | head -n 1)
+        # Find the latest mochawesome report
+        LATEST_REPORT=$(find cypress/reports -name 'mochawesome*.json' -type f -exec ls -t {} + | head -n 1)
         
         if [ -n "$LATEST_REPORT" ]; then
-          echo "Processing latest report: $LATEST_REPORT"
+          echo "Processing report: $LATEST_REPORT"
           
-          # Extract stats directly from the latest report
+          # Extract stats with proper path and null checking
+          TOTAL=$(jq -r '.results[0].suites[0].tests | length // 0' "$LATEST_REPORT")
+          PASSED=$(jq -r '[.results[0].suites[0].tests[] | select(.pass == true)] | length // 0' "$LATEST_REPORT")
+          FAILED=$(jq -r '[.results[0].suites[0].tests[] | select(.fail == true)] | length // 0' "$LATEST_REPORT")
+          
+          echo "Stats found - Total: $TOTAL, Passed: $PASSED, Failed: $FAILED"
+          
+          # Save results
           jq -n \
-            --arg total "$(jq '.stats.tests' "$LATEST_REPORT")" \
-            --arg passed "$(jq '.stats.passes' "$LATEST_REPORT")" \
-            --arg failed "$(jq '.stats.failures' "$LATEST_REPORT")" \
+            --arg total "$TOTAL" \
+            --arg passed "$PASSED" \
+            --arg failed "$FAILED" \
             '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
             
-          # Debug output
-          echo "Test counts from latest report:"
-          cat cypress/reports/results.json
+          echo "Results saved to results.json"
         else
-          echo "No test report files found!"
+          echo "Error: No mochawesome reports found!"
+          echo "Available files in reports directory:"
+          ls -la cypress/reports/
           exit 1
         fi
 
@@ -117,12 +150,56 @@ jobs:
           echo "No consoleErrors.json found"
         fi
 
+    # Add step to merge and generate HTML report
+    - name: Generate HTML report
+      if: always()
+      run: |
+        # Install required packages
+        npm install -g mochawesome-merge mochawesome-report-generator
+        
+        # Create directories
+        mkdir -p cypress/reports/mochawesome
+        mkdir -p cypress/reports/mochawesome-html
+        
+        echo "Checking for Mochawesome reports..."
+        find cypress/reports/mochawesome -type f -name "mochawesome*.json" -ls
+        
+        # Merge JSON reports if they exist
+        if compgen -G "cypress/reports/mochawesome/mochawesome*.json" > /dev/null; then
+          echo "Merging Mochawesome reports..."
+          mochawesome-merge "cypress/reports/mochawesome/mochawesome*.json" > cypress/reports/mochawesome-html/mochawesome.json
+          
+          echo "Generating HTML report..."
+          marge cypress/reports/mochawesome-html/mochawesome.json \
+            --reportDir cypress/reports/mochawesome-html \
+            --inline \
+            --charts \
+            --reportTitle "Cypress Test Results" \
+            --reportPageTitle "B4M Test Report"
+            
+          echo "✅ HTML report generated successfully"
+        else
+          echo "⚠️ No Mochawesome reports found in cypress/reports/mochawesome/"
+          echo "Creating empty report..."
+          echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0},"results":[]}' \
+            > cypress/reports/mochawesome-html/mochawesome.json
+          marge cypress/reports/mochawesome-html/mochawesome.json \
+            --reportDir cypress/reports/mochawesome-html
+        fi
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: cypress-results
-        path: cypress/reports
+        name: cypress-results-${{ github.run_id }}
+        path: |
+          cypress/reports/mochawesome-html/**
+          cypress/reports/mochawesome/*.json
+          cypress/screenshots/**/*.png
+          cypress/videos/**/*.mp4
+          cypress/fixtures/credits.json
+          cypress/reports/consoleErrors.json
+          cypress/reports/results.json
         if-no-files-found: warn
         retention-days: 14
 
