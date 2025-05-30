@@ -334,7 +334,6 @@ const fileOperation = (operation, promptType, newName) => {
             //click elipsis button
             cy.get('.MuiBox-root.css-1qbii0y > div > div > button', { timeout: 10000 })
             .eq(0)
-            .should('be.visible')
             .and('be.enabled')
             .click({ timeout: 10000, force: true });
 

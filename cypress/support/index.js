@@ -1,5 +1,6 @@
 import './commands';
 import { setupGlobalErrorTracking } from './consoleErrorTracker';
+require('cypress-xpath');
 
 // filepath: /Users/Automation/Documents/my-cypress-project/cypress/support/index.js
 Cypress.on('uncaught:exception', (err) => {
