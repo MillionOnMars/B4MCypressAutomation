@@ -305,17 +305,18 @@ const uploadFile = (promptType) => {
 const fileOperation = (operation, promptType, newName) => {
     const testCase = prompts[promptType];
     const filename = testCase.filepath.split('/').pop()
+    const prompt = testCase.prompt;
 
     //resize the window
     cy.viewport(1280, 800);
 
     //Click on files button
-    cy.get('.css-1ajop3b')
+    cy.get('.css-1ajop3b', { timeout: 10000 })
         .should('be.visible')
         .click();
-
+    
     //Checks if file is present
-    cy.get('.css-1d3w5bb').eq(0)
+    cy.get('.css-1d3w5bb', { timeout: 10000 }).eq(0)
         .should('have.text', filename)
         .should('be.visible')
         .click();
@@ -324,6 +325,7 @@ const fileOperation = (operation, promptType, newName) => {
         case 'checkFile':
             // File presence already verified above
             cy.log(`File ${filename} found successfully`);
+
             //Click Close button
             cy.get('.css-1122oev')
                 .should('be.visible')
@@ -373,7 +375,6 @@ const fileOperation = (operation, promptType, newName) => {
             break;
 
         case 'addFile':
-
             //click add file
             cy.get('.css-1r0lsol > .MuiBox-root > .MuiButton-colorPrimary')
                 .should('be.visible')
@@ -400,9 +401,40 @@ const fileOperation = (operation, promptType, newName) => {
             cy.log('File added to Notebook Successfully.');
             break;
 
+        case 'createFile':
+            //Verify Create button is visible
+            cy.contains('Create', { timeout: 10000 })
+                .should('be.visible')
+            //Click Create button
+            cy.xpath('//button[@aria-label="Create"]', { timeout: 10000 })
+                .should('be.visible')
+                .click();
+            //Create new name
+            cy.xpath('//input[@value="Noodle.txt"]').should('be.visible', { timeout: 10000 })
+                .clear()
+                .type(filename);
+            //Type file content
+            cy.xpath('//textarea[@placeholder="Edit content here"]')
+                .clear()
+                .type(prompt);
+            //Click Save button
+            cy.xpath('//button[@aria-label="Save Changes"]')
+                .should('be.visible')
+                .click();
+            //Close the file modal
+            cy.get('.MuiBox-root.css-mbx0dj > button')
+                .should('be.visible')
+                .click();
+            //Click Close button
+            cy.get('.css-1122oev', {timeout: 10000})
+                .should('be.visible')
+                .click();
+            break;
+
         default:
             throw new Error(`Invalid file operation: ${operation}`);
     }
+
 
 }
 
@@ -439,6 +471,7 @@ class Notebook {
             fileOperation('checkFile', filepath);
             fileOperation('addFile', filepath);
             fileOperation('renameFile', filepath, 'RenamedFile');
+            fileOperation('createFile', filepath);
             fileOperation('deleteFile', filepath);
         });
 
