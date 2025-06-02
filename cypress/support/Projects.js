@@ -31,6 +31,80 @@ const createProject = (projectName) => {
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('exist');
 };
 
+const openProject = (projectName) => {
+    // Click the "Project" button
+    cy.xpath(' //button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Verify the project list is visible
+    cy.contains ('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible')
+
+    // Find and click on the specific project
+    cy.xpath(`//div[contains(text(),${projectName})]`, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .first()  // Ensure we only get the first match
+        .click();
+
+    // Verify project is opened
+    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('be.visible');
+};
+
+const addNotebook = (notebookName) => {
+    // Open the project first
+    openProject(projectName);
+
+    // Wait for notebooks to load
+    cy.wait(1000);
+
+    // Find and click on the specific notebook
+    cy.contains(`${notebookName}']`,
+        { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    //Click Add Item
+    cy.xpath('//button[normalize-space()="Add 1 items"]')
+        .should('be.visible')
+        .click();
+
+        // Find and click on the specific notebook
+    cy.contains(`${notebookName}']`,
+        { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+};
+
+const removeNotebook = (notebookName) => {
+    // Open the project first
+    openProject(projectName);
+
+    // Wait for notebooks to load
+    cy.wait(1000);
+
+    // Find the notebook and click its menu
+    cy.xpath(`//div[contains(text(),${notebookName})]`, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Click Remove button from dropdown
+    cy.get('.MuiBox-root.css-i5q2k0 > button')
+        .eq(4)
+        .should('be.visible')
+        .click();
+
+    // Confirm removal in dialog
+    cy.get('.MuiButton-sizeMd')
+        .contains('Remove')
+        .should('be.visible')
+        .click();
+
+    // Verify notebook is removed
+    cy.contains('Notebook removed successfully', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+    cy.contains(notebookName, { timeout: DEFAULT_TIMEOUT })
+        .should('not.exist');
+};
+
 const renameProject = (oldName, newName) => {
     // Click the "Project" button
     cy.get('.MuiBox-root.css-ppif72 > button:nth-child(2)', { timeout: DEFAULT_TIMEOUT })
@@ -117,6 +191,11 @@ class Projects {
     static deleteProject(projectName) {
         it('Should delete a project', () => {
             deleteProject(projectName);
+        });
+    }
+    static openProject(projectName) {
+        it(`Should open project: ${projectName}`, () => {
+            openProject(projectName);
         });
     }
 }
