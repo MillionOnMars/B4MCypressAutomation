@@ -2,7 +2,7 @@ const DEFAULT_TIMEOUT = 10000;
 
 const createProject = (projectName) => {
     // Click the "Project" button
-    cy.get('.MuiBox-root.css-ppif72 > button:nth-child(2)', { timeout: DEFAULT_TIMEOUT })
+    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -33,7 +33,7 @@ const createProject = (projectName) => {
 
 const renameProject = (oldName, newName) => {
     // Click the "Project" button
-    cy.get('.MuiBox-root.css-ppif72 > button:nth-child(2)', { timeout: DEFAULT_TIMEOUT })
+    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -71,7 +71,7 @@ const renameProject = (oldName, newName) => {
 
 const deleteProject = (projectName) => {
     // Click the "Project" button
-    cy.get('.MuiBox-root.css-ppif72 > button:nth-child(2)', { timeout: DEFAULT_TIMEOUT })
+    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
