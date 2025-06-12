@@ -1,8 +1,14 @@
 export const setupGlobalErrorTracking = () => {
-    let errors = new Set(); // Use Set to prevent duplicates
+    // Use closure to maintain errors across suite runs
     const errorFilePath = 'cypress/reports/consoleErrors.json';
+    let globalErrors = new Set();
 
+    // Initialize once at start of all tests
     before(() => {
+        // Clear the set
+        globalErrors.clear();
+        
+        // Initialize error file
         cy.task('writeFile', {
             filePath: errorFilePath,
             content: { errors: [], totalErrors: 0 }
@@ -10,8 +16,6 @@ export const setupGlobalErrorTracking = () => {
     });
 
     beforeEach(() => {
-        errors.clear(); // Clear errors Set
-
         Cypress.on('window:before:load', (win) => {
             const originalConsole = {
                 error: win.console.error,
@@ -43,26 +47,34 @@ export const setupGlobalErrorTracking = () => {
                     test: error.test
                 });
 
-                // Only add if not already present
-                errors.add(errorKey);
+                // Add to global set
+                globalErrors.add(errorKey);
                 
+                // Call original console.error
                 originalConsole.error.apply(win.console, args);
             };
         });
     });
 
+    // Update error file after each test
     afterEach(() => {
-        if (errors.size > 0) {
-            // Convert Set back to array and deduplicate
-            const uniqueErrors = Array.from(errors).map(errorKey => JSON.parse(errorKey));
+        if (globalErrors.size > 0) {
+            // Convert Set to array of parsed errors
+            const uniqueErrors = Array.from(globalErrors).map(errorKey => JSON.parse(errorKey));
             
             cy.task('updateErrorLog', {
                 filePath: errorFilePath,
-                newErrors: uniqueErrors
+                newErrors: uniqueErrors,
+                append: true  // Indicate we want to append errors
             }).then(() => {
-                cy.log(`Processed ${uniqueErrors.length} unique console messages`);
-                errors.clear();
+                cy.log(`Total unique console errors: ${globalErrors.size}`);
             });
         }
+    });
+
+    // Final error summary after all tests
+    after(() => {
+        cy.log(`Final error count: ${globalErrors.size}`);
+        globalErrors.clear();
     });
 };
