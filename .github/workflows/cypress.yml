@@ -80,39 +80,6 @@ jobs:
           --arg failed "${FAILING:-0}" \
           '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
 
-    - name: Process test results
-      if: always()
-      run: |
-        mkdir -p cypress/reports
-        
-        # Find the latest mochawesome report
-        LATEST_REPORT=$(find cypress/reports -name 'mochawesome*.json' -type f -exec ls -t {} + | head -n 1)
-        
-        if [ -n "$LATEST_REPORT" ]; then
-          echo "Processing report: $LATEST_REPORT"
-          
-          # Extract stats with proper path and null checking
-          TOTAL=$(jq -r '.results[0].suites[0].tests | length // 0' "$LATEST_REPORT")
-          PASSED=$(jq -r '[.results[0].suites[0].tests[] | select(.pass == true)] | length // 0' "$LATEST_REPORT")
-          FAILED=$(jq -r '[.results[0].suites[0].tests[] | select(.fail == true)] | length // 0' "$LATEST_REPORT")
-          
-          echo "Stats found - Total: $TOTAL, Passed: $PASSED, Failed: $FAILED"
-          
-          # Save results
-          jq -n \
-            --arg total "$TOTAL" \
-            --arg passed "$PASSED" \
-            --arg failed "$FAILED" \
-            '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
-            
-          echo "Results saved to results.json"
-        else
-          echo "Error: No mochawesome reports found!"
-          echo "Available files in reports directory:"
-          ls -la cypress/reports/
-          exit 1
-        fi
-
     - name: Get test results
       id: test-results
       if: always()
@@ -148,43 +115,6 @@ jobs:
         else
           echo "total=0" >> "$GITHUB_OUTPUT"
           echo "No consoleErrors.json found"
-        fi
-
-    # Add step to merge and generate HTML report
-    - name: Generate HTML report
-      if: always()
-      run: |
-        # Install required packages
-        npm install -g mochawesome-merge mochawesome-report-generator
-        
-        # Create directories
-        mkdir -p cypress/reports/mochawesome
-        mkdir -p cypress/reports/mochawesome-html
-        
-        echo "Checking for Mochawesome reports..."
-        find cypress/reports/mochawesome -type f -name "mochawesome*.json" -ls
-        
-        # Merge JSON reports if they exist
-        if compgen -G "cypress/reports/mochawesome/mochawesome*.json" > /dev/null; then
-          echo "Merging Mochawesome reports..."
-          mochawesome-merge "cypress/reports/mochawesome/mochawesome*.json" > cypress/reports/mochawesome-html/mochawesome.json
-          
-          echo "Generating HTML report..."
-          marge cypress/reports/mochawesome-html/mochawesome.json \
-            --reportDir cypress/reports/mochawesome-html \
-            --inline \
-            --charts \
-            --reportTitle "Cypress Test Results" \
-            --reportPageTitle "B4M Test Report"
-            
-          echo "✅ HTML report generated successfully"
-        else
-          echo "⚠️ No Mochawesome reports found in cypress/reports/mochawesome/"
-          echo "Creating empty report..."
-          echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0},"results":[]}' \
-            > cypress/reports/mochawesome-html/mochawesome.json
-          marge cypress/reports/mochawesome-html/mochawesome.json \
-            --reportDir cypress/reports/mochawesome-html
         fi
 
     - name: Upload test results
