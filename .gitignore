@@ -1,2 +1,3 @@
 .env
 .ngrok.yml
+node_modules
