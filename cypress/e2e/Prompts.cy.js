@@ -14,7 +14,7 @@ describe("Prompts", () => {
   });
 
   //Choose 3 random text models and create a new notebook
-  randomTextModels.forEach((model) => {
+randomTextModels.forEach((model) => {
     Notebook.multiPrompts("capital", model, 30);
     Notebook.multiUpload("recipe", model, 4);
   });
