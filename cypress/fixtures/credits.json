@@ -1,11 +1,11 @@
 [
   {
-    "textModel": "o3",
-    "Credits": 6
+    "textModel": "claude 3.7 sonnet",
+    "Credits": 5
   },
   {
-    "textModel": "claude 3.7 sonnet",
-    "Credits": 6
+    "textModel": "o3",
+    "Credits": 5
   },
   {
     "textModel": "gpt-4.1",

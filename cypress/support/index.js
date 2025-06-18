@@ -32,3 +32,7 @@ Cypress.on('uncaught:exception', (err) => {
     
     return false;
 });
+
+// Cypress.Cookies.defaults({
+//     preserve: 'sessionid',
+// })
