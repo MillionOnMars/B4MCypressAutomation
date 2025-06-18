@@ -1,30 +1,10 @@
 {
-  "lastUpdate": "2025-05-30T07:24:35.316Z",
-  "totalErrors": 19,
+  "lastUpdate": "2025-06-18T12:37:32.095Z",
+  "totalErrors": 24,
   "errors": [
     {
       "message": "Axios Error: Unauthorized",
       "suite": "Notebook Operations",
-      "test": "Should select Text model:o3 and create a new notebook"
-    },
-    {
-      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
-      "suite": "Notebook Operations",
-      "test": "Should select Text model:o3 and create a new notebook"
-    },
-    {
-      "message": "Axios Error: Unauthorized",
-      "suite": "Notebook Operations",
-      "test": "Should log credits for o3."
-    },
-    {
-      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
-      "suite": "Notebook Operations",
-      "test": "Should log credits for o3."
-    },
-    {
-      "message": "Axios Error: Unauthorized",
-      "suite": "Notebook Operations",
       "test": "Should select Text model:claude 3.7 sonnet and create a new notebook"
     },
     {
@@ -41,6 +21,26 @@
       "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
       "suite": "Notebook Operations",
       "test": "Should log credits for claude 3.7 sonnet."
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Notebook Operations",
+      "test": "Should select Text model:o3 and create a new notebook"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Notebook Operations",
+      "test": "Should select Text model:o3 and create a new notebook"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Notebook Operations",
+      "test": "Should log credits for o3."
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Notebook Operations",
+      "test": "Should log credits for o3."
     },
     {
       "message": "Axios Error: Unauthorized",
@@ -85,17 +85,42 @@
     {
       "message": "Axios Error: Unauthorized",
       "suite": "Notebook Operations",
-      "test": "Verify Files Operations"
+      "test": "Adds file"
     },
     {
       "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
       "suite": "Notebook Operations",
-      "test": "Verify Files Operations"
+      "test": "Adds file"
     },
     {
       "message": "Axios Error: {\"name\":\"NotFoundError\",\"error\":\"Session not found\"}",
       "suite": "Notebook Operations",
-      "test": "Verify Files Operations"
+      "test": "Adds file"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Notebook Operations",
+      "test": "Renames file"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Notebook Operations",
+      "test": "Renames file"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"NotFoundError\",\"error\":\"Session not found\"}",
+      "suite": "Notebook Operations",
+      "test": "Renames file"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Notebook Operations",
+      "test": "Deletes file"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Notebook Operations",
+      "test": "Deletes file"
     }
   ]
 }

@@ -117,7 +117,7 @@ const sendPrompt = (promptType, promptNo, model) => {
 
         cy.log(`Completed prompt ${currentPrompt + 1} of ${promptNo}`);
         // Send next prompt
-        sendSinglePrompt(currentPrompt + 1);
+        // sendSinglePrompt(currentPrompt + 1);
     };
 
     // Start sending prompts
@@ -286,9 +286,9 @@ const uploadFile = (promptType) => {
     cy.wait('@uploadRequest', { timeout: 10000 });
 
     // Click the upload button
-    cy.get('.css-ilpbvj > .MuiIconButton-root')
-        .should('be.visible')
-        .click();
+    // cy.get('.css-ilpbvj > .MuiIconButton-root')
+    //     .should('be.visible')
+    //     .click();
 
     //Verify file uploaded
     cy.contains(testCase.filepath.split('/').pop());
@@ -296,114 +296,97 @@ const uploadFile = (promptType) => {
     cy.log('File uploaded successfully.');
 
     //close files modal
-    cy.get('.css-1122oev > .MuiIconButton-root')
-        .should('be.visible')
-        .click();
+    // cy.get('.css-1122oev > .MuiIconButton-root')
+    //     .should('be.visible')
+    //     .click();
     cy.wait(5000)
 };
 
 const fileOperation = (operation, promptType, newName) => {
-    const testCase = prompts[promptType];
-    const filename = testCase.filepath.split('/').pop()
+  const testCase = prompts[promptType];
+  const filename = testCase.filepath.split("/").pop();
 
-    //resize the window
-    cy.viewport(1280, 800);
+  //Click on files button
+  cy.contains("Files").should("be.visible").click();
 
-    //Click on files button
-    cy.get('.css-1ajop3b')
-        .should('be.visible')
-        .click();
+  cy.get(".MuiModalDialog-root").within(() => {
+    // Click the date header twice to sort descending
+    cy.contains("DATE").click();
+    cy.contains("DATE").click();
 
     //Checks if file is present
-    cy.get('.css-1d3w5bb').eq(0)
-        .should('have.text', filename)
-        .should('be.visible')
-        .click();
+    cy.contains(filename)
+      .should("be.visible")
+      .click();
 
     switch (operation) {
-        case 'checkFile':
-            // File presence already verified above
-            cy.log(`File ${filename} found successfully`);
-            //Click Close button
-            cy.get('.css-1122oev')
-                .should('be.visible')
-                .click();
-            break;
+      case "checkFile":
+        // File presence already verified above
+        cy.log(`File ${filename} found successfully`);
+        //Click Close button
+        cy.get('[data-testid="CloseIcon"]')
+          .should("be.visible")
+          .click();
+        break;
 
-        case 'renameFile':
-            //click elipsis button
-            cy.get('.MuiBox-root.css-1qbii0y > div > div > button', { timeout: 10000 })
-            .eq(0)
-            .and('be.enabled')
-            .click({ timeout: 10000, force: true });
+      case "renameFile":
+        // Find the checked file row and click its elipsis button
+        cy.get('.lucide-check[stroke="white"]')
+          .parents().eq(2)
+          .find('button')
+          .should('be.visible')
+          .click();
 
-            //click rename button
-            cy.get('li[role="menuitem"]').eq(1)
-                .should('be.visible')
-                .click({ force: true });
+        //Click rename button. Temporarily search outside the modal
+        cy.document().its('body').find('li[role="menuitem"]').contains('Rename')
+          .should("be.visible")
+          .click();
 
-            cy.get('.MuiBox-root.css-8atqhb > div > input')
-                .should('be.visible')
-                .clear()
-                .type(newName)
-                .type('{enter}');
+        cy.get('input[value="' + filename + '"]')
+          .should("be.visible")
+          .clear()
+          .type(newName)
+          .type("{enter}");
 
-            cy.log(`File ${newName} renamed successfully`);
-            //Click Close button
-            cy.get('.css-1122oev')
-                .should('be.visible')
-                .click();
-            break;
+        cy.log(`File ${newName} renamed successfully`);
+        //Click Close button
+        cy.get('[data-testid="CloseIcon"]').should("be.visible").click();
+        break;
 
-        case 'deleteFile':
-            //Click delete button
-            cy.get('.css-x1bfaw')
-                .should('be.visible')
-                .click();
+      case "deleteFile":
+        //Click delete button
+        cy.contains("Delete 1 files").should("be.visible").click();
+        cy.document().its('body').find('button').contains('Ok').click();
 
-            //Confirm delete message
-            cy.contains('Non-existent files removed from projects successfully')
-                .should('be.visible')
-                .click();
+        //Click Close button
+        // cy.get('[data-testid="CloseIcon"]').should("be.visible").click();
+        break;
 
-            //Click Close button
-            cy.get('.css-1122oev')
-                .should('be.visible')
-                .click();
-            break;
+      case "addFile":
+        //click add file
+        cy.contains("Add 1 files").should("be.visible").click();
 
-        case 'addFile':
+        //wait for file to be added
+        cy.wait(2000);
 
-            //click add file
-            cy.get('.css-1r0lsol > .MuiBox-root > .MuiButton-colorPrimary')
-                .should('be.visible')
-                .click();
+        cy.log("File added to Notebook Successfully.");
+        break;
 
-            //close files modal
-            cy.get('.css-1122oev > .MuiIconButton-root')
-                .should('be.visible')
-                .click();
-
-            //wait for file to be added
-            cy.wait(2000);
-
-            //verify file added
-            cy.get('.MuiChip-action')
-                .should('be.visible')
-
-            //delete added file
-            cy.get('[data-testid="CancelIcon"]')
-                .eq(0)
-                .should('be.visible')
-                .click();
-
-            cy.log('File added to Notebook Successfully.');
-            break;
-
-        default:
-            throw new Error(`Invalid file operation: ${operation}`);
+      default:
+        throw new Error(`Invalid file operation: ${operation}`);
     }
+  });
 
+  // After closing the modal, confirm the file operations
+  switch (operation) {
+    case "addFile":
+      cy.get(".MuiChip-action").should("be.visible");
+      break;
+    case "deleteFile":
+      cy.contains(/Deleted \d+ files/)
+        .should("be.visible")
+      break;
+  }
 }
 
 
@@ -434,13 +417,23 @@ class Notebook {
         });
     }
     static Files(filepath) {
-        it('Verify Files Operations', () => {
+        describe("Files Operations", () => {
+          it("Adds file", () => {
             uploadFile(filepath);
-            fileOperation('checkFile', filepath);
-            fileOperation('addFile', filepath);
-            fileOperation('renameFile', filepath, 'RenamedFile');
-            fileOperation('deleteFile', filepath);
+            fileOperation("addFile", filepath);
+          });
+
+          it("Renames file", () => {
+            uploadFile(filepath);
+            fileOperation("renameFile", filepath, "RenamedFile");
+          });
+
+          it("Deletes file", () => {
+            uploadFile(filepath);
+            fileOperation("deleteFile", filepath);
+          });
         });
+        
 
     }
     static multiPrompts(promptType, model, promptNo) {

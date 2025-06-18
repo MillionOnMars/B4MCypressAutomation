@@ -1,3 +1,4 @@
 .env
 .ngrok.yml
 node_modules
+cypress/reports/consoleErrors.json
