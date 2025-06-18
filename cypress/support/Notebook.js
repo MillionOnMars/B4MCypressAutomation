@@ -106,12 +106,12 @@ const sendPrompt = (promptType, promptNo, model) => {
         if (Array.isArray(currentPromptData.answer)) {
             // For array of answers, check each one
             currentPromptData.answer.forEach((answer) => {
-                cy.contains(answer, { timeout: 20000, matchCase: false })
+                cy.get('p.MuiTypography-root').contains(answer, { timeout: 20000, matchCase: false })
                     .should('be.visible');
             });
         } else {
             // For single answer
-            cy.get('p').contains(currentPromptData.answer, { timeout: 20000, matchCase: false })
+            cy.get('p.MuiTypography-root').contains(currentPromptData.answer, { timeout: 20000, matchCase: false })
                 .should('be.visible');
         }
 
