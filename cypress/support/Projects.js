@@ -7,22 +7,22 @@ const createProject = (projectName) => {
         .click();
 
     // Click the "New Project" button
-    cy.get('.MuiBox-root.css-1t228ch > button', { timeout: DEFAULT_TIMEOUT })
+    cy.xpath('//button[normalize-space()="New Project"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Type the project name in the input field
-    cy.get(".MuiInput-formControl.css-1kti2wz", { timeout: DEFAULT_TIMEOUT })
+    cy.get("input[id*=':r']", { timeout: DEFAULT_TIMEOUT }).eq(1)
         .should('be.visible')
         .type(projectName);
 
     // Type the project description in the input field
-    cy.get(`.MuiTextarea-formControl.css-96akkw`, { timeout: DEFAULT_TIMEOUT })
+    cy.get(`textarea[id*=':r']`, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(projectName);
 
     // Click the "Create Project" button
-    cy.get('.MuiButton-sizeMd.css-dvzipw', { timeout: DEFAULT_TIMEOUT })
+    cy.get('button[type="submit"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -42,7 +42,7 @@ const renameProject = (oldName, newName) => {
         .should('exist')
 
     //Clicks ellipsis button
-    cy.get('.MuiBox-root.css-6su6fj > button', { timeout: DEFAULT_TIMEOUT })
+    cy.get('.lucide.lucide-more-vertical', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();
@@ -54,13 +54,13 @@ const renameProject = (oldName, newName) => {
         .click();
 
     // Type the project name in the input field
-    cy.get(".MuiInput-formControl.css-1kti2wz", { timeout: DEFAULT_TIMEOUT })
+    cy.get("input[id*=':r']", { timeout: DEFAULT_TIMEOUT }).eq(1)
         .should('be.visible')
         .clear()
         .type(newName);
 
     // Click the "Update Project" button
-    cy.get('.MuiButton-sizeMd.css-dvzipw', { timeout: DEFAULT_TIMEOUT })
+    cy.xpath('//button[normalize-space()="Update Project"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -79,7 +79,7 @@ const deleteProject = (projectName) => {
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('exist');
 
     //Clicks ellipsis button
-    cy.get('.MuiBox-root.css-6su6fj > button', { timeout: DEFAULT_TIMEOUT })
+    cy.get('.lucide.lucide-more-vertical', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();

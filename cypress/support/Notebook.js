@@ -1,7 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['claude 3.7 sonnet', 'o3', 'gpt-4.1']; // Add your text models here
-// const textModels = ['gpt-4.1']; // Add your text models here
+const textModels = ['Claude 3.7 Sonnet', 'O3', 'GPT-4.1']; // Add your text models here
+let notebookCreated = false;
 
 let prompts;
 
@@ -15,8 +15,13 @@ const getRandomTextModels = (count) => {
     return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
 };
 
-const createNote = (promptType) => {
+const createNote = (promptType, model) => {
     const testCase = prompts[promptType];
+
+    //Verify if models is selected
+    cy.contains(model, { timeout: 20000})
+        .should('be.visible')
+
     // Click the "New Chat" button
     cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
         .eq(0)
@@ -24,7 +29,7 @@ const createNote = (promptType) => {
         .click();
 
     // Type the question in the textarea
-    cy.get('.MuiTextarea-root')
+    cy.xpath('//textarea[@placeholder="Type your message here..."]')
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
@@ -40,12 +45,12 @@ const createNote = (promptType) => {
     // Handle both array and string answers
     if (Array.isArray(testCase.answer)) {
         testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 20000 }).should('be.visible');
+            cy.contains(answer, { timeout: 50000 }).should('be.visible');
         });
     } else {
         cy.contains(testCase.answer, { timeout: 10000 }).should('be.visible');
     }
-
+    notebookCreated = true;
     cy.log('Notebook creation completed successfully.');
 };
 
@@ -72,7 +77,7 @@ const sendPrompt = (promptType, promptNo, model) => {
             testCase;
 
         //enter prompt
-        cy.get('.MuiTextarea-root')
+        cy.xpath('//textarea[@placeholder="Type your message here..."]')
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
@@ -106,12 +111,12 @@ const sendPrompt = (promptType, promptNo, model) => {
         if (Array.isArray(currentPromptData.answer)) {
             // For array of answers, check each one
             currentPromptData.answer.forEach((answer) => {
-                cy.get('p.MuiTypography-root').contains(answer, { timeout: 20000, matchCase: false })
+                cy.get('p.MuiTypography-root').contains(answer, { timeout: 50000, matchCase: false })
                     .should('be.visible');
             });
         } else {
             // For single answer
-            cy.get('p.MuiTypography-root').contains(currentPromptData.answer, { timeout: 20000, matchCase: false })
+            cy.get('p.MuiTypography-root').contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
                 .should('be.visible');
         }
 
@@ -143,7 +148,7 @@ const renameNote = (newName) => {
         .click();
 
     //clicks notebook
-    cy.get('.MuiInput-sizeSm.Mui-focused.css-b3dpgg')
+    cy.get('.MuiInput-sizeSm.Mui-focused.css-di36d5')
         .eq(0)
         .should('be.visible')
         .type(newName)
@@ -180,7 +185,7 @@ const deleteNote = (Name) => {
 };
 
 const selectTxtModel = (model) => {
-    cy.get('.css-14uw3z2', {timeout: 50000})
+    cy.get('.css-1bqn7pp', {timeout: 50000})
         .eq(0)
         .should('be.visible')
         .click();
@@ -202,6 +207,8 @@ const selectTxtModel = (model) => {
             .should('be.visible')
             .click();
     }
+    cy.contains(model, { timeout: 20000})
+        .should('be.visible')
 }
 
 
@@ -311,8 +318,8 @@ const fileOperation = (operation, promptType, newName) => {
 
   cy.get(".MuiModalDialog-root").within(() => {
     // Click the date header twice to sort descending
-    cy.contains("DATE").click();
-    cy.contains("DATE").click();
+    cy.contains("Date").click();
+    cy.contains("Date").click();
 
     //Checks if file is present
     cy.contains(filename)
@@ -331,8 +338,9 @@ const fileOperation = (operation, promptType, newName) => {
 
       case "renameFile":
         // Find the checked file row and click its elipsis button
-        cy.get('.lucide-check[stroke="white"]')
-          .parents().eq(2)
+        // cy.get('.lucide-check[stroke="white"]')
+        //   .parents().eq(2)
+        cy.xpath('(//*[name()="svg"][contains(@class,"lucide lucide-more-vertical")])[1]')
           .find('button')
           .should('be.visible')
           .click();
@@ -355,7 +363,7 @@ const fileOperation = (operation, promptType, newName) => {
 
       case "deleteFile":
         //Click delete button
-        cy.contains("Delete 1 files").should("be.visible").click();
+        cy.contains("Delete 1 File").should("be.visible").click();
         cy.document().its('body').find('button').contains('Ok').click();
 
         //Click Close button
@@ -364,7 +372,7 @@ const fileOperation = (operation, promptType, newName) => {
 
       case "addFile":
         //click add file
-        cy.contains("Add 1 files").should("be.visible").click();
+        cy.contains("Add 1 File").should("be.visible").click();
 
         //wait for file to be added
         cy.wait(2000);
@@ -392,23 +400,33 @@ const fileOperation = (operation, promptType, newName) => {
 
 class Notebook {
     static createNotebook(prompt, model) {
-        it(`Should select Text model:${model} and create a new notebook`, () => {
-            selectTxtModel(model);
-            createNote(prompt);
-
-        });
-        it(`Should log credits for ${model}.`, () => {
-            logCreditsToJSON([model])
+        describe(`Text Model: ${model}`, () => {
+            it(`Should select Text model.`, () => {
+                selectTxtModel(model);
+             });
+            it(`Create new notebook.`, () => {
+                createNote(prompt, model);
+            });
+            it(`Logging credits`, () => {
+                if (notebookCreated) {
+                    logCreditsToJSON([model]);
+                }   
+            });
         });
     }
     static renameNotebook(newName) {
-        it('Should rename a notebook', () => {
-            renameNote(newName);
+        // it('Should rename a notebook', () => {
+        describe(`Rename Notebook`, () => {
+            it(`Rename a new notebook.`, () => {
+                renameNote(newName);
+            });
         });
     }
     static deleteNotebook(Name) {
-        it('Should delete a notebook', () => {
-            deleteNote(Name);
+        describe(`Delete Notebook`, () => {
+            it(`Delete a notebook.`, () => {
+                deleteNote(Name);
+            });
         });
     }
     static selectTextModel(model) {
