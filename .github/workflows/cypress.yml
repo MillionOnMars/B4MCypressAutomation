@@ -144,7 +144,7 @@ jobs:
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
           echo "Found credits data:"
-          echo "$CREDITS"
+          echo "$CREDITS" 
         else
           echo "No credits.json file found"
           echo "credits=No credits data available" >> $GITHUB_OUTPUT

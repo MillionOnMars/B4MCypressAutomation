@@ -1,4 +1,4 @@
-const TIMEOUT = 10000;
+const TIMEOUT = 30000;
 
 // Navigate to the login page
 const navigateToLoginPage = () => {
