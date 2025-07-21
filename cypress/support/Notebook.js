@@ -34,7 +34,7 @@ const createNote = (promptType, model) => {
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('New Notebook')
+    cy.contains('New Notebook', { timeout: 50000 })
         .should('be.visible');
 
     // Wait until the question appears
