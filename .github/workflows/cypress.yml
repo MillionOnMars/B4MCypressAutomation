@@ -162,3 +162,29 @@ jobs:
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Check for slow responses in credits.json
+      id: slow
+      if: always()
+      run: |
+        SLOW=false
+        if [ -f "cypress/fixtures/credits.json" ]; then
+          # Extract and check if any ResponseTime > 10
+          SLOW_COUNT=$(jq '[.[] | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 10)] | length' cypress/fixtures/credits.json)
+          if [ "$SLOW_COUNT" -gt 0 ]; then
+            SLOW=true
+            echo "There are $SLOW_COUNT slow responses (>10 sec) in credits.json"
+          fi
+        fi
+        echo "slow=$SLOW" >> $GITHUB_OUTPUT
+
+    - name: Send Slack notification for slow responses
+      if: steps.slow.outputs.slow == 'true'
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "⚠️ One or more model responses in credits.json took more than 10 seconds! Please investigate.<#C08QZ42L9KM|b4m-automation-results>."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES}}
