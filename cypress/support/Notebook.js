@@ -1,7 +1,6 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
 const textModels = ['Claude 3.7 Sonnet', 'O3', 'GPT-4.1']; // Add your text models here
-let notebookCreated = false;
 
 let prompts;
 
@@ -47,10 +46,21 @@ const createNote = (promptType, model) => {
             cy.contains(answer, { timeout: 50000 }).should('be.visible');
         });
     } else {
-        cy.get('p.MuiTypography-root').contains(testCase.answer, { timeout: 50000, matchCase: false })
-                .should('be.visible');
-    }
-    notebookCreated = true;
+        // cy.get('p.MuiTypography-root').contains(testCase.answer, { timeout: 50000, matchCase: false })
+        //         .should('be.visible');
+        let startTime;
+        cy.window().then(() => { startTime = Date.now(); }); // Start timer right before the command
+        cy.get('p.MuiTypography-root')
+            .contains(testCase.answer, { timeout: 50000, matchCase: false })
+            .should('be.visible')
+            .then(() => {
+                const duration = (Date.now() - startTime) / 1000;
+                cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
+                // Log credits with response time here
+                logCreditsToJSON([model], duration); 
+            });
+
+    } 
     cy.log('Notebook creation completed successfully.');
 };
 
@@ -206,7 +216,7 @@ const selectTxtModel = (model) => {
 
 let creditLogCounter = 0;
 
-const logCreditsToJSON = (models) => {
+const logCreditsToJSON = (models,ResponseTime) => {
     creditLogCounter++ // Increment counter
 
     const processModel = (index) => {
@@ -240,7 +250,8 @@ const logCreditsToJSON = (models) => {
                     // Add new credit data
                     newData.push({
                         textModel: model,
-                        Credits: parseInt(creditsNumber)
+                        Credits: parseInt(creditsNumber),
+                        ResponseTime: Number(ResponseTime)+ ' secs.' 
                     });
 
                     // Write back the combined data
@@ -381,12 +392,12 @@ class Notebook {
             it(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
                 createNote(prompt, model);
-             });
-            it(`Logging credits`, () => {
-                if (notebookCreated) {
-                    logCreditsToJSON([model]);
-                }   
-            });
+            //  });
+            // it(`Logging credits`, () => {
+                // if (notebookCreated) {
+                //     logCreditsToJSON([model]);
+                // }   
+            }); 
         });
     }
     static renameNotebook(newName) {
