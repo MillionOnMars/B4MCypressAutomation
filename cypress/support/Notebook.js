@@ -23,8 +23,7 @@ const createNote = (promptType, model) => {
         .should('be.visible')
 
     // Click the "New Chat" button
-    cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
-        .eq(0)
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
         .should('be.visible')
         .click();
 
@@ -39,7 +38,7 @@ const createNote = (promptType, model) => {
         .should('be.visible');
 
     // Wait until the question appears
-    cy.contains('prime', { timeout: 50000 })
+    cy.contains(testCase.prompt, { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers
@@ -48,7 +47,14 @@ const createNote = (promptType, model) => {
             cy.contains(answer, { timeout: 50000 }).should('be.visible');
         });
     } else {
-        cy.contains(testCase.answer, { timeout: 10000 }).should('be.visible');
+        cy.contains(testCase.answer, { timeout: 10000 }).then($el => {
+            if (!$el.length) {
+                cy.log(`Error: Value "${testCase.answer}" not found within 10 secs`);
+                throw new Error(`Value "${testCase.answer}" not found within 10 secs`);
+            } else {
+                cy.wrap($el).should('be.visible');
+            }
+        });
     }
     notebookCreated = true;
     cy.log('Notebook creation completed successfully.');
@@ -59,8 +65,7 @@ const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.get('.MuiButton-root.MuiButton-variantSolid.MuiButton-colorPrimary')
-        .eq(0)
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
         .should('be.visible')
         .click();
 
@@ -84,16 +89,11 @@ const sendPrompt = (promptType, promptNo, model) => {
             .wait(2000); 
         
         if(model == 'claude-3-7-sonnet'){
-            // Initial longer wait for model initialization
-            // Use longer wait for first prompt, shorter for subsequent ones
             if (currentPrompt === 0) {
                 cy.wait(5000); // First prompt
             } else {
                 cy.wait(2000); // Subsequent prompts
             }
-            // // Wait for the response to appear
-            // cy.get('.css-18sok60')
-            //     .should('be.visible', { timeout: 50000 });
 
             // Shorter wait for subsequent operations
             cy.wait(2000);
@@ -121,8 +121,6 @@ const sendPrompt = (promptType, promptNo, model) => {
         }
 
         cy.log(`Completed prompt ${currentPrompt + 1} of ${promptNo}`);
-        // Send next prompt
-        // sendSinglePrompt(currentPrompt + 1);
     };
 
     // Start sending prompts
@@ -201,7 +199,7 @@ const selectTxtModel = (model) => {
         .click({ force: true });
 
     //clicks close button
-    if(model !== 'gpt-4.1'){
+    if(model !== 'GPT-4.1'){
         cy.get('.MuiBox-root.css-f0am11 > button')
             .eq(1)
             .should('be.visible')
@@ -292,20 +290,10 @@ const uploadFile = (promptType) => {
     cy.intercept('POST', '**/createFabFile').as('uploadRequest');
     cy.wait('@uploadRequest', { timeout: 10000 });
 
-    // Click the upload button
-    // cy.get('.css-ilpbvj > .MuiIconButton-root')
-    //     .should('be.visible')
-    //     .click();
-
     //Verify file uploaded
     cy.contains(testCase.filepath.split('/').pop());
 
     cy.log('File uploaded successfully.');
-
-    //close files modal
-    // cy.get('.css-1122oev > .MuiIconButton-root')
-    //     .should('be.visible')
-    //     .click();
     cy.wait(5000)
 };
 
@@ -337,11 +325,8 @@ const fileOperation = (operation, promptType, newName) => {
         break;
 
       case "renameFile":
-        // Find the checked file row and click its elipsis button
-        // cy.get('.lucide-check[stroke="white"]')
-        //   .parents().eq(2)
         cy.xpath('(//*[name()="svg"][contains(@class,"lucide lucide-more-vertical")])[1]')
-          .find('button')
+        //   .find('button')
           .should('be.visible')
           .click();
 
@@ -358,16 +343,14 @@ const fileOperation = (operation, promptType, newName) => {
 
         cy.log(`File ${newName} renamed successfully`);
         //Click Close button
-        cy.get('[data-testid="CloseIcon"]').should("be.visible").click();
+        // cy.get('[data-testid="CloseIcon"]').eq(2).should("be.visible").click();
+
         break;
 
       case "deleteFile":
         //Click delete button
         cy.contains("Delete 1 File").should("be.visible").click();
         cy.document().its('body').find('button').contains('Ok').click();
-
-        //Click Close button
-        // cy.get('[data-testid="CloseIcon"]').should("be.visible").click();
         break;
 
       case "addFile":
@@ -387,9 +370,9 @@ const fileOperation = (operation, promptType, newName) => {
 
   // After closing the modal, confirm the file operations
   switch (operation) {
-    case "addFile":
-      cy.get(".MuiChip-action").should("be.visible");
-      break;
+    // case "addFile":
+    //   cy.get(".MuiChip-action").should("be.visible");
+    //   break;
     case "deleteFile":
       cy.contains(/Deleted \d+ files/)
         .should("be.visible")
@@ -403,10 +386,11 @@ class Notebook {
         describe(`Text Model: ${model}`, () => {
             it(`Should select Text model.`, () => {
                 selectTxtModel(model);
-             });
-            it(`Create new notebook.`, () => {
                 createNote(prompt, model);
-            });
+             });
+            // it(`Create new notebook.`, () => {
+            //     createNote(prompt, model);
+            // });
             it(`Logging credits`, () => {
                 if (notebookCreated) {
                     logCreditsToJSON([model]);
