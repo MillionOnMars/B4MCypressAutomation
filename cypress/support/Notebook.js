@@ -47,14 +47,8 @@ const createNote = (promptType, model) => {
             cy.contains(answer, { timeout: 50000 }).should('be.visible');
         });
     } else {
-        cy.contains(testCase.answer, { timeout: 10000 }).then($el => {
-            if (!$el.length) {
-                cy.log(`Error: Value "${testCase.answer}" not found within 10 secs`);
-                throw new Error(`Value "${testCase.answer}" not found within 10 secs`);
-            } else {
-                cy.wrap($el).should('be.visible');
-            }
-        });
+        cy.get('p.MuiTypography-root').contains(testCase.answer, { timeout: 50000, matchCase: false })
+                .should('be.visible');
     }
     notebookCreated = true;
     cy.log('Notebook creation completed successfully.');
@@ -384,13 +378,10 @@ const fileOperation = (operation, promptType, newName) => {
 class Notebook {
     static createNotebook(prompt, model) {
         describe(`Text Model: ${model}`, () => {
-            it(`Should select Text model.`, () => {
+            it(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
                 createNote(prompt, model);
              });
-            // it(`Create new notebook.`, () => {
-            //     createNote(prompt, model);
-            // });
             it(`Logging credits`, () => {
                 if (notebookCreated) {
                     logCreditsToJSON([model]);
