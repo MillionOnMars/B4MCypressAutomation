@@ -205,13 +205,14 @@ jobs:
           echo "high=false" >> $GITHUB_OUTPUT
         fi
 
-        - name: Send Slack notification for high credit usage
-        if: steps.highcredits.outputs.high == 'true'
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          payload: |
-            {
-              "text": "⚠️ One or more requests used 20 or more credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
+    - name: Send Slack notification for high credit usage
+      if: steps.highcredits.outputs.high == 'true'
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "⚠️ One or more requests used 20 or more credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
+
