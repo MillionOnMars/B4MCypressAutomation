@@ -192,19 +192,20 @@ const selectTxtModel = (model) => {
         .should('be.visible')
         .click();
 
-    cy.get('.css-1fed3lh')
-        .eq(1)
+    //input text model
+    cy.xpath("(//input[@placeholder='Search'])[3]")
         .should('be.visible')
-        .click();
+        .type(model)
+        .type('{enter}');
 
     //select text model
     cy.contains('div', model, { timeout: 50000, matchCase: false })
         .should('exist')
-        .click({ force: true });
+        .click({ force: true }); 
 
     //clicks close button
     if(model !== 'GPT-4.1'){
-        cy.get('.MuiBox-root.css-f0am11 > button')
+        cy.get(".MuiBox-root.css-6zgsse > button")
             .eq(1)
             .should('be.visible')
             .click();
@@ -391,12 +392,7 @@ class Notebook {
         describe(`Text Model: ${model}`, () => {
             it(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
-                createNote(prompt, model);
-            //  });
-            // it(`Logging credits`, () => {
-                // if (notebookCreated) {
-                //     logCreditsToJSON([model]);
-                // }   
+                createNote(prompt, model); 
             }); 
         });
     }
