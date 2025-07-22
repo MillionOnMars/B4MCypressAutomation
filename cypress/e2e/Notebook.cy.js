@@ -2,7 +2,7 @@ import { login } from '../support/login.js';
 import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Correctly import the default export
 
 describe('Notebook Operations', () => {
-    const randomTextModels = getRandomTextModels(3); 
+    const randomTextModels = getRandomTextModels(4); 
     // Log in to the application before running the tests
     
     beforeEach(() => {
@@ -12,7 +12,7 @@ describe('Notebook Operations', () => {
             login(username, password);
         });
     });
-    //Choose 3 random text models and create a new notebook
+    //Choose 4 random text models and create a new notebook
     randomTextModels.forEach((model) => {
         Notebook.createNotebook('capital', model);
     });

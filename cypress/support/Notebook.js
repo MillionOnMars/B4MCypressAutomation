@@ -1,6 +1,6 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['Claude 3.7 Sonnet', 'O3', 'GPT-4.1']; // Add your text models here
+const textModels = ['Claude 4 Opus', 'O3', 'GPT-4.1', 'Gemini 1.5 Pro']; // Add your text models here
 
 let prompts;
 
