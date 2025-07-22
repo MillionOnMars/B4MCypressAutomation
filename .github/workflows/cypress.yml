@@ -205,7 +205,6 @@ jobs:
           echo "high=false" >> $GITHUB_OUTPUT
         fi
 
-
         - name: Send Slack notification for high credit usage
         if: steps.highcredits.outputs.high == 'true'
         uses: slackapi/slack-github-action@v1.24.0
