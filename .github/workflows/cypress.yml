@@ -65,38 +65,48 @@ jobs:
       run: |
         if [ -f "cypress/reports/cypress-run-output.txt" ]; then
           echo "Reading Cypress output file..."
-          cat cypress/reports/cypress-run-output.txt
           
-          # Get the summary section with more context
-          SUMMARY=$(awk '/Run Finished/,/All specs passed!/' cypress/reports/cypress-run-output.txt)
+          # Get the last line containing "All specs"
+          SUMMARY=$(grep "All specs" cypress/reports/cypress-run-output.txt | tail -n 1)
           
-          # Debug: Show what we captured
-          echo "Captured Summary:"
+          echo "Found summary line:"
           echo "$SUMMARY"
           
-          # Extract counts using more specific patterns
-          TOTAL=$(echo "$SUMMARY" | grep "All specs passed!" | grep -o '[0-9]\+' | head -1)
-          PASSING=$(echo "$SUMMARY" | grep "All specs passed!" | grep -o '[0-9]\+' | head -2 | tail -1)
-          FAILING=$(echo "$SUMMARY" | grep "All specs passed!" | grep -o '[0-9]\+' | head -3 | tail -1)
-          
-          # Debug: Show extracted numbers
-          echo "Extracted numbers:"
-          echo "Total: ${TOTAL:-0}"
-          echo "Passing: ${PASSING:-0}"
-          echo "Failing: ${FAILING:-0}"
-          
-          # Format summary for output
-          echo "Test Results Summary:"
-          echo "┌────────────────────────────────┐"
-          echo "│ Total Tests: ${TOTAL:-0}"
-          echo "│ Passing: ${PASSING:-0}"
-          echo "│ Failing: ${FAILING:-0}"
-          echo "└────────────────────────────────┘"
-          
-          # Set outputs for other steps
-          echo "total=${TOTAL:-0}" >> $GITHUB_OUTPUT
-          echo "passing=${PASSING:-0}" >> $GITHUB_OUTPUT
-          echo "failing=${FAILING:-0}" >> $GITHUB_OUTPUT
+          # Parse numbers using awk (matches the format "✔  All specs passed!        00:51        8        7        -        1")
+          if [[ ! -z "$SUMMARY" ]]; then
+            TOTAL=$(echo "$SUMMARY" | awk '{print $6}')
+            PASSING=$(echo "$SUMMARY" | awk '{print $7}')
+            FAILING=$(echo "$SUMMARY" | awk '{print $8}')
+            
+            # Convert "-" to 0 if needed
+            TOTAL=${TOTAL:-0}
+            PASSING=${PASSING:-0}
+            FAILING=${FAILING//-/0}
+            
+            # Debug: Show raw values
+            echo "Raw values found:"
+            echo "TOTAL: '$TOTAL'"
+            echo "PASSING: '$PASSING'"
+            echo "FAILING: '$FAILING'"
+            
+            # Format summary
+            echo "Test Results Summary:"
+            echo "┌────────────────────────────────┐"
+            echo "│ Total Tests: $TOTAL"
+            echo "│ Passing: $PASSING"
+            echo "│ Failing: $FAILING"
+            echo "└────────────────────────────────┘"
+            
+            # Set outputs
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passing=$PASSING" >> $GITHUB_OUTPUT
+            echo "failing=$FAILING" >> $GITHUB_OUTPUT
+          else
+            echo "No summary line found in output!"
+            echo "Full output content:"
+            cat cypress/reports/cypress-run-output.txt
+            exit 1
+          fi
         else
           echo "Error: cypress-run-output.txt not found!"
           ls -la cypress/reports/
