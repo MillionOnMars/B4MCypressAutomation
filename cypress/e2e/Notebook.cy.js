@@ -14,7 +14,8 @@ describe('Notebook Operations', () => {
     });
     //Choose 4 random text models and create a new notebook
     randomTextModels.forEach((model) => {
-        Notebook.createNotebook('capital', model);
+        //Notebook.createNotebook('capital', model);
+        Notebook.createNotebookWithAverage('capital', model);
     });
     // Rename the notebook
     Notebook.renameNotebook('Renamed Notebook');

@@ -16,6 +16,7 @@ const getRandomTextModels = (count) => {
 
 const createNote = (promptType, model) => {
     const testCase = prompts[promptType];
+    let startTime;
 
     //Verify if models is selected
     cy.contains(model, { timeout: 20000})
@@ -45,22 +46,21 @@ const createNote = (promptType, model) => {
         testCase.answer.forEach((answer) => {
             cy.contains(answer, { timeout: 50000 }).should('be.visible');
         });
+        return 0; // Return 0 for array answers or handle differently
     } else {
-        // cy.get('p.MuiTypography-root').contains(testCase.answer, { timeout: 50000, matchCase: false })
-        //         .should('be.visible');
-        let startTime;
-        cy.window().then(() => { startTime = Date.now(); }); // Start timer right before the command
-        cy.get('p.MuiTypography-root')
-            .contains(testCase.answer, { timeout: 50000, matchCase: false })
-            .should('be.visible')
-            .then(() => {
-                const duration = (Date.now() - startTime) / 1000;
-                cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                // Log credits with response time here
-                logCreditsToJSON([model], duration); 
-            });
-
-    } 
+        return new Cypress.Promise(resolve => {
+            cy.window().then(() => { startTime = Date.now(); });
+            
+            cy.get('p.MuiTypography-root')
+                .contains(testCase.answer, { timeout: 50000, matchCase: false })
+                .should('be.visible')
+                .then(() => {
+                    const duration = (Date.now() - startTime) / 1000;
+                    cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
+                    resolve(duration);
+                });
+        });
+    }
     cy.log('Notebook creation completed successfully.');
 };
 
@@ -448,6 +448,34 @@ class Notebook {
             uploadFile(promptType);
             fileOperation('addFile', promptType);
             sendPrompt(promptType,promptNo,model);
+        });
+    }
+    static createNotebookWithAverage(prompt, model) {
+        describe(`Text Model: ${model} - Average Response Time`, () => {
+            let responseTimes = [];
+
+            beforeEach(() => {
+                selectTxtModel(model);
+            });
+
+            // Run the test 3 times
+            Array.from({ length: 3 }).forEach((_, index) => {
+                it(`Run ${index + 1}: Create notebook and measure response time`, () => {
+                    createNote(prompt, model).then(duration => {
+                        // Format duration to 2 decimal places
+                        const formattedDuration = Number(duration.toFixed(2));
+                        responseTimes.push(formattedDuration);
+                        cy.log(`Run ${index + 1} response time: ${formattedDuration} seconds`);
+                    });
+                });
+            });
+
+            after(() => {
+                const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
+                const formattedAverage = Number(average.toFixed(2));
+                cy.log(`Average response time for ${model}: ${formattedAverage} seconds`);
+                logCreditsToJSON([model], formattedAverage);
+            });
         });
     }
 }
