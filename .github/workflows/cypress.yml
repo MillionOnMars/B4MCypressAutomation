@@ -45,74 +45,45 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
-        reporter: mochawesome
-        reporter-options: >-
-          reportDir=cypress/reports/mochawesome,
-          overwrite=false,
-          html=true,
-          json=true,
-          quiet=true,
-          reportFilename=mochawesome-[datetime]
+        reporter: spec
+        # Add custom reporter config to capture output
+        config: |
+          {
+            "reporter": "spec",
+            "reporterOptions": {
+              "toConsole": true,
+              "outputFile": "cypress/reports/cypress-run-output.txt"
+            }
+          }
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
 
-    # Add step to process Cypress run results
-    - name: Process Cypress results
+    - name: Extract test results
       if: always()
+      id: test-results
       run: |
-        # Find the Cypress output file
-        CYPRESS_OUTPUT="cypress/reports/cypress-run-output.txt"
-        
-        if [ -f "$CYPRESS_OUTPUT" ]; then
-          echo "Found Cypress output file"
+        if [ -f "cypress/reports/cypress-run-output.txt" ]; then
+          # Get the summary section
+          SUMMARY=$(sed -n '/Run Finished/,/All specs passed!/p' cypress/reports/cypress-run-output.txt)
           
-          # Extract test counts using grep and awk
-          TOTAL=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $4}')
-          PASSING=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $5}')
-          PENDING=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $7}')
-          SKIPPED=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $8}')
+          # Extract counts
+          TOTAL=$(echo "$SUMMARY" | grep "All specs passed!" | awk '{print $4}')
+          PASSING=$(echo "$SUMMARY" | grep "All specs passed!" | awk '{print $5}')
+          FAILING=$(echo "$SUMMARY" | grep "All specs passed!" | awk '{print $6}')
           
-          # Calculate failing (total - passing)
-          FAILING=$((TOTAL - PASSING))
+          # Output results
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
-          # Create results JSON
-          cat << EOF > cypress/reports/results.json
-{
-  "totalTests": ${TOTAL:-0},
-  "totalPassed": ${PASSING:-0},
-  "totalFailed": ${FAILING:-0},
-  "totalPending": ${PENDING:-0},
-  "totalSkipped": ${SKIPPED:-0}
-}
-EOF
-          
-          # Set GitHub Actions outputs
-          echo "TOTAL_TESTS=${TOTAL:-0}" >> $GITHUB_ENV
-          echo "TOTAL_PASSED=${PASSING:-0}" >> $GITHUB_ENV
-          echo "TOTAL_FAILED=${FAILING:-0}" >> $GITHUB_ENV
-          echo "TOTAL_PENDING=${PENDING:-0}" >> $GITHUB_ENV
-          echo "TOTAL_SKIPPED=${SKIPPED:-0}" >> $GITHUB_ENV
+          echo "total=${TOTAL:-0}" >> $GITHUB_OUTPUT
+          echo "passing=${PASSING:-0}" >> $GITHUB_OUTPUT
+          echo "failing=${FAILING:-0}" >> $GITHUB_OUTPUT
           
           echo "Test Results Summary:"
-          echo "Total: ${TOTAL:-0}"
-          echo "Passing: ${PASSING:-0}"
-          echo "Failing: ${FAILING:-0}"
-          echo "Pending: ${PENDING:-0}"
-          echo "Skipped: ${SKIPPED:-0}"
+          echo "$SUMMARY"
         else
-          echo "No Cypress output file found at $CYPRESS_OUTPUT"
+          echo "No test output file found"
           exit 1
         fi
-
-    - name: Display Test Results
-      if: always()
-      run: |
-        echo "📊 Test Results Summary"
-        echo "┌────────────────────────────────────────────────────────────────────────┐"
-        echo "│ Total Tests: $TOTAL_TESTS"
-        echo "│ Passed: $TOTAL_PASSED"
-        echo "│ Failed: $TOTAL_FAILED"
-        echo "│ Pending: $TOTAL_PENDING"
-        echo "│ Skipped: $TOTAL_SKIPPED"
-        echo "└────────────────────────────────────────────────────────────────────────┘"
