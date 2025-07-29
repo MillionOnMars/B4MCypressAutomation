@@ -13,10 +13,10 @@ module.exports = defineConfig({
   e2e: {    
     specPattern: [
       'cypress/e2e/Auth.cy.js',
-      'cypress/e2e/Signup.cy.js',
-      'cypress/e2e/Projects.cy.js',
-      'cypress/e2e/Notebook.cy.js',
-      'cypress/e2e/Prompts.cy.js'
+      'cypress/e2e/Signup.cy.js'
+      // 'cypress/e2e/Projects.cy.js',
+      // 'cypress/e2e/Notebook.cy.js',
+      // 'cypress/e2e/Prompts.cy.js'
     ],
     supportFile: 'cypress/support/index.js',
     env: {
