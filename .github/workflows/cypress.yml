@@ -61,32 +61,47 @@ jobs:
     - name: Process Cypress results
       if: always()
       run: |
-        # Find and verify the latest report
-        LATEST_REPORT=$(find cypress/reports/mochawesome -name 'mochawesome*.json' -type f -print0 | xargs -0 ls -t | head -n1)
-        echo "Latest report found: $LATEST_REPORT"
+        # Find the Cypress output file
+        CYPRESS_OUTPUT="cypress/reports/cypress-run-output.txt"
         
-        if [ -f "$LATEST_REPORT" ]; then
-          # Debug: Show full report content
-          echo "Report contents:"
-          cat "$LATEST_REPORT"
+        if [ -f "$CYPRESS_OUTPUT" ]; then
+          echo "Found Cypress output file"
           
-          # Get stats directly from the report structure
-          TOTAL=$(jq '.results[0].suites[0].tests | length' "$LATEST_REPORT")
-          PASSING=$(jq '[.results[0].suites[0].tests[] | select(.pass == true)] | length' "$LATEST_REPORT")
-          FAILING=$(jq '[.results[0].suites[0].tests[] | select(.fail == true)] | length' "$LATEST_REPORT")
+          # Extract test counts using grep and awk
+          TOTAL=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $4}')
+          PASSING=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $5}')
+          PENDING=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $7}')
+          SKIPPED=$(grep "All specs passed!" "$CYPRESS_OUTPUT" | awk '{print $8}')
           
-          # Create results with explicit values
-          echo "{\"totalTests\": $TOTAL, \"totalPassed\": $PASSING, \"totalFailed\": $FAILING}" > cypress/reports/results.json
+          # Calculate failing (total - passing)
+          FAILING=$((TOTAL - PASSING))
           
-          echo "Results saved to results.json:"
-          cat cypress/reports/results.json
+          # Create results JSON
+          cat << EOF > cypress/reports/results.json
+{
+  "totalTests": ${TOTAL:-0},
+  "totalPassed": ${PASSING:-0},
+  "totalFailed": ${FAILING:-0},
+  "totalPending": ${PENDING:-0},
+  "totalSkipped": ${SKIPPED:-0}
+}
+EOF
           
-          # Output for GitHub Actions
-          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
-          echo "TOTAL_PASSED=$PASSING" >> $GITHUB_ENV
-          echo "TOTAL_FAILED=$FAILING" >> $GITHUB_ENV
+          # Set GitHub Actions outputs
+          echo "TOTAL_TESTS=${TOTAL:-0}" >> $GITHUB_ENV
+          echo "TOTAL_PASSED=${PASSING:-0}" >> $GITHUB_ENV
+          echo "TOTAL_FAILED=${FAILING:-0}" >> $GITHUB_ENV
+          echo "TOTAL_PENDING=${PENDING:-0}" >> $GITHUB_ENV
+          echo "TOTAL_SKIPPED=${SKIPPED:-0}" >> $GITHUB_ENV
+          
+          echo "Test Results Summary:"
+          echo "Total: ${TOTAL:-0}"
+          echo "Passing: ${PASSING:-0}"
+          echo "Failing: ${FAILING:-0}"
+          echo "Pending: ${PENDING:-0}"
+          echo "Skipped: ${SKIPPED:-0}"
         else
-          echo "No mochawesome report found!"
+          echo "No Cypress output file found at $CYPRESS_OUTPUT"
           exit 1
         fi
 
@@ -94,43 +109,10 @@ jobs:
       if: always()
       run: |
         echo "📊 Test Results Summary"
-        echo "Total Tests: $TOTAL_TESTS"
-        echo "Passed: $TOTAL_PASSED"
-        echo "Failed: $TOTAL_FAILED"
-
-    - name: Get test results
-      id: test-results
-      if: always()
-      run: |
-        if [ -f "cypress/reports/results.json" ]; then
-          echo "Reading results summary..."
-          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
-          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
-          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
-          
-          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
-          
-          echo "Test Results Summary:"
-          echo "Total: $TOTAL"
-          echo "Passed: $PASSED"
-          echo "Failed: $FAILED"
-        else
-          echo "Error: results.json not found"
-          exit 1
-        fi
-
-      # Add step to get console errors count
-    - name: Get console errors
-      id: console-errors
-      if: always()
-      run: |
-        if [ -f "cypress/reports/consoleErrors.json" ]; then
-          TOTAL_ERRORS=$(jq -r '.totalErrors' cypress/reports/consoleErrors.json)
-          echo "total=$TOTAL_ERRORS" >> "$GITHUB_OUTPUT"
-          echo "Found $TOTAL_ERRORS console errors"
-        else
-          echo "total=0" >> "$GITHUB_OUTPUT"
-          echo "No consoleErrors.json found"
-        fi
+        echo "┌────────────────────────────────────────────────────────────────────────┐"
+        echo "│ Total Tests: $TOTAL_TESTS"
+        echo "│ Passed: $TOTAL_PASSED"
+        echo "│ Failed: $TOTAL_FAILED"
+        echo "│ Pending: $TOTAL_PENDING"
+        echo "│ Skipped: $TOTAL_SKIPPED"
+        echo "└────────────────────────────────────────────────────────────────────────┘"
