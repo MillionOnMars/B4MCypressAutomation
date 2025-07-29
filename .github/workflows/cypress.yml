@@ -64,26 +64,41 @@ jobs:
       id: test-results
       run: |
         if [ -f "cypress/reports/cypress-run-output.txt" ]; then
-          # Get the summary section
-          SUMMARY=$(sed -n '/Run Finished/,/All specs passed!/p' cypress/reports/cypress-run-output.txt)
+          echo "Reading Cypress output file..."
+          cat cypress/reports/cypress-run-output.txt
           
-          # Extract counts
-          TOTAL=$(echo "$SUMMARY" | grep "All specs passed!" | awk '{print $4}')
-          PASSING=$(echo "$SUMMARY" | grep "All specs passed!" | awk '{print $5}')
-          FAILING=$(echo "$SUMMARY" | grep "All specs passed!" | awk '{print $6}')
+          # Get the summary section with more context
+          SUMMARY=$(awk '/Run Finished/,/All specs passed!/' cypress/reports/cypress-run-output.txt)
           
-          # Output results
-          echo "summary<<EOF" >> $GITHUB_OUTPUT
-          echo "$SUMMARY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Debug: Show what we captured
+          echo "Captured Summary:"
+          echo "$SUMMARY"
           
+          # Extract counts using more specific patterns
+          TOTAL=$(echo "$SUMMARY" | grep "All specs passed!" | grep -o '[0-9]\+' | head -1)
+          PASSING=$(echo "$SUMMARY" | grep "All specs passed!" | grep -o '[0-9]\+' | head -2 | tail -1)
+          FAILING=$(echo "$SUMMARY" | grep "All specs passed!" | grep -o '[0-9]\+' | head -3 | tail -1)
+          
+          # Debug: Show extracted numbers
+          echo "Extracted numbers:"
+          echo "Total: ${TOTAL:-0}"
+          echo "Passing: ${PASSING:-0}"
+          echo "Failing: ${FAILING:-0}"
+          
+          # Format summary for output
+          echo "Test Results Summary:"
+          echo "┌────────────────────────────────┐"
+          echo "│ Total Tests: ${TOTAL:-0}"
+          echo "│ Passing: ${PASSING:-0}"
+          echo "│ Failing: ${FAILING:-0}"
+          echo "└────────────────────────────────┘"
+          
+          # Set outputs for other steps
           echo "total=${TOTAL:-0}" >> $GITHUB_OUTPUT
           echo "passing=${PASSING:-0}" >> $GITHUB_OUTPUT
           echo "failing=${FAILING:-0}" >> $GITHUB_OUTPUT
-          
-          echo "Test Results Summary:"
-          echo "$SUMMARY"
         else
-          echo "No test output file found"
+          echo "Error: cypress-run-output.txt not found!"
+          ls -la cypress/reports/
           exit 1
         fi
