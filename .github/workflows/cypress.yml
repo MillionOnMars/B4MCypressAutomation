@@ -61,24 +61,48 @@ jobs:
     - name: Process Cypress results
       if: always()
       run: |
-        SPEC_OUTPUT=$(cat cypress/reports/cypress-run-output.txt || echo "No output file found")
+        # Find the latest mochawesome JSON report
+        LATEST_REPORT=$(ls -t cypress/reports/mochawesome/mochawesome*.json | head -n 1)
         
-        # Extract test counts using grep and awk
-        TOTAL=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $2}')
-        PASSING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $3}')
-        FAILING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $4}')
-        
-        echo "Test Results Summary:"
-        echo "Total: ${TOTAL:-0}"
-        echo "Passing: ${PASSING:-0}"
-        echo "Failing: ${FAILING:-0}"
-        
-        # Save to results.json
-        jq -n \
-          --arg total "${TOTAL:-0}" \
-          --arg passed "${PASSING:-0}" \
-          --arg failed "${FAILING:-0}" \
-          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+        if [ -f "$LATEST_REPORT" ]; then
+          echo "Found report file: $LATEST_REPORT"
+          
+          # Debug: Print raw JSON stats
+          echo "Raw stats from report:"
+          jq '.stats' "$LATEST_REPORT"
+          
+          # Extract test counts with error checking
+          TOTAL=$(jq -e '[.stats.tests] | add' "$LATEST_REPORT" || echo 0)
+          PASSING=$(jq -e '[.stats.passes] | add' "$LATEST_REPORT" || echo 0)
+          FAILING=$(jq -e '[.stats.failures] | add' "$LATEST_REPORT" || echo 0)
+          
+          # Validate numbers
+          if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
+            echo "Warning: Total tests count is 0 or empty"
+          fi
+          
+          echo "Test Results Summary:"
+          echo "Total: ${TOTAL:-0}"
+          echo "Passing: ${PASSING:-0}"
+          echo "Failing: ${FAILING:-0}"
+          
+          # Save to results.json with validation
+          if [ ! -z "$TOTAL" ] && [ ! -z "$PASSING" ] && [ ! -z "$FAILING" ]; then
+            jq -n \
+              --arg total "${TOTAL:-0}" \
+              --arg passed "${PASSING:-0}" \
+              --arg failed "${FAILING:-0}" \
+              '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+            echo "Results saved to results.json"
+          else
+            echo "Error: Invalid test counts, not saving results"
+            exit 1
+          fi
+        else
+          echo "No mochawesome report found in directory:"
+          ls -la cypress/reports/mochawesome/
+          exit 1
+        fi
 
     - name: Get test results
       id: test-results
@@ -116,103 +140,3 @@ jobs:
           echo "total=0" >> "$GITHUB_OUTPUT"
           echo "No consoleErrors.json found"
         fi
-
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: cypress-results-${{ github.run_id }}
-        path: |
-          cypress/reports/mochawesome-html/**
-          cypress/reports/mochawesome/*.json
-          cypress/screenshots/**/*.png
-          cypress/videos/**/*.mp4
-          cypress/fixtures/credits.json
-          cypress/reports/consoleErrors.json
-          cypress/reports/results.json
-        if-no-files-found: warn
-        retention-days: 14
-
-    - name: Get credits data
-      id: credits
-      if: always()
-      run: |
-        if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data with ResponseTime using jq
-          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime)") | join("\n")' cypress/fixtures/credits.json)
-          # Escape newlines for GitHub Actions output
-          CREDITS="${CREDITS//$'\n'/'\n'}"
-          echo "credits=$CREDITS" >> $GITHUB_OUTPUT
-          echo "Found credits data:"
-          echo "$CREDITS" 
-        else
-          echo "No credits.json file found"
-          echo "credits=No credits data available" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Send Slack notification
-      if: always()
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "username": "GitHub Actions",
-            "icon_emoji": ":github:",
-            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-    - name: Check for slow responses in credits.json
-      id: slow
-      if: always()
-      run: |
-        SLOW=false
-        if [ -f "cypress/fixtures/credits.json" ]; then
-          # Extract and check if any ResponseTime > 10
-          SLOW_COUNT=$(jq '[.[] | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 10)] | length' cypress/fixtures/credits.json)
-          if [ "$SLOW_COUNT" -gt 0 ]; then
-            SLOW=true
-            echo "There are $SLOW_COUNT slow responses (>10 sec) in credits.json"
-          fi
-        fi
-        echo "slow=$SLOW" >> $GITHUB_OUTPUT
-
-    - name: Send Slack notification for slow responses
-      if: steps.slow.outputs.slow == 'true'
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "text": "⚠️ One or more text model responses took more than 10 seconds! Please investigate.<#C08QZ42L9KM|b4m-automation-results>."
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES}}
-
-    - name: Check for high credit usage
-      id: highcredits
-      if: always()
-      run: |
-        if [ -f "cypress/fixtures/credits.json" ]; then
-          HIGH=$(jq '[.[] | select(.Credits|tonumber >= 20)] | length' cypress/fixtures/credits.json)
-          if [ "$HIGH" -gt 0 ]; then
-            echo "high=true" >> $GITHUB_OUTPUT
-            echo "$HIGH entries used 20 or more credits."
-          else
-            echo "high=false" >> $GITHUB_OUTPUT
-          fi
-        else
-          echo "high=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Send Slack notification for high credit usage
-      if: steps.highcredits.outputs.high == 'true'
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "text": "⚠️ One or more requests used 20 or more credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
-
