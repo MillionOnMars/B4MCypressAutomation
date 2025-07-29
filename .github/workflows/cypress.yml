@@ -61,69 +61,58 @@ jobs:
     - name: Process Cypress results
       if: always()
       run: |
-        LATEST_REPORT=$(ls -t cypress/reports/mochawesome/mochawesome*.json | head -n 1)
+        # Find and verify the latest report
+        LATEST_REPORT=$(find cypress/reports/mochawesome -name 'mochawesome*.json' -type f -print0 | xargs -0 ls -t | head -n1)
+        echo "Latest report found: $LATEST_REPORT"
         
         if [ -f "$LATEST_REPORT" ]; then
-          echo "Found report file: $LATEST_REPORT"
-          
-          # Debug: Print full report content
-          echo "Full report content:"
+          # Debug: Show full report content
+          echo "Report contents:"
           cat "$LATEST_REPORT"
           
-          # Extract stats directly
-          TOTAL=$(jq '.stats.tests' "$LATEST_REPORT")
-          PASSING=$(jq '.stats.passes' "$LATEST_REPORT")
-          FAILING=$(jq '.stats.failures' "$LATEST_REPORT")
+          # Get stats directly from the report structure
+          TOTAL=$(jq '.results[0].suites[0].tests | length' "$LATEST_REPORT")
+          PASSING=$(jq '[.results[0].suites[0].tests[] | select(.pass == true)] | length' "$LATEST_REPORT")
+          FAILING=$(jq '[.results[0].suites[0].tests[] | select(.fail == true)] | length' "$LATEST_REPORT")
           
-          # Ensure numbers are valid
-          TOTAL=${TOTAL:-0}
-          PASSING=${PASSING:-0}
-          FAILING=${FAILING:-0}
+          # Create results with explicit values
+          echo "{\"totalTests\": $TOTAL, \"totalPassed\": $PASSING, \"totalFailed\": $FAILING}" > cypress/reports/results.json
           
-          echo "Test Results Summary:"
-          echo "Total: $TOTAL"
-          echo "Passing: $PASSING"
-          echo "Failing: $FAILING"
-          
-          # Create results.json with explicit numbers
-          cat << EOF > cypress/reports/results.json
-{
-  "totalTests": $TOTAL,
-  "totalPassed": $PASSING,
-  "totalFailed": $FAILING
-}
-EOF
-          echo "Created results.json with actual numbers"
+          echo "Results saved to results.json:"
           cat cypress/reports/results.json
+          
+          # Output for GitHub Actions
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "TOTAL_PASSED=$PASSING" >> $GITHUB_ENV
+          echo "TOTAL_FAILED=$FAILING" >> $GITHUB_ENV
         else
-          echo "No mochawesome report found"
-          ls -la cypress/reports/mochawesome/
+          echo "No mochawesome report found!"
           exit 1
         fi
+
+    - name: Display Test Results
+      if: always()
+      run: |
+        echo "📊 Test Results Summary"
+        echo "Total Tests: $TOTAL_TESTS"
+        echo "Passed: $TOTAL_PASSED"
+        echo "Failed: $TOTAL_FAILED"
 
     - name: Get test results
       id: test-results
       if: always()
       run: |
         if [ -f "cypress/reports/results.json" ]; then
-          # Read values directly
-          TOTAL=$(jq '.totalTests' cypress/reports/results.json)
-          PASSED=$(jq '.totalPassed' cypress/reports/results.json)
-          FAILED=$(jq '.totalFailed' cypress/reports/results.json)
+          echo "Reading results summary..."
+          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
+          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
+          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
           
-          # Ensure we have numbers
-          if [ -z "$TOTAL" ] || [ -z "$PASSED" ] || [ -z "$FAILED" ]; then
-            echo "Error: Missing values in results.json"
-            cat cypress/reports/results.json
-            exit 1
-          fi
-          
-          # Set outputs
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
           echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
           
-          echo "Final Test Results Summary:"
+          echo "Test Results Summary:"
           echo "Total: $TOTAL"
           echo "Passed: $PASSED"
           echo "Failed: $FAILED"
