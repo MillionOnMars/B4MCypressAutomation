@@ -61,45 +61,42 @@ jobs:
     - name: Process Cypress results
       if: always()
       run: |
-        # Find the latest mochawesome JSON report
         LATEST_REPORT=$(ls -t cypress/reports/mochawesome/mochawesome*.json | head -n 1)
         
         if [ -f "$LATEST_REPORT" ]; then
           echo "Found report file: $LATEST_REPORT"
           
-          # Debug: Print raw JSON stats
-          echo "Raw stats from report:"
-          jq '.stats' "$LATEST_REPORT"
+          # Debug: Print full report content
+          echo "Full report content:"
+          cat "$LATEST_REPORT"
           
-          # Extract test counts with error checking
-          TOTAL=$(jq -e '[.stats.tests] | add' "$LATEST_REPORT" || echo 0)
-          PASSING=$(jq -e '[.stats.passes] | add' "$LATEST_REPORT" || echo 0)
-          FAILING=$(jq -e '[.stats.failures] | add' "$LATEST_REPORT" || echo 0)
+          # Extract stats directly
+          TOTAL=$(jq '.stats.tests' "$LATEST_REPORT")
+          PASSING=$(jq '.stats.passes' "$LATEST_REPORT")
+          FAILING=$(jq '.stats.failures' "$LATEST_REPORT")
           
-          # Validate numbers
-          if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
-            echo "Warning: Total tests count is 0 or empty"
-          fi
+          # Ensure numbers are valid
+          TOTAL=${TOTAL:-0}
+          PASSING=${PASSING:-0}
+          FAILING=${FAILING:-0}
           
           echo "Test Results Summary:"
-          echo "Total: ${TOTAL:-0}"
-          echo "Passing: ${PASSING:-0}"
-          echo "Failing: ${FAILING:-0}"
+          echo "Total: $TOTAL"
+          echo "Passing: $PASSING"
+          echo "Failing: $FAILING"
           
-          # Save to results.json with validation
-          if [ ! -z "$TOTAL" ] && [ ! -z "$PASSING" ] && [ ! -z "$FAILING" ]; then
-            jq -n \
-              --arg total "${TOTAL:-0}" \
-              --arg passed "${PASSING:-0}" \
-              --arg failed "${FAILING:-0}" \
-              '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
-            echo "Results saved to results.json"
-          else
-            echo "Error: Invalid test counts, not saving results"
-            exit 1
-          fi
+          # Create results.json with explicit numbers
+          cat << EOF > cypress/reports/results.json
+{
+  "totalTests": $TOTAL,
+  "totalPassed": $PASSING,
+  "totalFailed": $FAILING
+}
+EOF
+          echo "Created results.json with actual numbers"
+          cat cypress/reports/results.json
         else
-          echo "No mochawesome report found in directory:"
+          echo "No mochawesome report found"
           ls -la cypress/reports/mochawesome/
           exit 1
         fi
@@ -109,16 +106,24 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/reports/results.json" ]; then
-          echo "Reading results summary..."
-          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
-          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
-          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
+          # Read values directly
+          TOTAL=$(jq '.totalTests' cypress/reports/results.json)
+          PASSED=$(jq '.totalPassed' cypress/reports/results.json)
+          FAILED=$(jq '.totalFailed' cypress/reports/results.json)
           
+          # Ensure we have numbers
+          if [ -z "$TOTAL" ] || [ -z "$PASSED" ] || [ -z "$FAILED" ]; then
+            echo "Error: Missing values in results.json"
+            cat cypress/reports/results.json
+            exit 1
+          fi
+          
+          # Set outputs
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
           echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
           
-          echo "Test Results Summary:"
+          echo "Final Test Results Summary:"
           echo "Total: $TOTAL"
           echo "Passed: $PASSED"
           echo "Failed: $FAILED"
