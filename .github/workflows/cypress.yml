@@ -139,7 +139,7 @@ jobs:
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
           # Format credits data with ResponseTime using jq
-          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), time: \(.ResponseTime)") | join("\n")' cypress/fixtures/credits.json)
+          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime)") | join("\n")' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
