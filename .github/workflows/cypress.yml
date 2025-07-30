@@ -158,7 +158,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Preview' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
