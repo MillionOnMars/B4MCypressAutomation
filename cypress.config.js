@@ -5,7 +5,8 @@ const path = require('path');
 // Define global environment URLs
 const environments = {
   staging: 'https://app.staging.bike4mind.com/',
-  production: 'https://app.bike4mind.com/'
+  production: 'https://app.bike4mind.com/',
+  preview: 'https://app.sstv3.preview.bike4mind.com/'
 };
 
 module.exports = defineConfig({
@@ -20,11 +21,14 @@ module.exports = defineConfig({
     ],
     supportFile: 'cypress/support/index.js',
     env: {
-      //set appURL to production or staging
-      appUrl: process.env.CYPRESS_APP_URL || environments.staging
+      //set appURL to production or preview
+      appUrl: process.env.CYPRESS_APP_URL || environments.preview
     },
     viewportWidth: 1920,
     viewportHeight: 1080,
+    defaultCommandTimeout: 10000,
+    pageLoadTimeout: 30000,
+    elementTimeout: 10000,
     setupNodeEvents(on, config) {
       on('task', {
         writeFile({ filePath, content }) {
