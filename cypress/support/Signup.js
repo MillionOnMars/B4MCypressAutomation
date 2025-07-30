@@ -1,4 +1,3 @@
-
 let testUser,adminUser;
 
 before(() => {
@@ -82,23 +81,52 @@ const signUpWithMismatchedPasswords = () => {
     const account = testUser;
     const mismatchedPassword = 'DifferentPassword123!';
 
-    // Visit the home page
-    cy.visit(Cypress.env('appUrl'))
+    // Visit the home page with increased timeout
+    cy.visit(Cypress.env('appUrl'), { timeout: 30000 });
 
-    // Click on the signup button
-    cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
+    // Wait for page load
+    cy.document().should('have.property', 'readyState', 'complete');
+
+    // Click on the signup button with better waiting
+    cy.get('.css-1uc3zfw', { timeout: 10000 })
+        .should('be.visible')
+        .should('be.enabled')
+        .click();
 
     // Verify we're on the signup page
     verifyPage('register'); 
 
-    // Fill in the signup form with mismatched passwords
-    cy.get('#username').should('be.visible').type(account.username);
-    cy.get('.MuiInput-root > #email').should('be.visible').type(account.email);
-    cy.get('#password').should('be.visible').type(account.password);
-    cy.get('#confirmPassword').should('be.visible').type(mismatchedPassword);
+    // Fill in the signup form with proper waits
+    cy.get('#username', { timeout: 10000 })
+        .should('be.visible')
+        .should('be.enabled')
+        .clear()
+        .type(account.username, { delay: 50 });
 
-    // Verify error message
-    cy.contains("Passwords don't match").should('be.visible');
+    cy.get('.MuiInput-root > #email', { timeout: 10000 })
+        .should('be.visible')
+        .should('be.enabled')
+        .clear()
+        .type(account.email, { delay: 50 });
+
+    cy.get('#password', { timeout: 10000 })
+        .should('be.visible')
+        .should('be.enabled')
+        .clear()
+        .type(account.password, { delay: 50 });
+
+    // Add a small wait before typing confirm password
+    cy.wait(500);
+
+    cy.get('#confirmPassword', { timeout: 10000 })
+        .should('be.visible')
+        .should('be.enabled')
+        .clear()
+        .type(mismatchedPassword, { delay: 50 });
+
+    // Verify error message with increased timeout
+    cy.contains("Passwords don't match", { timeout: 10000 })
+        .should('be.visible');
 };
 
 const signUpWithLess8CharPass = () => {
