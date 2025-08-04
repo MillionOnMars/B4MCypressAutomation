@@ -59,65 +59,45 @@ jobs:
       id: test-results
       if: always()
       run: |
-        # Find the latest junit report
-        REPORT=$(find cypress/reports -name "junit-*.xml" -type f -print0 | xargs -0 ls -t | head -n1)
-        
-        if [ -f "$REPORT" ]; then
-          echo "Processing test results from: $REPORT"
-          echo "Report content:"
-          cat "$REPORT"
+        # First try the results.json file (most reliable)
+        if [ -f "cypress/reports/results.json" ]; then
+          echo "Processing results from results.json"
           
-          # Install xmllint if needed
-          if ! command -v xmllint &> /dev/null; then
-            echo "Installing xmllint..."
-            apt-get update && apt-get install -y libxml2-utils
+          # Install jq if needed
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            apt-get update && apt-get install -y jq
           fi
           
-          # Extract test counts with fallbacks
-          TOTAL=$(xmllint --xpath "string(//testsuite/@tests)" "$REPORT" || echo "0")
-          FAILURES=$(xmllint --xpath "string(//testsuite/@failures)" "$REPORT" || echo "0")
-          SKIPPED=$(xmllint --xpath "string(//testsuite/@skipped)" "$REPORT" || echo "0")
-          
-          # Set defaults if empty
-          TOTAL=${TOTAL:-0}
-          FAILURES=${FAILURES:-0}
-          SKIPPED=${SKIPPED:-0}
-          
-          # Calculate passing tests
-          PASSING=$((TOTAL - FAILURES - SKIPPED))
-          
-          # Set environment variables
-          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
-          echo "PASSING_TESTS=$PASSING" >> $GITHUB_ENV
-          echo "FAILING_TESTS=$FAILURES" >> $GITHUB_ENV
-          echo "SKIPPED_TESTS=$SKIPPED" >> $GITHUB_ENV
+          # Extract test counts
+          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
+          PASSING=$(jq -r '.totalPassed' cypress/reports/results.json)
+          FAILING=$(jq -r '.totalFailed' cypress/reports/results.json)
           
           echo "Test Results Summary:"
           echo "┌────────────────────────────────┐"
           echo "│ Total Tests: $TOTAL"
           echo "│ Passing: $PASSING"
-          echo "│ Failing: $FAILURES"
-          echo "│ Skipped: $SKIPPED"
+          echo "│ Failing: $FAILING"
           echo "└────────────────────────────────┘"
           
-          # Set outputs
+          # Set environment variables and outputs
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSING_TESTS=$PASSING" >> $GITHUB_ENV
+          echo "FAILING_TESTS=$FAILING" >> $GITHUB_ENV
+          
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "passing=$PASSING" >> $GITHUB_OUTPUT
-          echo "failing=$FAILURES" >> $GITHUB_OUTPUT
+          echo "failing=$FAILING" >> $GITHUB_OUTPUT
         else
-          echo "No test report found in cypress/reports/"
+          echo "No results.json found"
           echo "Available files:"
           find cypress/reports -type f | sort
           
-          # Create a default empty report
-          mkdir -p cypress/reports
-          echo '<testsuites tests="0" failures="0" skipped="0"></testsuites>' > cypress/reports/empty-report.xml
-          
-          # Set default values
+          # Default values if no results found
           echo "TOTAL_TESTS=0" >> $GITHUB_ENV
           echo "PASSING_TESTS=0" >> $GITHUB_ENV
           echo "FAILING_TESTS=0" >> $GITHUB_ENV
-          echo "SKIPPED_TESTS=0" >> $GITHUB_ENV
           
           echo "total=0" >> $GITHUB_OUTPUT
           echo "passing=0" >> $GITHUB_OUTPUT
