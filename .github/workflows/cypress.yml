@@ -114,3 +114,118 @@ jobs:
         echo "│ Failing: $FAILING_TESTS"
         echo "│ Skipped: $SKIPPED_TESTS"
         echo "└────────────────────────────────┘"
+
+      # Add step to get console errors count
+    - name: Get console errors
+      id: console-errors
+      if: always()
+      run: |
+        if [ -f "cypress/reports/consoleErrors.json" ]; then
+          TOTAL_ERRORS=$(jq -r '.totalErrors' cypress/reports/consoleErrors.json)
+          echo "total=$TOTAL_ERRORS" >> "$GITHUB_OUTPUT"
+          echo "Found $TOTAL_ERRORS console errors"
+        else
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "No consoleErrors.json found"
+        fi
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cypress-results-${{ github.run_id }}
+        path: |
+          cypress/reports/mochawesome-html/**
+          cypress/reports/mochawesome/*.json
+          cypress/screenshots/**/*.png
+          cypress/videos/**/*.mp4
+          cypress/fixtures/credits.json
+          cypress/reports/consoleErrors.json
+          cypress/reports/results.json
+        if-no-files-found: warn
+        retention-days: 14
+
+    - name: Get credits data
+      id: credits
+      if: always()
+      run: |
+        if [ -f "cypress/fixtures/credits.json" ]; then
+          # Format credits data with ResponseTime using jq
+          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime)") | join("\n")' cypress/fixtures/credits.json)
+          # Escape newlines for GitHub Actions output
+          CREDITS="${CREDITS//$'\n'/'\n'}"
+          echo "credits=$CREDITS" >> $GITHUB_OUTPUT
+          echo "Found credits data:"
+          echo "$CREDITS" 
+        else
+          echo "No credits.json file found"
+          echo "credits=No credits data available" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Send Slack notification
+      if: always()
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "username": "GitHub Actions",
+            "icon_emoji": ":github:",
+            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Check for slow responses in credits.json
+      id: slow
+      if: always()
+      run: |
+        SLOW=false
+        if [ -f "cypress/fixtures/credits.json" ]; then
+          # Extract and check if any ResponseTime > 10
+          SLOW_COUNT=$(jq '[.[] | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 10)] | length' cypress/fixtures/credits.json)
+          if [ "$SLOW_COUNT" -gt 0 ]; then
+            SLOW=true
+            echo "There are $SLOW_COUNT slow responses (>10 sec) in credits.json"
+          fi
+        fi
+        echo "slow=$SLOW" >> $GITHUB_OUTPUT
+
+    - name: Send Slack notification for slow responses
+      if: steps.slow.outputs.slow == 'true'
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "⚠️ One or more text model responses took more than 10 seconds! Please investigate.<#C08QZ42L9KM|b4m-automation-results>."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES}}
+
+    - name: Check for high credit usage
+      id: highcredits
+      if: always()
+      run: |
+        if [ -f "cypress/fixtures/credits.json" ]; then
+          HIGH=$(jq '[.[] | select(.Credits|tonumber >= 20)] | length' cypress/fixtures/credits.json)
+          if [ "$HIGH" -gt 0 ]; then
+            echo "high=true" >> $GITHUB_OUTPUT
+            echo "$HIGH entries used 20 or more credits."
+          else
+            echo "high=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "high=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Send Slack notification for high credit usage
+      if: steps.highcredits.outputs.high == 'true'
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "⚠️ One or more requests used 20 or more credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
+
+
