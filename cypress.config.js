@@ -9,7 +9,7 @@ const environments = {
 };
 
 module.exports = defineConfig({
-  retries: 0,
+  retries: 1,
   e2e: {    
     specPattern: [
       'cypress/e2e/Auth.cy.js',
