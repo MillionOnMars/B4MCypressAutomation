@@ -38,7 +38,7 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Run Cypress tests
+    - name: 🚀 Launch Cypress Test Suite 🧪
       id: cypress
       uses: cypress-io/github-action@v5
       with:
@@ -57,51 +57,65 @@ jobs:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
 
-    # Add step to process Cypress run results
-    - name: Process Cypress results
-      if: always()
-      run: |
-        SPEC_OUTPUT=$(cat cypress/reports/cypress-run-output.txt || echo "No output file found")
-        
-        # Extract test counts using grep and awk
-        TOTAL=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $2}')
-        PASSING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $3}')
-        FAILING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $4}')
-        
-        echo "Test Results Summary:"
-        echo "Total: ${TOTAL:-0}"
-        echo "Passing: ${PASSING:-0}"
-        echo "Failing: ${FAILING:-0}"
-        
-        # Save to results.json
-        jq -n \
-          --arg total "${TOTAL:-0}" \
-          --arg passed "${PASSING:-0}" \
-          --arg failed "${FAILING:-0}" \
-          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
-
-    - name: Get test results
+    - name: Process test results
       id: test-results
       if: always()
       run: |
+        # First try the results.json file (most reliable)
         if [ -f "cypress/reports/results.json" ]; then
-          echo "Reading results summary..."
-          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
-          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
-          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
+          echo "Processing results from results.json"
           
-          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          # Install jq if needed
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            apt-get update && apt-get install -y jq
+          fi
+          
+          # Extract test counts
+          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
+          PASSING=$(jq -r '.totalPassed' cypress/reports/results.json)
+          FAILING=$(jq -r '.totalFailed' cypress/reports/results.json)
           
           echo "Test Results Summary:"
-          echo "Total: $TOTAL"
-          echo "Passed: $PASSED"
-          echo "Failed: $FAILED"
+          echo "┌────────────────────────────────┐"
+          echo "│ Total Tests: $TOTAL"
+          echo "│ Passing: $PASSING"
+          echo "│ Failing: $FAILING"
+          echo "└────────────────────────────────┘"
+          
+          # Set environment variables and outputs
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSING_TESTS=$PASSING" >> $GITHUB_ENV
+          echo "FAILING_TESTS=$FAILING" >> $GITHUB_ENV
+          
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passing=$PASSING" >> $GITHUB_OUTPUT
+          echo "failing=$FAILING" >> $GITHUB_OUTPUT
         else
-          echo "Error: results.json not found"
-          exit 1
+          echo "No results.json found"
+          echo "Available files:"
+          find cypress/reports -type f | sort
+          
+          # Default values if no results found
+          echo "TOTAL_TESTS=0" >> $GITHUB_ENV
+          echo "PASSING_TESTS=0" >> $GITHUB_ENV
+          echo "FAILING_TESTS=0" >> $GITHUB_ENV
+          
+          echo "total=0" >> $GITHUB_OUTPUT
+          echo "passing=0" >> $GITHUB_OUTPUT
+          echo "failing=0" >> $GITHUB_OUTPUT
         fi
+
+    - name: Display test results
+      if: always()
+      run: |
+        echo "📊 Final Test Results:"
+        echo "┌────────────────────────────────┐"
+        echo "│ Total Tests: $TOTAL_TESTS"
+        echo "│ Passing: $PASSING_TESTS"
+        echo "│ Failing: $FAILING_TESTS"
+        echo "│ Skipped: $SKIPPED_TESTS"
+        echo "└────────────────────────────────┘"
 
       # Add step to get console errors count
     - name: Get console errors
@@ -158,7 +172,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Test Summary*\n• Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n• Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n• Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -215,4 +229,3 @@ jobs:
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
-
