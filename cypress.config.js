@@ -9,7 +9,7 @@ const environments = {
 };
 
 module.exports = defineConfig({
-  retries: 1,
+  retries: 0,
   e2e: {    
     specPattern: [
       'cypress/e2e/Auth.cy.js',
@@ -25,14 +25,6 @@ module.exports = defineConfig({
     },
     viewportWidth: 1920,
     viewportHeight: 1080,
-    
-    // Add reporter configuration
-    reporter: 'junit',
-    reporterOptions: {
-      mochaFile: 'cypress/reports/junit-results-[hash].xml',
-      toConsole: true
-    },
-    
     setupNodeEvents(on, config) {
       on('task', {
         writeFile({ filePath, content }) {
@@ -82,43 +74,6 @@ module.exports = defineConfig({
 
           fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
           return null;
-        }
-      });
-      
-      // Add test results reporting
-      on('after:run', (results) => {
-        if (results) {
-          // Create a summary file with test counts
-          const summary = {
-            totalTests: results.totalTests,
-            totalPassed: results.totalPassed,
-            totalFailed: results.totalFailed,
-            totalPending: results.totalPending,
-            totalSkipped: results.totalSkipped,
-            browserName: results.browserName,
-            browserVersion: results.browserVersion,
-            osName: results.osName,
-            osVersion: results.osVersion,
-            cypressVersion: results.cypressVersion,
-            startedAt: results.startedAt,
-            endedAt: results.endedAt
-          };
-          
-          // Ensure directory exists
-          if (!fs.existsSync('cypress/reports')) {
-            fs.mkdirSync('cypress/reports', { recursive: true });
-          }
-          
-          // Write results summary
-          fs.writeFileSync(
-            'cypress/reports/results.json',
-            JSON.stringify(summary, null, 2)
-          );
-          
-          console.log('Test results summary:');
-          console.log(`Total: ${summary.totalTests}`);
-          console.log(`Passed: ${summary.totalPassed}`);
-          console.log(`Failed: ${summary.totalFailed}`);
         }
       });
     }
