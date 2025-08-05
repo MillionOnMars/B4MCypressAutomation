@@ -38,7 +38,7 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Run Cypress tests
+    - name: 🚀 Launch Cypress Test Suite 🧪
       id: cypress
       uses: cypress-io/github-action@v5
       with:
