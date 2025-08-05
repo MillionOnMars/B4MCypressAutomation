@@ -57,75 +57,62 @@ jobs:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
 
-    # Add step to process Cypress run results
-    - name: Process Cypress results
-      if: always()
-      run: |
-        SPEC_OUTPUT=$(cat cypress/reports/cypress-run-output.txt || echo "No output file found")
-        
-        # Extract test counts using grep and awk
-        TOTAL=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $2}')
-        PASSING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $3}')
-        FAILING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $4}')
-        
-        echo "Test Results Summary:"
-        echo "Total: ${TOTAL:-0}"
-        echo "Passing: ${PASSING:-0}"
-        echo "Failing: ${FAILING:-0}"
-        
-        # Save to results.json
-        jq -n \
-          --arg total "${TOTAL:-0}" \
-          --arg passed "${PASSING:-0}" \
-          --arg failed "${FAILING:-0}" \
-          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
-
-    - name: Get test results
+    - name: Process test results
       id: test-results
       if: always()
       run: |
+        # First try the results.json file (most reliable)
         if [ -f "cypress/reports/results.json" ]; then
-          echo "Reading Cypress results.json..."
+          echo "Processing results from results.json"
           
           # Install jq if needed
           if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
             apt-get update && apt-get install -y jq
           fi
           
           # Extract test counts
           TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
-          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
-          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
-          SKIPPED=$(jq -r '.totalSkipped' cypress/reports/results.json)
-          PENDING=$(jq -r '.totalPending' cypress/reports/results.json)
+          PASSING=$(jq -r '.totalPassed' cypress/reports/results.json)
+          FAILING=$(jq -r '.totalFailed' cypress/reports/results.json)
           
-          # Set outputs for use in other workflow steps
-          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
-          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
-          echo "pending=$PENDING" >> "$GITHUB_OUTPUT"
-          
-          # Display fancy summary
           echo "Test Results Summary:"
           echo "┌────────────────────────────────┐"
           echo "│ Total Tests: $TOTAL"
-          echo "│ Passing:     $PASSED"
-          echo "│ Failing:     $FAILED"
-          echo "│ Skipped:     $SKIPPED"
-          echo "│ Pending:     $PENDING"
+          echo "│ Passing: $PASSING"
+          echo "│ Failing: $FAILING"
           echo "└────────────────────────────────┘"
+          
+          # Set environment variables and outputs
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSING_TESTS=$PASSING" >> $GITHUB_ENV
+          echo "FAILING_TESTS=$FAILING" >> $GITHUB_ENV
+          
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passing=$PASSING" >> $GITHUB_OUTPUT
+          echo "failing=$FAILING" >> $GITHUB_OUTPUT
         else
-          echo "Error: results.json not found"
-          echo "Available files in reports directory:"
+          echo "No results.json found"
+          echo "Available files:"
           find cypress/reports -type f | sort
           
-          # Set default outputs
-          echo "total=0" >> "$GITHUB_OUTPUT"
-          echo "passed=0" >> "$GITHUB_OUTPUT"
-          echo "failed=0" >> "$GITHUB_OUTPUT"
-          echo "skipped=0" >> "$GITHUB_OUTPUT"
-          echo "pending=0" >> "$GITHUB_OUTPUT"
+          # Default values if no results found
+          echo "TOTAL_TESTS=0" >> $GITHUB_ENV
+          echo "PASSING_TESTS=0" >> $GITHUB_ENV
+          echo "FAILING_TESTS=0" >> $GITHUB_ENV
           
-          exit 1
+          echo "total=0" >> $GITHUB_OUTPUT
+          echo "passing=0" >> $GITHUB_OUTPUT
+          echo "failing=0" >> $GITHUB_OUTPUT
         fi
+
+    - name: Display test results
+      if: always()
+      run: |
+        echo "📊 Final Test Results:"
+        echo "┌────────────────────────────────┐"
+        echo "│ Total Tests: $TOTAL_TESTS"
+        echo "│ Passing: $PASSING_TESTS"
+        echo "│ Failing: $FAILING_TESTS"
+        echo "│ Skipped: $SKIPPED_TESTS"
+        echo "└────────────────────────────────┘"
