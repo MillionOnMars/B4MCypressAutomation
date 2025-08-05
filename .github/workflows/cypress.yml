@@ -45,45 +45,60 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
-        reporter: 'mocha-junit-reporter'
-        reporter-options: >
-          mochaFile=cypress/reports/junit-[hash].xml,
-          toConsole=true,
-          output=cypress/reports/cypress-run-output.txt,
-          testsuitesTitle=false
+        reporter: mochawesome
+        reporter-options: >-
+          reportDir=cypress/reports/mochawesome,
+          overwrite=false,
+          html=true,
+          json=true,
+          quiet=true,
+          reportFilename=mochawesome-[datetime]
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
 
-    - name: Process test results
+    # Add step to process Cypress run results
+    - name: Process Cypress results
       if: always()
       run: |
-        # Find the latest junit report
-        REPORT=$(find cypress/reports -name "junit-*.xml" -type f -print0 | xargs -0 ls -t | head -n1)
+        SPEC_OUTPUT=$(cat cypress/reports/cypress-run-output.txt || echo "No output file found")
         
-        if [ -f "$REPORT" ]; then
-          echo "Processing test results from: $REPORT"
+        # Extract test counts using grep and awk
+        TOTAL=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $2}')
+        PASSING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $3}')
+        FAILING=$(echo "$SPEC_OUTPUT" | grep "Run Finished" -A 2 | tail -n 1 | awk '{print $4}')
+        
+        echo "Test Results Summary:"
+        echo "Total: ${TOTAL:-0}"
+        echo "Passing: ${PASSING:-0}"
+        echo "Failing: ${FAILING:-0}"
+        
+        # Save to results.json
+        jq -n \
+          --arg total "${TOTAL:-0}" \
+          --arg passed "${PASSING:-0}" \
+          --arg failed "${FAILING:-0}" \
+          '{totalTests: $total, totalPassed: $passed, totalFailed: $failed}' > cypress/reports/results.json
+
+    - name: Get test results
+      id: test-results
+      if: always()
+      run: |
+        if [ -f "cypress/reports/results.json" ]; then
+          echo "Reading results summary..."
+          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
+          PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
+          FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
           
-          # Extract test counts using xmllint
-          TOTAL=$(xmllint --xpath "string(//testsuite/@tests)" "$REPORT")
-          FAILURES=$(xmllint --xpath "string(//testsuite/@failures)" "$REPORT")
-          SKIPPED=$(xmllint --xpath "string(//testsuite/@skipped)" "$REPORT")
-          PASSING=$((TOTAL - FAILURES - SKIPPED))
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
           
           echo "Test Results Summary:"
-          echo "┌────────────────────────────────┐"
-          echo "│ Total Tests: $TOTAL"
-          echo "│ Passing: $PASSING"
-          echo "│ Failing: $FAILURES"
-          echo "│ Skipped: $SKIPPED"
-          echo "└────────────────────────────────┘"
-          
-          # Set outputs
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passing=$PASSING" >> $GITHUB_OUTPUT
-          echo "failing=$FAILURES" >> $GITHUB_OUTPUT
+          echo "Total: $TOTAL"
+          echo "Passed: $PASSED"
+          echo "Failed: $FAILED"
         else
-          echo "No test report found!"
-          ls -la cypress/reports/
+          echo "Error: results.json not found"
           exit 1
         fi
