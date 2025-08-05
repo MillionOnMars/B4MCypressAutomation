@@ -85,20 +85,47 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/reports/results.json" ]; then
-          echo "Reading results summary..."
+          echo "Reading Cypress results.json..."
+          
+          # Install jq if needed
+          if ! command -v jq &> /dev/null; then
+            apt-get update && apt-get install -y jq
+          fi
+          
+          # Extract test counts
           TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
           PASSED=$(jq -r '.totalPassed' cypress/reports/results.json)
           FAILED=$(jq -r '.totalFailed' cypress/reports/results.json)
+          SKIPPED=$(jq -r '.totalSkipped' cypress/reports/results.json)
+          PENDING=$(jq -r '.totalPending' cypress/reports/results.json)
           
+          # Set outputs for use in other workflow steps
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
           echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
+          echo "pending=$PENDING" >> "$GITHUB_OUTPUT"
           
+          # Display fancy summary
           echo "Test Results Summary:"
-          echo "Total: $TOTAL"
-          echo "Passed: $PASSED"
-          echo "Failed: $FAILED"
+          echo "┌────────────────────────────────┐"
+          echo "│ Total Tests: $TOTAL"
+          echo "│ Passing:     $PASSED"
+          echo "│ Failing:     $FAILED"
+          echo "│ Skipped:     $SKIPPED"
+          echo "│ Pending:     $PENDING"
+          echo "└────────────────────────────────┘"
         else
           echo "Error: results.json not found"
+          echo "Available files in reports directory:"
+          find cypress/reports -type f | sort
+          
+          # Set default outputs
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "passed=0" >> "$GITHUB_OUTPUT"
+          echo "failed=0" >> "$GITHUB_OUTPUT"
+          echo "skipped=0" >> "$GITHUB_OUTPUT"
+          echo "pending=0" >> "$GITHUB_OUTPUT"
+          
           exit 1
         fi
