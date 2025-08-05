@@ -45,144 +45,45 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         publish-summary: true
-        # Change the reporter configuration
-        reporter: mochawesome
+        reporter: 'mocha-junit-reporter'
         reporter-options: >
-          reportDir=cypress/reports/mochawesome,
-          overwrite=false,
-          html=true,
-          json=true,
-          quiet=true
+          mochaFile=cypress/reports/junit-[hash].xml,
+          toConsole=true,
+          output=cypress/reports/cypress-run-output.txt,
+          testsuitesTitle=false
       env:
         CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
       continue-on-error: true
-    
-    # Add this step right after to generate a consolidated report
-    - name: Generate Mochawesome report
-      if: always()
-      run: |
-        echo "Generating Mochawesome report"
-        npx mochawesome-merge cypress/reports/mochawesome/*.json > cypress/reports/mochawesome/mochawesome.json
-        npx marge cypress/reports/mochawesome/mochawesome.json --reportDir cypress/reports/mochawesome-html --inline
-        
-        # Extract test counts
-        if [ -f "cypress/reports/mochawesome/mochawesome.json" ]; then
-          # Install jq if needed
-          if ! command -v jq &> /dev/null; then
-            echo "Installing jq..."
-            apt-get update && apt-get install -y jq
-          fi
-          
-          # Extract counts from the combined report
-          TOTAL=$(jq '.stats.tests' cypress/reports/mochawesome/mochawesome.json)
-          PASSING=$(jq '.stats.passes' cypress/reports/mochawesome/mochawesome.json)
-          FAILING=$(jq '.stats.failures' cypress/reports/mochawesome/mochawesome.json)
-          PENDING=$(jq '.stats.pending' cypress/reports/mochawesome/mochawesome.json)
-          SKIPPED=$(jq '.stats.skipped' cypress/reports/mochawesome/mochawesome.json)
-          
-          # Create results.json for compatibility with existing steps
-          cat > cypress/reports/results.json << EOF
-          {
-            "totalTests": $TOTAL,
-            "totalPassed": $PASSING,
-            "totalFailed": $FAILING,
-            "totalPending": $PENDING,
-            "totalSkipped": $SKIPPED
-          }
-          EOF
-          
-          echo "Test results summary created"
-          cat cypress/reports/results.json
-        else
-          echo "No mochawesome report found"
-        fi
 
     - name: Process test results
-      id: test-results
       if: always()
       run: |
-        # First try the results.json file (most reliable)
-        if [ -f "cypress/reports/results.json" ]; then
-          echo "Processing results from results.json"
+        # Find the latest junit report
+        REPORT=$(find cypress/reports -name "junit-*.xml" -type f -print0 | xargs -0 ls -t | head -n1)
+        
+        if [ -f "$REPORT" ]; then
+          echo "Processing test results from: $REPORT"
           
-          # Install jq if needed
-          if ! command -v jq &> /dev/null; then
-            echo "Installing jq..."
-            apt-get update && apt-get install -y jq
-          fi
-          
-          # Extract test counts
-          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
-          PASSING=$(jq -r '.totalPassed' cypress/reports/results.json)
-          FAILING=$(jq -r '.totalFailed' cypress/reports/results.json)
+          # Extract test counts using xmllint
+          TOTAL=$(xmllint --xpath "string(//testsuite/@tests)" "$REPORT")
+          FAILURES=$(xmllint --xpath "string(//testsuite/@failures)" "$REPORT")
+          SKIPPED=$(xmllint --xpath "string(//testsuite/@skipped)" "$REPORT")
+          PASSING=$((TOTAL - FAILURES - SKIPPED))
           
           echo "Test Results Summary:"
           echo "┌────────────────────────────────┐"
           echo "│ Total Tests: $TOTAL"
           echo "│ Passing: $PASSING"
-          echo "│ Failing: $FAILING"
+          echo "│ Failing: $FAILURES"
+          echo "│ Skipped: $SKIPPED"
           echo "└────────────────────────────────┘"
           
-          # Set environment variables and outputs
-          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
-          echo "PASSING_TESTS=$PASSING" >> $GITHUB_ENV
-          echo "FAILING_TESTS=$FAILING" >> $GITHUB_ENV
-          
+          # Set outputs
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "passing=$PASSING" >> $GITHUB_OUTPUT
-          echo "failing=$FAILING" >> $GITHUB_OUTPUT
+          echo "failing=$FAILURES" >> $GITHUB_OUTPUT
         else
-          echo "No results.json found"
-          echo "Available files:"
-          find cypress/reports -type f | sort
-          
-          # Default values if no results found
-          echo "TOTAL_TESTS=0" >> $GITHUB_ENV
-          echo "PASSING_TESTS=0" >> $GITHUB_ENV
-          echo "FAILING_TESTS=0" >> $GITHUB_ENV
-          
-          echo "total=0" >> $GITHUB_OUTPUT
-          echo "passing=0" >> $GITHUB_OUTPUT
-          echo "failing=0" >> $GITHUB_OUTPUT
+          echo "No test report found!"
+          ls -la cypress/reports/
+          exit 1
         fi
-
-    - name: Display test results
-      if: always()
-      run: |
-        echo "📊 Final Test Results:"
-        echo "┌────────────────────────────────┐"
-        echo "│ Total Tests: $TOTAL_TESTS"
-        echo "│ Passing: $PASSING_TESTS"
-        echo "│ Failing: $FAILING_TESTS"
-        echo "│ Skipped: $SKIPPED_TESTS"
-        echo "└────────────────────────────────┘"
-
-      # Add step to get console errors count
-    - name: Get console errors
-      id: console-errors
-      if: always()
-      run: |
-        if [ -f "cypress/reports/consoleErrors.json" ]; then
-          TOTAL_ERRORS=$(jq -r '.totalErrors' cypress/reports/consoleErrors.json)
-          echo "total=$TOTAL_ERRORS" >> "$GITHUB_OUTPUT"
-          echo "Found $TOTAL_ERRORS console errors"
-        else
-          echo "total=0" >> "$GITHUB_OUTPUT"
-          echo "No consoleErrors.json found"
-        fi
-
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: cypress-results-${{ github.run_id }}
-        path: |
-          cypress/screenshots/**/*.png
-          cypress/videos/**/*.mp4
-          cypress/fixtures/credits.json
-          cypress/reports/consoleErrors.json
-          cypress/reports/results.json
-          cypress/reports/cypress-run-output.txt
-        if-no-files-found: warn
-        retention-days: 14
-
