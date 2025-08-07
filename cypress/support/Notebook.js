@@ -203,13 +203,12 @@ const selectTxtModel = (model) => {
         .should('exist')
         .click({ force: true }); 
 
-    //clicks close button
-    if(model !== 'GPT-4.1'){
-        cy.get(".MuiBox-root.css-6zgsse > button")
-            .eq(1)
-            .should('be.visible')
-            .click();
-    }
+    // clicks close button
+    cy.get(".MuiBox-root.css-6zgsse > button")
+        .eq(1)
+        .should('be.visible')
+        .click();
+    // Verify the model is visible   
     cy.contains(model, { timeout: 20000})
         .should('be.visible')
 }
