@@ -8,6 +8,7 @@ const navigateToLoginPage = () => {
 // Authenticate a user with provided credentials
 const authenticateUser = (username, password) => {
     cy.get('[id="username"]', { timeout: TIMEOUT }).type(username);
+    cy.get('[type="submit"]', { timeout: TIMEOUT }).click();
     cy.get('[id="password"]', { timeout: TIMEOUT }).type(password);
     cy.get('[type="submit"]', { timeout: TIMEOUT }).click();
 };
