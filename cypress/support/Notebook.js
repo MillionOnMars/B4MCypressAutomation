@@ -37,9 +37,9 @@ const createNote = (promptType, model) => {
     cy.contains('New Notebook', { timeout: 50000 })
         .should('be.visible');
 
-    // Wait until the question appears
-    cy.contains(testCase.prompt, { timeout: 50000 })
-        .should('be.visible');
+    // // Wait until the question appears
+    // cy.contains(testCase.prompt, { timeout: 50000 })
+    //     .should('be.visible');
 
     // Handle both array and string answers
     if (Array.isArray(testCase.answer)) {
@@ -50,6 +50,10 @@ const createNote = (promptType, model) => {
     } else {
         return new Cypress.Promise(resolve => {
             cy.window().then(() => { startTime = Date.now(); });
+
+            // Wait until the question appears
+            cy.contains(testCase.prompt, { timeout: 50000 })
+                .should('be.visible');
             
             cy.get('p.MuiTypography-root')
                 .contains(testCase.answer, { timeout: 50000, matchCase: false })
