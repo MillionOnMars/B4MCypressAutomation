@@ -275,7 +275,7 @@ const uploadFile = (promptType) => {
         .click();
 
     //Upload from computer
-    cy.get('li[role="menuitem"]').eq(1)
+    cy.get('[role="button"]').eq(2)
         .should('be.visible')
         .click();
 
