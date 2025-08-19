@@ -191,7 +191,7 @@ const deleteNote = (Name) => {
 };
 
 const selectTxtModel = (model) => {
-    cy.get('.css-1bqn7pp', {timeout: 50000})
+    cy.get('.css-1juad4n', {timeout: 50000})
         .eq(0)
         .should('be.visible')
         .click();
@@ -279,7 +279,7 @@ const uploadFile = (promptType) => {
         .click();
 
     //Upload from computer
-    cy.get('li[role="menuitem"]').eq(1)
+    cy.get('[role="button"]').eq(2)
         .should('be.visible')
         .click();
 
