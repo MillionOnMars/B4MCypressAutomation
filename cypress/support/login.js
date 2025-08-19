@@ -6,6 +6,9 @@ export function login(username, password) {
     cy.get('[name="username"]', { timeout: 10000 })
         .should('be.visible')
         .type(username);
+    cy.get('button[type="submit"]', { timeout: 10000 })
+        .should('be.visible')
+        .click();
     cy.get('[name="password"]', { timeout: 10000 })
         .should('be.visible')
         .type(password);
