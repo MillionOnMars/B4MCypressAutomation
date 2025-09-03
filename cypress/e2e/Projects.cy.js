@@ -13,6 +13,8 @@ describe('Project Operations', () => {
         Projects.createProject('My New Project');
         // Rename the project
         Projects.renameProject('My New Project', 'Renamed Project');
+        // Open project and add notebook
+        Projects.openProject('Renamed Project','France Capital Inquiry')
         // Deletes the project
         Projects.deleteProject('Renamed Project');
 });
