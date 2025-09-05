@@ -405,9 +405,6 @@ class Notebook {
             it(`Rename a new notebook.`, () => {
                 renameNote(newName);
             });
-            it(`Set agent.`, () => {
-                renameNote(newName);
-            });
         });
     }
     static deleteNotebook(Name) {
