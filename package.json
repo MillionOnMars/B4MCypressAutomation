@@ -16,7 +16,7 @@
   "devDependencies": {
     "@slack/web-api": "^7.9.1",
     "@slack/webhook": "^7.0.5",
-    "cypress": "^14.5.0",
+    "cypress": "^14.5.4",
     "cypress-slack-reporter": "^1.5.4",
     "cypress-xpath": "^2.0.1",
     "dotenv": "^16.5.0",

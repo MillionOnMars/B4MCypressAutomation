@@ -1,4 +1,106 @@
 {
-  "errors": [],
-  "totalErrors": 0
+  "lastUpdate": "2025-09-09T08:37:58.352Z",
+  "totalErrors": 20,
+  "errors": [
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Should create a new project"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Should create a new project"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"ForbiddenError\",\"error\":\"Admin access required\"}",
+      "suite": "Project Operations",
+      "test": "Should create a new project"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Should rename a project"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Should rename a project"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"ForbiddenError\",\"error\":\"Admin access required\"}",
+      "suite": "Project Operations",
+      "test": "Should rename a project"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Adds notebook."
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Adds notebook."
+    },
+    {
+      "message": "Axios Error: {\"name\":\"ForbiddenError\",\"error\":\"Admin access required\"}",
+      "suite": "Project Operations",
+      "test": "Adds notebook."
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Upload file"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Upload file"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"ForbiddenError\",\"error\":\"Admin access required\"}",
+      "suite": "Project Operations",
+      "test": "Upload file"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Add members"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Add members"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Create notebook"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Create notebook"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"ForbiddenError\",\"error\":\"Admin access required\"}",
+      "suite": "Project Operations",
+      "test": "Create notebook"
+    },
+    {
+      "message": "Axios Error: Unauthorized",
+      "suite": "Project Operations",
+      "test": "Should delete a project"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"JsonWebTokenError\",\"error\":\"jwt must be provided\"}",
+      "suite": "Project Operations",
+      "test": "Should delete a project"
+    },
+    {
+      "message": "Axios Error: {\"name\":\"ForbiddenError\",\"error\":\"Admin access required\"}",
+      "suite": "Project Operations",
+      "test": "Should delete a project"
+    }
+  ]
 }
