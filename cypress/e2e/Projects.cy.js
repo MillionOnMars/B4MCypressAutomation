@@ -14,7 +14,7 @@ describe('Project Operations', () => {
         // Rename the project
         Projects.renameProject('My New Project', 'Renamed Project');
         // Open project and add notebook
-        Projects.openProject('Renamed Project','capital')
+        Projects.openProject('Renamed Project','France Capital Inquiry')
         // Deletes the project
         Projects.deleteProject('Renamed Project');
 });
