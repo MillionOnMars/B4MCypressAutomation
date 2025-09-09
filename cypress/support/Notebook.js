@@ -446,7 +446,7 @@ class Notebook {
         });
     }
     static multiUpload(promptType,model,promptNo) {
-        it(`Upload file and validate reply for ${model}.`, () => {
+        it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
             uploadFile(promptType);
             fileOperation('addFile', promptType);
