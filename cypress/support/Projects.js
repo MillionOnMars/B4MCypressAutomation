@@ -15,7 +15,7 @@ const openProject = (projectName) => {
         .click();
 
     // Verify the project list is visible
-    cy.contains ('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible')
+    cy.contains('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible')
 
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
@@ -123,7 +123,7 @@ const deleteProject = (projectName) => {
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('not.exist');
 };
 
-const addNotebook = (notebookName,projectName) => {
+const addNotebook = (notebookName, projectName) => {
     openProject(projectName);
 
     //Click Add Notebooks button
@@ -143,7 +143,7 @@ const addNotebook = (notebookName,projectName) => {
     // Verify sessions added message
     cy.contains('Sessions added to project successfully', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
-    
+
 };
 
 const removeNotebook = (notebookName) => {
@@ -177,7 +177,7 @@ const removeNotebook = (notebookName) => {
         .should('not.exist');
 };
 
-const uploadFileWithFileBrowser = (promptType,projectName) => {
+const uploadFileWithFileBrowser = (promptType, projectName) => {
     openProject(projectName);
     const testCase = prompts[promptType];
     const filename = testCase.filepath.split("/").pop();
@@ -190,11 +190,11 @@ const uploadFileWithFileBrowser = (promptType,projectName) => {
     cy.xpath("//p[normalize-space()='File Browser']", { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
- 
+
     //Checks if file is present
     cy.contains(filename)
-      .should("be.visible")
-      .click();
+        .should("be.visible")
+        .click();
 
     //click add file
     cy.contains("Add 1 File").should("be.visible").click();
@@ -204,7 +204,7 @@ const uploadFileWithFileBrowser = (promptType,projectName) => {
         .should('be.visible');
 };
 
-const createNotebook = (promptType,projectName) => {
+const createNotebook = (promptType, projectName) => {
     openProject(projectName);
     const testCase = prompts[promptType];
     let startTime;
@@ -242,7 +242,7 @@ const createNotebook = (promptType,projectName) => {
             // Wait until the question appears
             cy.contains(testCase.prompt, { timeout: 50000 })
                 .should('be.visible');
-            
+
             cy.get('p.MuiTypography-root')
                 .contains(testCase.answer, { timeout: 50000, matchCase: false })
                 .should('be.visible')
@@ -251,30 +251,33 @@ const createNotebook = (promptType,projectName) => {
                     cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
                     resolve(duration);
                 });
-                cy.log('Notebook creation completed successfully.');
+            cy.contains('Renamed Project', { timeout: 50000 })
+                .should('be.visible');
+            cy.log('Notebook creation completed successfully.');
+
         });
-        
+
     }
-    
-    
-    
+
+
+
 };
 
 class Projects {
-    static openProject(projectName,notebookName) {
+    static openProject(projectName, notebookName) {
         describe('Project Operations', () => {
-          it("Adds notebook.", () => {
-            addNotebook(notebookName,projectName);
-          });
-          it("Upload file", () => {
-            uploadFileWithFileBrowser('prime',projectName)
-          });
-          it("Add members", () => {
-          });
-          it("Create notebook", () => {
-            createNotebook(notebookName, projectName);
-          });
-      });
+            it("Adds notebook.", () => {
+                addNotebook(notebookName, projectName);
+            });
+            it("Upload file", () => {
+                uploadFileWithFileBrowser('prime', projectName)
+            });
+            it("Add members", () => {
+            });
+            it("Create notebook", () => {
+                createNotebook(notebookName, projectName);
+            });
+        });
     }
     static createProject(projectName) {
         it('Should create a new project', () => {
@@ -290,10 +293,10 @@ class Projects {
 
     static deleteProject(projectName) {
         describe('Delete Project', () => {
-        it('Should delete a project', () => {
-            deleteProject(projectName);
+            it('Should delete a project', () => {
+                deleteProject(projectName);
+            });
         });
-      });
     }
     static createNotebook(notebookName, projectName) {
         it('Should create a new notebook', () => {
