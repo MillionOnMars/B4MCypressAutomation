@@ -9,7 +9,7 @@
         "answer": "Paris",
         "filePath": "cypress/fixtures/upload/cat.png"
     },
-    "recipe": {
+    "txt-recipe": {
         "filepath": "cypress/fixtures/upload/recipe.txt",
         "queries": [
             {
@@ -27,6 +27,32 @@
             {
                 "prompt": "What recipe can Corn be used on?",
                 "answer": "Tortilla"
+            }
+        ]
+    },
+    "image-cat": {
+        "filepath": "cypress/fixtures/upload/cat.png",
+        "queries": [
+            {
+                "prompt": "What is the color of the cat?",
+                "answer": "orange"
+            },
+            {
+                "prompt": "How many cats in the picture?",
+                "answer": "one"
+            }
+        ]
+    },
+    "pdf-lorem": {
+        "filepath": "cypress/fixtures/upload/sample.pdf",
+        "queries": [
+            {
+                "prompt": "What is the file all about?",
+                "answer": "lorem ipsum"
+            },
+            {
+                "prompt": "What is the content of the file?",
+                "answer": "layout"
             }
         ]
     }
