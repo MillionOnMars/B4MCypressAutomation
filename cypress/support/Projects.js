@@ -251,7 +251,7 @@ const createNotebook = (promptType, projectName) => {
                     cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
                     resolve(duration);
                 });
-            cy.contains('Renamed Project', { timeout: 50000 })
+            cy.contains(projectName, { timeout: 50000 })
                 .should('be.visible');
             cy.log('Notebook creation completed successfully.');
 
