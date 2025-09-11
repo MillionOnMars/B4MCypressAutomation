@@ -54,8 +54,8 @@ const createNote = (promptType, model) => {
             // Wait until the question appears
             cy.contains(testCase.prompt, { timeout: 50000 })
                 .should('be.visible');
-            
-            cy.get('p.MuiTypography-root')
+
+            cy.get('[data-testid="ai-response"]')
                 .contains(testCase.answer, { timeout: 50000, matchCase: false })
                 .should('be.visible')
                 .then(() => {
@@ -85,8 +85,8 @@ const sendPrompt = (promptType, promptNo, model) => {
         }
 
         // Handle both single prompt and array of prompts
-        const currentPromptData = testCase.queries ? 
-            testCase.queries[currentPrompt % testCase.queries.length] : 
+        const currentPromptData = testCase.queries ?
+            testCase.queries[currentPrompt % testCase.queries.length] :
             testCase;
 
         //enter prompt
@@ -94,8 +94,8 @@ const sendPrompt = (promptType, promptNo, model) => {
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
-            .wait(2000); 
-        
+            .wait(2000);
+
         if(model == 'claude-3-7-sonnet'){
             if (currentPrompt === 0) {
                 cy.wait(5000); // First prompt
@@ -119,12 +119,12 @@ const sendPrompt = (promptType, promptNo, model) => {
         if (Array.isArray(currentPromptData.answer)) {
             // For array of answers, check each one
             currentPromptData.answer.forEach((answer) => {
-                cy.get('p.MuiTypography-root', { timeout: 50000 }).contains(answer, { timeout: 50000, matchCase: false })
+                cy.get('[data-testid="ai-response"]', { timeout: 50000 }).contains(answer, { timeout: 50000, matchCase: false })
                     .should('be.visible');
             });
         } else {
             // For single answer
-            cy.get('p.MuiTypography-root', { timeout: 50000 }).contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
+            cy.get('[data-testid="ai-response"]', { timeout: 50000 }).contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
                 .should('be.visible');
         }
 
@@ -205,14 +205,14 @@ const selectTxtModel = (model) => {
     //select text model
     cy.contains('div', model, { timeout: 50000, matchCase: false })
         .should('exist')
-        .click({ force: true }); 
+        .click({ force: true });
 
     // clicks close button
     cy.get(".MuiBox-root.css-6zgsse > button")
         .eq(1)
         .should('be.visible')
         .click();
-    // Verify the model is visible   
+    // Verify the model is visible
     cy.contains(model, { timeout: 20000})
         .should('be.visible')
 }
@@ -255,7 +255,7 @@ const logCreditsToJSON = (models,ResponseTime) => {
                     newData.push({
                         textModel: model,
                         Credits: parseInt(creditsNumber),
-                        ResponseTime: Number(ResponseTime)+ ' secs.' 
+                        ResponseTime: Number(ResponseTime)+ ' secs.'
                     });
 
                     // Write back the combined data
@@ -395,8 +395,8 @@ class Notebook {
         describe(`Text Model: ${model}`, () => {
             it(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
-                createNote(prompt, model); 
-            }); 
+                createNote(prompt, model);
+            });
         });
     }
     static renameNotebook(newName) {
@@ -436,7 +436,7 @@ class Notebook {
             fileOperation("deleteFile", filepath);
           });
         });
-        
+
 
     }
     static multiPrompts(promptType, model, promptNo) {
