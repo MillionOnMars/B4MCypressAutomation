@@ -28,7 +28,7 @@ const verifyLogout = () => {
 // Log out the user by interacting with the menu
 const logoutUser = () => {
     // Wait for user menu button and force click
-    cy.get('.MuiBox-root.css-1fq16i4 > div:nth-child(2) > button')
+    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: TIMEOUT })
         .should('exist')
         .click({ force: true });
 
@@ -42,8 +42,8 @@ class Auth {
     static correctCredentials() {
         it('Should log in with correct credentials', () => {
             navigateToLoginPage();
-            authenticateUser('wescarda', 'Password12345!');
-            verifySuccessfulLogin('wescarda!');
+            authenticateUser('onoya', 'Testing12345!');
+            verifySuccessfulLogin('onoya!');
         });
     }
 
@@ -66,8 +66,8 @@ class Auth {
     static userLogout() {
         it('Should log out a user successfully', () => {
             navigateToLoginPage();
-            authenticateUser('wescarda', 'Password12345!');
-            verifySuccessfulLogin('wescarda!');
+            authenticateUser('onoya', 'Testing12345!');
+            verifySuccessfulLogin('onoya!');
             logoutUser();
             verifyLogout();
         });

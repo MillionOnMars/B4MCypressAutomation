@@ -34,12 +34,12 @@ const createProject = (projectName) => {
         .click();
 
     // Type the project name in the input field
-    cy.get("input[id*=':r']", { timeout: DEFAULT_TIMEOUT }).eq(1)
+    cy.get('[data-testid="create-project-form-container"] [data-testid="name-input"]', { timeout: DEFAULT_TIMEOUT }).eq(0)
         .should('be.visible')
         .type(projectName);
 
     // Type the project description in the input field
-    cy.get(`textarea[id*=':r']`, { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="create-project-form-container"] [data-testid="description-textarea"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(projectName);
 
@@ -76,7 +76,7 @@ const renameProject = (oldName, newName) => {
         .click();
 
     // Type the project name in the input field
-    cy.get("input[id*=':r']", { timeout: DEFAULT_TIMEOUT }).eq(1)
+    cy.get('[data-testid="project-edit-modal-form"] [data-testid="name-input"]', { timeout: DEFAULT_TIMEOUT }).eq(0)
         .should('be.visible')
         .clear()
         .type(newName);
@@ -132,7 +132,7 @@ const addNotebook = (notebookName, projectName) => {
         .click();
 
     // Select the notebook by its name
-    cy.get('.css-1jj0cvj', { timeout: DEFAULT_TIMEOUT }).eq(0)
+    cy.get('[data-testid="generic-add-items-item"]', { timeout: DEFAULT_TIMEOUT }).eq(0)
         .click({ force: true });
 
     // Click the "Add 1 items" button
