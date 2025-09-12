@@ -172,7 +172,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

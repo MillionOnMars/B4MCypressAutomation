@@ -38,6 +38,8 @@ const signUpUser = () => {
     // Click on the signup button
     cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
 
+    cy.wait(2000); // Wait for 2 seconds to ensure the page loads
+
     // Verify we're on the signup page
     verifyPage('register'); 
 
@@ -66,6 +68,8 @@ const signUpWithInvalidEmail = () => {
 
     // Click on the signup button
     cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
+
+    cy.wait(2000); // Wait for 2 seconds to ensure the page loads
 
     // Verify we're on the signup page
     verifyPage('register'); 
