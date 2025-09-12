@@ -165,7 +165,7 @@ jobs:
         fi
 
     - name: Send Slack notification
-      if: always()
+      if: always() && !cancelled()
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
