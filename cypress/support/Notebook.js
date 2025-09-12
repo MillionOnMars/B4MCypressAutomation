@@ -55,7 +55,7 @@ const createNote = (promptType, model) => {
             cy.contains(testCase.prompt, { timeout: 50000 })
                 .should('be.visible');
 
-            cy.get('[data-testid="ai-response"]')
+            cy.get('[data-testid="ai-response"]', { timeout: 50000 })
                 .contains(testCase.answer, { timeout: 50000, matchCase: false })
                 .should('be.visible')
                 .then(() => {
@@ -137,13 +137,13 @@ const sendPrompt = (promptType, promptNo, model) => {
 
 const renameNote = (newName) => {
     //clicks notebook
-    cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button')
+    cy.get('[data-testid="sidenav-item-session-button"]')
         .eq(0)
         .should('be.visible')
         .click();
 
     //click elipsis button
-    cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > div > button')
+    cy.get('[data-testid="sidenav-item-menu-button"]')
         .eq(0)
         .should('be.visible')
         .click();
@@ -154,7 +154,7 @@ const renameNote = (newName) => {
         .click();
 
     //clicks notebook
-    cy.get('.MuiInput-sizeSm.Mui-focused.css-di36d5')
+    cy.get('[data-testid="sidenav-item-rename-input"]')
         .eq(0)
         .should('be.visible')
         .type(newName)
@@ -165,13 +165,13 @@ const renameNote = (newName) => {
 
 const deleteNote = (Name) => {
     //clicks notebook
-    cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button')
+    cy.get('[data-testid="sidenav-item-session-button"]')
         .eq(0)
         .should('be.visible')
         .click();
 
     //click elipsis button
-    cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > div > button')
+    cy.get('[data-testid="sidenav-item-menu-button"]')
         .eq(0)
         .should('be.visible')
         .click();
@@ -182,7 +182,7 @@ const deleteNote = (Name) => {
         .click();
 
     //confirm delete
-    cy.get('.MuiButton-sizeMd.css-25d5g8')
+    cy.get('[data-testid="confirm-delete-modal"] [data-testid="confirm-modal-confirm-btn"]')
         .should('be.visible')
         .click();
 
@@ -191,7 +191,7 @@ const deleteNote = (Name) => {
 };
 
 const selectTxtModel = (model) => {
-    cy.get('.css-1juad4n', {timeout: 50000})
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', {timeout: 50000})
         .eq(0)
         .should('be.visible')
         .click();
@@ -235,7 +235,7 @@ const logCreditsToJSON = (models,ResponseTime) => {
         }
 
         // Click to view credits
-        cy.get('.MuiStack-root.css-1bzhh82 > div:nth-child(1) > div > button > span', {timeout: 10000})
+        cy.get('[data-testid="credits-used"]', {timeout: 10000})
             .eq(0)
             .should('be.visible')
             .click();
