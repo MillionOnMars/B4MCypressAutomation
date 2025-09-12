@@ -165,14 +165,14 @@ jobs:
         fi
 
     - name: Send Slack notification
-      if: always()
+      if: always() && !cancelled()
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "*🤖 Cypress Test Results*\n\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Status:* ${{ steps.cypress.outcome }}\n\n*Test Summary*\n• Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n• Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n• Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n\n*Credit Usage & Response Time*\n${{ steps.credits.outputs.credits }}\n\n*Console Errors*\n• Total: ${{ steps.console-errors.outputs.total }}\n\n*View Full Report:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click Here> 📊"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
