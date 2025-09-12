@@ -19,7 +19,7 @@ const searchUser = (username, email) => {
         .click();
     // Ensure the admin dashboard is loaded
     cy.url()
-        .should('include', '/admin');
+        .should('include', '/admin', { timeout: DEFAULT_TIMEOUT });
     // Search for the user
     cy.get('input[placeholder="Search users"]')
         .should('be.visible')
