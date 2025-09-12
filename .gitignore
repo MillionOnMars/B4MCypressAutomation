@@ -2,3 +2,9 @@
 .ngrok.yml
 node_modules
 cypress/reports/consoleErrors.json
+.env.secrets
+.env
+.direnv
+
+# Claude
+.claude/settings.local.json
