@@ -30,7 +30,7 @@ const logoutUser = () => {
     // Wait for user menu button and force click
     cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: TIMEOUT })
         .should('exist')
-        .click({ force: true });
+        .click();
 
     // Wait for logout icon and force click
     cy.get('[data-testid="LogoutIcon"]')
