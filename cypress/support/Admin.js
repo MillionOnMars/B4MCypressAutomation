@@ -29,11 +29,59 @@ const searchUser = (username, email) => {
         .should('be.visible');
 }
 
+const sortname = (username) => {
+
+    // Navigate to the admin panel
+    cy.get('[aria-label="Profile"]')
+        .should('be.visible')
+        .click();
+    // Ensure the admin panel is loaded
+    cy.url()
+        .should('include', '/profile', { timeout: DEFAULT_TIMEOUT });
+    //click admin tab
+    cy.contains('Admin')
+        .should('be.visible')
+        .click();
+    //click admin dashboard
+    cy.contains('Admin Dashboard')
+        .should('be.visible')
+        .click();
+    // Ensure the admin dashboard is loaded
+    cy.url()
+        .should('include', '/admin', { timeout: DEFAULT_TIMEOUT });
+    // Click Sort Combobox
+    cy.get('button[role="combobox"]')
+        .contains('Created At')
+        .should('be.visible')
+        .click();
+    // Click the "Name" option in the dropdown, scoped to the open listbox
+    cy.get('[role="listbox"]')
+        .contains('Name')
+        .should('be.visible')
+        .click();
+    //Click order to change to A-Z
+    cy.contains('button', 'Z → A')
+        .should('be.visible')
+        .click();
+    // Verify that username is visible in the results
+    cy.contains(username, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+
+}
+
+
 class Admin {
     static User(username, email) {
         describe('User Tests', () => {
             it(`Search for user: ${username}`, () => {
                 searchUser(username, email);
+            });
+        });
+    }
+    static Sort(username) {
+        describe('Sort Tests', () => {
+            it('Sort users', () => {
+                sortname(username);
             });
         });
     }
