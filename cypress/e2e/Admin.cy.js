@@ -11,4 +11,5 @@ describe('Admin Tests', () => {
     });
     // Search User
     Admin.User('Automation', 'b4m-automation@milliononmars.com');
+    Admin.Sort('Automation');
 });
