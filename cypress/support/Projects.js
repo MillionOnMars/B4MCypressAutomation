@@ -257,14 +257,64 @@ const createNotebook = (promptType, projectName) => {
 
         });
 
+        
+
     }
 
 
 
 };
 
+const addSystemPrompt = (promptType, projectName) => {
+    promptType='system-prompt';
+    openProject(projectName);
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split("/").pop();
+
+    //Click system prompt tab
+    cy.contains("System Prompt")
+        .should('be.visible')
+        .click();
+
+         // Find the File Browser section
+    cy.contains("File Browser", { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    //Checks if file is present
+    cy.contains(filename)
+        .should("be.visible")
+        .click();
+
+    //click add file
+    cy.contains("Add 1 File").should("be.visible").click();
+
+    // Verify file upload success message
+    cy.contains('Files added to project successfully', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('be.visible');
+
+
+}
+const viewSystemPromptFile = (projectName, systemPrompt) => {
+    openProject(projectName);
+
+    //Click system prompt tab
+    cy.contains("System Prompt")
+        .should('be.visible')
+        .click();
+
+    // Verify the system prompt file is visible
+    cy.contains(systemPrompt, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+
+}
+        
+
+    
+
+
 class Projects {
-    static openProject(projectName, notebookName) {
+    static openProject(projectName, notebookName, systemPrompt) {
         describe('Project Operations', () => {
             it("Adds notebook.", () => {
                 addNotebook(notebookName, projectName);
@@ -276,6 +326,10 @@ class Projects {
             });
             it("Create notebook", () => {
                 createNotebook(notebookName, projectName);
+            });
+            it("System Prompt", () => {
+                addSystemPrompt(projectName, systemPrompt);
+                viewSystemPromptFile(projectName, systemPrompt);
             });
         });
     }
@@ -301,6 +355,16 @@ class Projects {
     static createNotebook(notebookName, projectName) {
         it('Should create a new notebook', () => {
             createNotebook(notebookName, projectName);
+        });
+    }
+    static addSystemPrompt(projectName, systemPrompt) {
+        it('Should add a system prompt', () => {
+            addSystemPrompt(projectName, systemPrompt);
+        });
+    }
+    static viewSystemPromptFile(projectName, systemPrompt) {
+        it('Should view a system prompt file', () => {
+            viewSystemPromptFile(projectName, systemPrompt);
         });
     }
 }
