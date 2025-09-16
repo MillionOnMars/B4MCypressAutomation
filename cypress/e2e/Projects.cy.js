@@ -13,8 +13,14 @@ describe('Project Operations', () => {
         Projects.createProject('My New Project');
         // Rename the project
         Projects.renameProject('My New Project', 'Renamed Project');
-        // Open project and add notebook
-        Projects.openProject('Renamed Project','capital')
+        // Manage project content and members
+        Projects.manageProjectContent('Renamed Project', {
+            notebook: 'France Capital Inquiry',
+            uploadFile: 'prime',
+            memberEmail: 'auto-share',
+            createNotebook: 'capital'
+        });
+        Projects.shareProject('Renamed Project','France Capital Inquiry','auto-share');
         // Deletes the project
         Projects.deleteProject('Renamed Project');
 });

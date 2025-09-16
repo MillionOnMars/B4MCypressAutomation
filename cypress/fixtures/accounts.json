@@ -29,6 +29,13 @@
             "password": "Password12345!",
             "fullname": "Test User",
             "code": "ADMINCODE"
+        },
+        "auto-share": {
+            "username": "auto-share",
+            "email": "auto-share@milliononmars.com",
+            "password": "Password12345!",
+            "fullname": "Auto Share",
+            "code": "n/a"
         }
     }
 }
