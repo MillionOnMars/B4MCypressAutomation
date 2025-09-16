@@ -25,6 +25,8 @@ const searchUser = (username, email) => {
         .should('be.visible')
         .type(username);
     // Verify the user appears in the search results
+    cy.contains(username, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
     cy.contains(email, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
