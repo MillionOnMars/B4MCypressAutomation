@@ -1,7 +1,7 @@
 const DEFAULT_TIMEOUT = 10000;
 
-const searchUser = (username, email) => {
-
+// Function to navigate to the Admin Dashboard
+const navigateToAdminDashboard = () => {
     // Navigate to the admin panel
     cy.get('[aria-label="Profile"]')
         .should('be.visible')
@@ -20,6 +20,10 @@ const searchUser = (username, email) => {
     // Ensure the admin dashboard is loaded
     cy.url()
         .should('include', '/admin', { timeout: DEFAULT_TIMEOUT });
+}
+
+const searchUser = (username, email) => {
+    navigateToAdminDashboard(); // Call the navigation function
     // Search for the user
     cy.get('input[placeholder="Search users"]')
         .should('be.visible')
@@ -32,25 +36,7 @@ const searchUser = (username, email) => {
 }
 
 const sortname = (username) => {
-
-    // Navigate to the admin panel
-    cy.get('[aria-label="Profile"]')
-        .should('be.visible')
-        .click();
-    // Ensure the admin panel is loaded
-    cy.url()
-        .should('include', '/profile', { timeout: DEFAULT_TIMEOUT });
-    //click admin tab
-    cy.contains('Admin')
-        .should('be.visible')
-        .click();
-    //click admin dashboard
-    cy.contains('Admin Dashboard')
-        .should('be.visible')
-        .click();
-    // Ensure the admin dashboard is loaded
-    cy.url()
-        .should('include', '/admin', { timeout: DEFAULT_TIMEOUT });
+    navigateToAdminDashboard(); // Call the navigation function
     // Click Sort Combobox
     cy.get('button[role="combobox"]')
         .contains('Created At')
