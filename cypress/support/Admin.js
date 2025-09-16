@@ -35,8 +35,9 @@ const searchUser = (username, email) => {
         .should('be.visible');
 }
 
-const sortname = (username) => {
+const sortname = (username, sortBy) => {
     navigateToAdminDashboard(); // Call the navigation function
+    cy.log("Sorting by:", sortBy);
     // Click Sort Combobox
     cy.get('button[role="combobox"]')
         .contains('Created At')
@@ -44,7 +45,7 @@ const sortname = (username) => {
         .click();
     // Click the "Name" option in the dropdown, scoped to the open listbox
     cy.get('[role="listbox"]')
-        .contains('Name')
+        .contains(String(sortBy)) // Convert sortBy to a string
         .should('be.visible')
         .click();
     //Click order to change to A-Z
@@ -52,7 +53,8 @@ const sortname = (username) => {
         .should('be.visible')
         .click();
     // Verify that username is visible in the results
-    cy.contains(username, { timeout: DEFAULT_TIMEOUT })
+    cy.get('.MuiGrid-spacing-xs-2').eq(2)
+        .contains(username, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
 }
@@ -66,10 +68,10 @@ class Admin {
             });
         });
     }
-    static Sort(username) {
+    static Sort(username, sortBy) {
         describe('Sort Tests', () => {
             it('Sort users', () => {
-                sortname(username);
+                sortname(username, sortBy);
             });
         });
     }
