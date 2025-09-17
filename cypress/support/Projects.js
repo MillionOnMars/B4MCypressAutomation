@@ -353,6 +353,8 @@ const logoutUser = () => {
     cy.url().should('contain', '/login');
 };
 
+
+
 const checkInbox = (projectName) => {
     // Click the menu button
     cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
@@ -363,7 +365,9 @@ const checkInbox = (projectName) => {
     cy.contains('Inbox', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
+};
 
+const handleProjectInvite = (projectName, action) => {
     // Click invites tab
     cy.contains('Invites', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
@@ -374,14 +378,34 @@ const checkInbox = (projectName) => {
         .should('be.visible')
         .click();
 
-    // Click accept button 
-    cy.get('.MuiIconButton-colorSuccess', { timeout: DEFAULT_TIMEOUT })
-        .should('be.visible')
-        .click();
-        
-    // Verify member added message
-    cy.contains('Successfully joined the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
-        .should('be.visible');
+
+    if (action === 'accept') {
+        // Click accept button
+        cy.get('[data-testid="CheckIcon"]', { timeout: DEFAULT_TIMEOUT })
+            .eq(0)
+            .should('be.visible')
+            .click();
+            
+        // Verify success message
+        cy.contains('Successfully joined the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+            .should('be.visible');
+
+    } else {
+        // Click deny button
+        cy.get('[data-testid="DoDisturbIcon"]', { timeout: DEFAULT_TIMEOUT })
+            .eq(0)
+            .should('be.visible')
+            .click();
+            
+        // Verify denial message
+        cy.contains('Successfully refused the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+            .should('be.visible');
+    }
+
+    // Close the modal
+    cy.get('.MuiModalClose-sizeMd', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click({ force: true });
 };
 
 const validateSharedProjects = (projectName, notebook, user) => {
@@ -415,13 +439,6 @@ const validateSharedProjects = (projectName, notebook, user) => {
     // Verify member is present
     cy.contains(`${user}`, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
-    
-    //click close button
-    cy.get('[data-testid="CloseIcon"]',{ timeout: DEFAULT_TIMEOUT })
-        .eq(2)
-        .should('be.visible')
-        .click();
-
 };
 
 
@@ -491,10 +508,11 @@ class Projects {
     static shareProject(projectName,notebook,user) {
         describe(`Logging in to user --${user}`, () => {
             it(`Should share project: ${projectName}`, () => {
-                logoutUser()
+                logoutUser();
                 loginAs(user);
                 checkInbox(projectName);
-                validateSharedProjects(projectName, notebook, user)
+                handleProjectInvite(projectName, "accept");
+                validateSharedProjects(projectName, notebook, user);
             });
         });
     }

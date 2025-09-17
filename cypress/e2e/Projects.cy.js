@@ -15,12 +15,12 @@ describe('Project Operations', () => {
         Projects.renameProject('My New Project', 'Renamed Project');
         // Manage project content and members
         Projects.manageProjectContent('Renamed Project', {
-            notebook: 'France Capital Inquiry',
+            notebook: 'France',
             uploadFile: 'prime',
             memberEmail: 'auto-share',
             createNotebook: 'capital'
         });
-        Projects.shareProject('Renamed Project','France Capital Inquiry','auto-share');
+        Projects.shareProject('Renamed Project','France','auto-share');
         // Deletes the project
         Projects.deleteProject('Renamed Project');
 });
