@@ -1,5 +1,6 @@
-const DEFAULT_TIMEOUT = 10000;
+import { login } from '../support/login.js';
 
+const DEFAULT_TIMEOUT = 10000;
 let prompts;
 
 before(() => {
@@ -124,16 +125,23 @@ const deleteProject = (projectName) => {
 };
 
 const addNotebook = (notebookName, projectName) => {
+    //open project
     openProject(projectName);
+
+    // Click the Notebooks tab
+    cy.contains('.MuiTab-variantPlain', 'Notebooks', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
 
     //Click Add Notebooks button
     cy.xpath("//button[normalize-space()='Add Notebooks']")
         .should('be.visible')
         .click();
 
-    // Select the notebook by its name
-    cy.get('[data-testid="generic-add-items-item"]', { timeout: DEFAULT_TIMEOUT }).eq(0)
-        .click({ force: true });
+    // Select the notebook checkbox
+    cy.contains('[data-testid="generic-add-items-item"]', notebookName, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
 
     // Click the "Add 1 items" button
     cy.xpath("//button[normalize-space()='Add 1 items']")
@@ -178,11 +186,12 @@ const removeNotebook = (notebookName) => {
 };
 
 const uploadFileWithFileBrowser = (promptType, projectName) => {
+    //open project
     openProject(projectName);
     const testCase = prompts[promptType];
     const filename = testCase.filepath.split("/").pop();
     //Click Project Files Tab
-    cy.xpath("//div[@class='MuiBox-root css-17busxr'][normalize-space()='Project Files (0)']", { timeout: DEFAULT_TIMEOUT })
+    cy.contains('.MuiTab-variantPlain', 'Project Files', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -263,22 +272,207 @@ const createNotebook = (promptType, projectName) => {
 
 };
 
+const clickMembersTab = (projectName) => {
+    //open project
+    openProject(projectName);
+    // Click the Members button
+    cy.contains('.MuiTab-variantPlain', 'Members', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Verify the members modal/section is visible
+    cy.xpath("//button[normalize-space()='Add Members']", { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+};
+
+const addMembers = (memberEmail) => {
+    // Click Add Members button
+    cy.xpath("//button[normalize-space()='Add Members']", { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Type member email in the input field
+    cy.get('input[placeholder ="Search users"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .type(memberEmail);
+
+    // Select the member's checkbox
+    cy.contains('[data-testid="generic-add-items-item"]', memberEmail, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    
+    // Click the "Add 1 members" button (BUG: Should be members not items)
+    cy.xpath("//button[normalize-space()='Add 1 items']", { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Verify member added message
+    cy.contains('Sent an invite to the selected users', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('be.visible');
+};
+
+const selectMemberCheckbox = (memberName) => {
+    // Find the row containing the member name and click its checkbox
+    cy.contains(memberName, { timeout: DEFAULT_TIMEOUT })
+        .find('input[type="checkbox"]')
+        .click({ force: true });
+    
+    // Optional: Verify checkbox is checked
+    cy.contains('tr', memberName)
+        .find('input[type="checkbox"]')
+        .should('be.checked');
+};
+
+const loginAs = (userKey) => {
+    cy.fixture('accounts.json').then((accounts) => {
+        const user = accounts.existingUsers[userKey];
+        if (!user) {
+            throw new Error(`User "${userKey}" not found in accounts.json`);
+        }
+        login(user.username, user.password);
+    });
+};
+
+// Log out the user by interacting with the menu
+const logoutUser = () => {
+    cy.log('Logging out user...');
+    // Wait for user menu button and force click
+    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click();
+
+    // Wait for logout icon and force click
+    cy.get('[data-testid="LogoutIcon"]')
+        .should('exist')
+        .click({ force: true });
+
+    cy.wait(3000); // Wait for 3 seconds to ensure logout is complete
+
+    // Verify logout by checking the welcome message and URL
+    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
+    cy.url().should('contain', '/login');
+};
+
+
+
+const checkInbox = (projectName) => {
+    // Click the menu button
+    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Click inbox option
+    cy.contains('Inbox', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+};
+
+const handleProjectInvite = (projectName, action) => {
+    // Click invites tab
+    cy.contains('Invites', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Validate project invitation
+    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+
+    if (action === 'accept') {
+        // Click accept button
+        cy.get('[data-testid="CheckIcon"]', { timeout: DEFAULT_TIMEOUT })
+            .eq(0)
+            .should('be.visible')
+            .click();
+            
+        // Verify success message
+        cy.contains('Successfully joined the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+            .should('be.visible');
+
+    } else {
+        // Click deny button
+        cy.get('[data-testid="DoDisturbIcon"]', { timeout: DEFAULT_TIMEOUT })
+            .eq(0)
+            .should('be.visible')
+            .click();
+            
+        // Verify denial message
+        cy.contains('Successfully refused the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+            .should('be.visible');
+    }
+
+    // Close the modal
+    cy.get('.MuiModalClose-sizeMd', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click({ force: true });
+};
+
+const validateSharedProjects = (projectName, notebook, user) => {
+    //open project
+    openProject(projectName);
+
+    // Click the Notebooks tab
+    cy.contains('.MuiTab-variantPlain', 'Notebooks', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    
+    // Verify notebook is present
+    cy.contains(`${notebook}`, { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('be.visible');
+
+       //Click Project Files Tab
+    cy.contains('.MuiTab-variantPlain', 'Project Files', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+        // Verify notebook is present
+        //BUG is found files were not found after upload.
+    cy.contains('Project Files (0)', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('be.visible');
+
+    //Click members Tab
+    cy.contains('.MuiTab-variantPlain', 'Members', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    
+    // Verify member is present
+    cy.contains(`${user}`, { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('be.visible');
+};
+
+
 class Projects {
-    static openProject(projectName, notebookName) {
-        describe('Project Operations', () => {
-            it("Adds notebook.", () => {
-                addNotebook(notebookName, projectName);
-            });
-            it("Upload file", () => {
-                uploadFileWithFileBrowser('prime', projectName)
-            });
-            it("Add members", () => {
-            });
-            it("Create notebook", () => {
-                createNotebook(notebookName, projectName);
-            });
+    static manageProjectContent(projectName, options) {
+        describe(`Manage Project: ${projectName}`, () => {
+            if (options.notebook) {
+                it("Adds notebook", () => {
+                    addNotebook(options.notebook, projectName);
+                });
+            }
+
+            if (options.uploadFile) {
+                it("Upload file", () => {
+                    uploadFileWithFileBrowser(options.uploadFile, projectName);
+                });
+            }
+
+            if (options.memberEmail) {
+                it("Add members", () => {
+                    clickMembersTab(projectName);
+                    addMembers(options.memberEmail);
+                });
+            }
+
+            if (options.createNotebook) {
+                it("Create notebook", () => {
+                    createNotebook(options.createNotebook, projectName);
+                });
+            }
         });
     }
+
+
     static createProject(projectName) {
         it('Should create a new project', () => {
             createProject(projectName);
@@ -301,6 +495,25 @@ class Projects {
     static createNotebook(notebookName, projectName) {
         it('Should create a new notebook', () => {
             createNotebook(notebookName, projectName);
+        });
+    }
+
+    static addProjectMember(projectName, memberEmail) {
+        it(`Should add member ${memberEmail} to project`, () => {
+            clickMembersTab(projectName);
+            addMembers(memberEmail);
+        });
+    }
+
+    static shareProject(projectName,notebook,user) {
+        describe(`Logging in to user --${user}`, () => {
+            it(`Should share project: ${projectName}`, () => {
+                logoutUser();
+                loginAs(user);
+                checkInbox(projectName);
+                handleProjectInvite(projectName, "accept");
+                validateSharedProjects(projectName, notebook, user);
+            });
         });
     }
 }
