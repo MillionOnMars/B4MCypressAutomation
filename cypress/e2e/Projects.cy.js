@@ -18,9 +18,13 @@ describe('Project Operations', () => {
             notebook: 'France',
             uploadFile: 'prime',
             memberEmail: 'auto-share',
-            createNotebook: 'capital'
+            systemPrompt: 'sinigang',
+            createNotebook: 'sinigang'
         });
+        //validate sharing the project
         Projects.shareProject('Renamed Project','France','auto-share');
+        // Handle system prompt operations
+        Projects.systemPromptOperations('Renamed Project', 'sinigang');
         // Deletes the project
         Projects.deleteProject('Renamed Project');
 });

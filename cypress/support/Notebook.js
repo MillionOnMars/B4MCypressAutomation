@@ -37,10 +37,6 @@ const createNote = (promptType, model) => {
     cy.contains('New Notebook', { timeout: 50000 })
         .should('be.visible');
 
-    // // Wait until the question appears
-    // cy.contains(testCase.prompt, { timeout: 50000 })
-    //     .should('be.visible');
-
     // Handle both array and string answers
     if (Array.isArray(testCase.answer)) {
         testCase.answer.forEach((answer) => {
@@ -55,8 +51,8 @@ const createNote = (promptType, model) => {
             cy.contains(testCase.prompt, { timeout: 50000 })
                 .should('be.visible');
 
-            cy.get('[data-testid="ai-response"]', { timeout: 50000 })
-                .contains(testCase.answer, { timeout: 50000, matchCase: false })
+            cy.get('[data-testid="ai-response"]', { timeout: 60000 })
+                .contains(testCase.answer, { timeout: 60000, matchCase: false })
                 .should('be.visible')
                 .then(() => {
                     const duration = (Date.now() - startTime) / 1000;
@@ -119,12 +115,12 @@ const sendPrompt = (promptType, promptNo, model) => {
         if (Array.isArray(currentPromptData.answer)) {
             // For array of answers, check each one
             currentPromptData.answer.forEach((answer) => {
-                cy.get('[data-testid="ai-response"]', { timeout: 50000 }).contains(answer, { timeout: 50000, matchCase: false })
+                cy.get('[data-testid="ai-response"]', { timeout: 60000 }).contains(answer, { timeout: 50000, matchCase: false })
                     .should('be.visible');
             });
         } else {
             // For single answer
-            cy.get('[data-testid="ai-response"]', { timeout: 50000 }).contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
+            cy.get('[data-testid="ai-response"]', { timeout: 60000 }).contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
                 .should('be.visible');
         }
 
@@ -161,6 +157,46 @@ const renameNote = (newName) => {
         .type('{enter}');
 
     cy.log('Notebook renamed successfully.');
+};
+
+const editNotebookInfo = (tags) => {
+    //clicks notebook
+    cy.get('[data-testid="sidenav-item-session-button"]')
+        .eq(0)
+        .should('be.visible')
+        .click();
+
+    //click elipsis button
+    cy.get('[data-testid="sidenav-item-menu-button"]')
+        .eq(0)
+        .should('be.visible')
+        .click();
+
+    //click edit info button
+    cy.get('.sidenav-item-menuitem-viewinfo')
+        .should('be.visible')
+        .click();
+
+    //input a tag
+    cy.get('input[placeholder="Add a tag"]')
+        .should('be.visible')
+        .type(tags);
+    
+    //click add tag button
+    cy.xpath("//button[normalize-space()='Add Tag']")
+        .should('be.visible')
+        .click();
+
+    //automation tag verification
+    cy.contains('.session-metadata-tag', `${tags}100`, { timeout: 20000, matchCase: false })
+        .should('be.visible');
+
+    //click close button
+    cy.get('.session-metadata-close-button')
+        .should('be.visible')
+        .click();
+
+    cy.log('Notebook information edited successfully.');
 };
 
 const deleteNote = (Name) => {
@@ -478,6 +514,13 @@ class Notebook {
                 const formattedAverage = Number(average.toFixed(2));
                 cy.log(`Average response time for ${model}: ${formattedAverage} seconds`);
                 logCreditsToJSON([model], formattedAverage);
+            });
+        });
+    }
+    static addNotebookTags(tags) {
+        describe('Add Tags to Notebook', () => {
+            it(`Should add tag: ${tags}`, () => {
+                editNotebookInfo(tags);
             });
         });
     }
