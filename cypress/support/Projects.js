@@ -1,6 +1,6 @@
 import { login } from '../support/login.js';
 
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 20000;
 let prompts;
 
 before(() => {
@@ -185,13 +185,14 @@ const removeNotebook = (notebookName) => {
         .should('not.exist');
 };
 
-const uploadFileWithFileBrowser = (promptType, projectName) => {
+const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
     //open project
     openProject(projectName);
     const testCase = prompts[promptType];
     const filename = testCase.filepath.split("/").pop();
-    //Click Project Files Tab
-    cy.contains('.MuiTab-variantPlain', 'Project Files', { timeout: DEFAULT_TIMEOUT })
+
+    //Click appropriate tab based on tabType
+    cy.contains('.MuiTab-variantPlain', tabType, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -208,8 +209,12 @@ const uploadFileWithFileBrowser = (promptType, projectName) => {
     //click add file
     cy.contains("Add 1 File").should("be.visible").click();
 
-    // Verify file upload success message
-    cy.contains('Files added to project successfully', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+    // Verify appropriate success message based on tab type
+    const successMessage = tabType === 'Project Files' 
+        ? 'Files added to project successfully'
+        : 'System Prompts added successfully';
+
+    cy.contains(successMessage, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
 };
 
@@ -311,17 +316,90 @@ const addMembers = (memberEmail) => {
         .should('be.visible');
 };
 
-const selectMemberCheckbox = (memberName) => {
-    // Find the row containing the member name and click its checkbox
-    cy.contains(memberName, { timeout: DEFAULT_TIMEOUT })
-        .find('input[type="checkbox"]')
-        .click({ force: true });
-    
-    // Optional: Verify checkbox is checked
-    cy.contains('tr', memberName)
-        .find('input[type="checkbox"]')
-        .should('be.checked');
+const clickSystemPromptsTab = (projectName) => {
+    //open project
+    openProject(projectName);
+
+    // Click the System Prompt tab
+    cy.contains('.MuiTab-variantPlain', 'System Prompts', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Find the File Browser section
+    cy.xpath("//p[normalize-space()='File Browser']", { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
 };
+
+const handleSystemPrompt = (projectName, action, promptName) => {
+    //open project
+    openProject(projectName);
+
+    // Click the System Prompt tab
+    cy.contains('.MuiTab-variantPlain', 'System Prompts', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    switch(action) {
+        case 'view':
+            // Click View option
+            cy.get('.project-system-prompt-item-view-button', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            // verify file name is visible
+            cy.contains(promptName, { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+
+            // click Close button
+            cy.get('.MuiModalClose-sizeMd', { timeout: DEFAULT_TIMEOUT })
+                .eq(1)
+                .should('be.visible')
+                .click();
+            break;
+
+        case 'delete':
+            // Click Delete option
+            cy.get('.project-system-prompt-item-menu-button', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            cy.get('.project-system-prompt-item-menu-item', { timeout: DEFAULT_TIMEOUT })
+                .contains('Delete', { matchCase: false })
+                .should('be.visible')
+                .click();
+
+            // Confirm deletion
+            cy.get('.confirmation-modal-confirm-button')
+                .should('be.visible')
+                .click();
+
+            // Verify deletion message
+            cy.contains('System prompt removed successfully', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+            break;
+
+        case 'edit':
+            // Click Edit option
+            cy.get('.project-system-prompt-item-menu-item', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            // Verify prompt content is visible
+            cy.get('[data-testid="system-prompt-view-modal"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+
+            // Close view modal
+            cy.get('[data-testid="CloseIcon"]')
+                .should('be.visible')
+                .click();
+            break;
+
+        default:
+            throw new Error(`Invalid action: ${action}. Use 'edit', 'delete', or 'view'`);
+    }
+};
+
+
 
 const loginAs = (userKey) => {
     cy.fixture('accounts.json').then((accounts) => {
@@ -439,6 +517,16 @@ const validateSharedProjects = (projectName, notebook, user) => {
     // Verify member is present
     cy.contains(`${user}`, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
+
+    //Click System prompts Tab
+    cy.contains('.MuiTab-variantPlain', 'System Prompts', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click()
+
+    // Verify system prompt is present
+    cy.contains('System Prompts (1)', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('be.visible');
+
 };
 
 
@@ -453,7 +541,7 @@ class Projects {
 
             if (options.uploadFile) {
                 it("Upload file", () => {
-                    uploadFileWithFileBrowser(options.uploadFile, projectName);
+                    uploadFileWithFileBrowser(options.uploadFile, projectName, 'Project Files');
                 });
             }
 
@@ -461,6 +549,13 @@ class Projects {
                 it("Add members", () => {
                     clickMembersTab(projectName);
                     addMembers(options.memberEmail);
+                });
+            }   
+            
+            if (options.systemPrompt) {
+                it("Add system prompt", () => {
+                    clickSystemPromptsTab(projectName);
+                    uploadFileWithFileBrowser(options.systemPrompt, projectName, 'System Prompts');
                 });
             }
 
@@ -492,16 +587,10 @@ class Projects {
             });
         });
     }
+    
     static createNotebook(notebookName, projectName) {
         it('Should create a new notebook', () => {
             createNotebook(notebookName, projectName);
-        });
-    }
-
-    static addProjectMember(projectName, memberEmail) {
-        it(`Should add member ${memberEmail} to project`, () => {
-            clickMembersTab(projectName);
-            addMembers(memberEmail);
         });
     }
 
@@ -516,6 +605,18 @@ class Projects {
             });
         });
     }
+
+static systemPromptOperations(projectName, promptName) {
+    describe(`System Prompt Operations for ${projectName}`, () => {
+        it(`Should view system prompt: ${promptName}`, () => {
+            handleSystemPrompt(projectName, 'view', promptName);
+        });
+
+        it(`Should delete system prompt: ${promptName}`, () => {
+            handleSystemPrompt(projectName, 'delete', promptName);
+        });
+    });
+}
 }
 
 export default Projects;

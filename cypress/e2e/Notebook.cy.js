@@ -12,13 +12,15 @@ describe('Notebook Operations', () => {
             login(username, password);
         });
     });
-    //Choose 4 random text models and create a new notebook
+    // Choose 4 random text models and create a new notebook
     randomTextModels.forEach((model) => {
         //Notebook.createNotebook('capital', model);
         Notebook.createNotebookWithAverage('capital', model);
     });
     // Rename the notebook
     Notebook.renameNotebook('Renamed Notebook');
+    // Add tags to the notebook
+    Notebook.addNotebookTags('automation');
     // Deletes the notebook
     Notebook.deleteNotebook('Renamed Notebook');
     //add a file to the notebook

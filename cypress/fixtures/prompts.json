@@ -7,8 +7,14 @@
     "capital": {
         "prompt": "What is the capital of France?",
         "answer": "Paris",
-        "filePath": "cypress/fixtures/upload/cat.png"
+        "filepath": "cypress/fixtures/upload/cat.png"
     },
+    "sinigang": {
+        "prompt": "What is the recipe for Sinigang?",
+        "answer": "pork",
+        "filepath": "cypress/fixtures/upload/sinigang.pdf"
+    },
+
     "txt-recipe": {
         "filepath": "cypress/fixtures/upload/recipe.txt",
         "queries": [
