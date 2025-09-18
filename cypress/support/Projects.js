@@ -201,8 +201,13 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
         .should('be.visible')
         .click();
 
+    //type in file to upload
+    cy.get('.file-browser-search-input', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .type(filename);
+
     //Checks if file is present
-    cy.contains(filename)
+    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
         .should("be.visible")
         .click();
 
