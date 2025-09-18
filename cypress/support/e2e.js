@@ -21,12 +21,15 @@ import Signup from './Signup.js';
 import Projects from './Projects.js';
 import Login from './login.js'; 
 import Auth from './Auth.js';
+import Admin from './Admin.js';
+
 
 export {
     Notebook,
     Signup,
     Projects,
     Login,
-    Auth
+    Auth,
+    Admin
 };
 
