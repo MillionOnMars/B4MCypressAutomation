@@ -58,7 +58,83 @@ const sortname = (username, sortBy) => {
         .should('be.visible');
 
 }
-
+const CreateUser = (userDetails) => {
+    navigateToAdminDashboard();
+    //Click Bulk Import
+    cy.contains('Bulk Import')
+        .should('be.visible')
+        .click();
+    //Add CSV data
+    cy.get('textarea[placeholder="Paste CSV data here..."]')
+        .should('be.visible')
+        .type(userDetails);
+    //Click Import Users
+    cy.contains('button', 'Import Users')
+        .should('be.visible')
+        .click();
+    //Verify success message
+    cy.contains('User created successfully', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+}
+const EditUser = (oldName, newName, newEmail) => {
+    navigateToAdminDashboard();
+    // Search for the user to edit
+    cy.get('input[placeholder="Search users"]')
+        .should('be.visible')
+        .type(oldName);
+    cy.contains(oldName, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    //Click profile button
+    cy.xpath("//button[normalize-space()='Profile']")
+        .should('be.visible')
+        .click();
+    // Edit user details
+    cy.get('input[name="name"]')
+        .clear()
+        .type(newName);
+    cy.get('input[name="email"]')
+        .clear()
+        .type(newEmail);
+    // Save changes
+    cy.contains('button', 'Save Changes')
+        .should('be.visible')
+        .click();
+    // Verify success message
+    cy.contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+}
+const DeleteUser = (username) => {
+    navigateToAdminDashboard();
+    // Search for the user to delete
+    cy.get('input[placeholder="Search users"]')
+        .should('be.visible')
+        .type(username);
+    cy.contains(username, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    //Click admin button
+    cy.xpath("//button[normalize-space()='Admin']")
+        .should('be.visible')
+        .click();
+    //Type DELETE in confirmation box
+    cy.get('input[placeholder="type DELETE"]')
+        .should('be.visible')
+        .type('DELETE');
+    //Click Delete User button
+    cy.contains('button', 'Delete User')
+        .should('be.visible')
+        .click();
+    //Click Delete button in popup
+    cy.get('div[role="dialog"]')
+        .find('button.MuiButton-colorDanger')
+        .last() // Target the last matching element
+        .should('be.visible')
+        .click();
+    //Verify success message
+    cy.contains('User deleted successfully', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+}
 
 class Admin {
     static User(username, email) {
@@ -72,6 +148,27 @@ class Admin {
         describe('Sort Tests', () => {
             it('Sort users', () => {
                 sortname(username, sortBy);
+            });
+        });
+    }
+    static CreateUser(userDetails) {
+        describe('Create User Tests', () => {
+            it('Create user', () => {
+                CreateUser(userDetails);
+            });
+        });
+    }
+    static EditUser(oldName, newName, newEmail) {
+        describe('Edit User Tests', () => {
+            it('Edit user', () => {
+                EditUser(oldName, newName, newEmail);
+            });
+        });
+    }
+    static DeleteUser(username) {
+        describe('Delete User Tests', () => {
+            it('Delete user', () => {
+                DeleteUser(username);
             });
         });
     }
