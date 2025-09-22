@@ -113,7 +113,7 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         default:
-            throw new Error(`Invalid action: ${action}. Use 'create', 'edit', 'rename', or 'delete'`);
+            throw new Error(`Invalid action: ${action}. Use 'create', 'rename', or 'delete'`);
     }
 };
 
