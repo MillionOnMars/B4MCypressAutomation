@@ -27,23 +27,23 @@ const handleAgentOperations = (action, agentName, newName) => {
     switch(action) {
         case 'create':
             // Click New Agent button
-            cy.contains('button', 'New Agent')
+            cy.contains('button', 'New Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click();
 
             // Input agent name
-            cy.get('input[placeholder="E.g., Research Assistant"]')
+            cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .type(agentName);
 
             // Input description
-            cy.get('textarea[placeholder="Describe what this agent does..."]')
+            cy.get('textarea[placeholder="Describe what this agent does..."]', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .type(agentName)
                 .click();
 
             //click generate button to auto fill
-            cy.contains('Generate Being with Purpose', )
+            cy.contains('Generate Being with Purpose', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click();
 
@@ -65,7 +65,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             // Find and click specific agent
-            cy.contains('.MuiTypography-h4', agentName)
+            cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
 
@@ -75,7 +75,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             // Input new agent name
-            cy.get('input[placeholder="E.g., Research Assistant"]')
+            cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .clear()
                 .type(newName);
@@ -98,7 +98,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             // Find and click specific agent
-            cy.contains('.MuiTypography-h4', agentName)
+            cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
 
@@ -108,7 +108,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             // Verify success message
-            cy.contains('Agent deleted successfully')
+            cy.contains('Agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
