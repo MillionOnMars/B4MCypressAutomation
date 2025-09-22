@@ -76,26 +76,57 @@ const CreateUser = (userDetails) => {
     cy.contains('User created successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
-const EditUser = (oldName, newName, newEmail) => {
+const EditUser = (user) => {
     navigateToAdminDashboard();
     // Search for the user to edit
     cy.get('input[placeholder="Search users"]')
         .should('be.visible')
-        .type(oldName);
-    cy.contains(oldName, { timeout: DEFAULT_TIMEOUT })
+        .type(user.oldName);
+    cy.contains(user.oldName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click profile button
     cy.xpath("//button[normalize-space()='Profile']")
         .should('be.visible')
         .click();
-    // Edit user details
+    // Edit name
     cy.get('input[name="name"]')
         .clear()
-        .type(newName);
+        .type(user.newName);
+    //Edit email
     cy.get('input[name="email"]')
         .clear()
-        .type(newEmail);
+        .type(user.newEmail);
+    //Edit team
+    cy.get('input[name="team"]')
+        .clear()
+        .type(user.newTeam);
+    //Edit role
+    cy.get('input[name="role"]')
+        .clear()
+        .type(user.newRole);
+    //Edit phone
+    cy.get('input[name="phone"]')
+        .clear()
+        .type(user.phone);
+    //Select Preferred Contact Method
+    cy.get('button[role="combobox"]')
+        .contains('None')
+        .should('be.visible')
+        .click();
+    cy.get('[role="listbox"]')
+        .contains(user["preferredContactMethod"])
+        .should('be.visible')
+        .click();
+    //Select T-shirt Size
+    cy.get('button[role="combobox"]')
+        .contains('None')
+        .should('be.visible')
+        .click();
+    cy.get('[role="listbox"]')
+        .contains(user["tShirtSize"])
+        .should('be.visible')
+        .click();
     // Save changes
     cy.contains('button', 'Save Changes')
         .should('be.visible')
@@ -158,10 +189,14 @@ class Admin {
             });
         });
     }
-    static EditUser(oldName, newName, newEmail) {
+    static EditUser() {
         describe('Edit User Tests', () => {
             it('Edit user', () => {
-                EditUser(oldName, newName, newEmail);
+                cy.fixture('edit-user.json').then((editUserData) => {
+                    editUserData.forEach((user) => {
+                        EditUser(user);
+                    });
+                });
             });
         });
     }

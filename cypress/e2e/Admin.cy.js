@@ -16,7 +16,7 @@ describe('Admin Tests', () => {
     //Create User
     Admin.CreateUser('b4m-automation+11@milliononmars.com,Create,Admin,100,10');
     //Edit User
-    Admin.EditUser('Create Admin','Edited name','b4m-automation+12@milliononmars.com');
+    Admin.EditUser();
     //Delete User
     Admin.DeleteUser('Edited name');
 });
