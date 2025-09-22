@@ -1,5 +1,6 @@
-import { login } from '../support/login.js';
+import  { login }  from '../support/login.js';
 import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Correctly import the default export
+import  Agents  from '../support/Tools/agents.js';
 
 describe('Notebook Operations', () => {
     const randomTextModels = getRandomTextModels(4); 
@@ -25,4 +26,6 @@ describe('Notebook Operations', () => {
     Notebook.deleteNotebook('Renamed Notebook');
     //add a file to the notebook
     Notebook.Files('prime');
+    // Create/renamed & delete an agent
+    Agents.manageAgent('Test Agent', 'Renamed Agent');
 });
