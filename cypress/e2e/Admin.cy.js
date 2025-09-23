@@ -19,4 +19,10 @@ describe('Admin Tests', () => {
     Admin.EditUser();
     //Delete User
     Admin.DeleteUser('Edited name');
+    //Create Invite Code
+    Admin.CreateInviteCode('b4m-auto');
+    //Use Invite Code
+    Admin.UseInviteCode();
+    //Delete User created with Invite Code and created Invite Code
+    Admin.DeleteInviteCode('Automation User');
 });

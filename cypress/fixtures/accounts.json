@@ -20,6 +20,13 @@
             "password": "Password123!",
             "fullname": "Test User",
             "code": "TESTCODE123"
+        },
+        "user4": {
+            "username": "testuser4",
+            "email": "test4@example.com",
+            "password": "Password123!",
+            "fullname": "Automation User",
+            "code": ""
         }
     },
     "existingUsers": {
