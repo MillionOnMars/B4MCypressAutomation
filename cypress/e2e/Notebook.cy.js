@@ -24,8 +24,17 @@ describe('Notebook Operations', () => {
     Notebook.addNotebookTags('automation');
     // Deletes the notebook
     Notebook.deleteNotebook('Renamed Notebook');
+        // Create/renamed & delete an agent
+    Agents.manageAgent('Test Agent', 'Renamed Agent');
     //add a file to the notebook
     Notebook.Files('prime');
+    // Manage research agent
+    Notebook.manageResearchAgent({
+        agentName: 'Research Agent',
+        newName: 'Renamed Agent',
+        description: 'This agent specializes in research tasks.',
+        newDescription: 'This agent has been updated to focus on advanced research tasks.'
+    });
     // Create/renamed & delete an agent
     Agents.manageAgent('Test Agent', 'Renamed Agent');
 });
