@@ -343,89 +343,184 @@ const uploadFile = (promptType) => {
     cy.wait(5000)
 };
 
-const fileOperation = (operation, promptType, newName) => {
-  const testCase = prompts[promptType];
-  const filename = testCase.filepath.split("/").pop();
+const fileOperation = (operation, promptType, newName, expectedContent = {}) => {
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split("/").pop();
 
-  //Click on files button
-  cy.contains("Files").should("be.visible").click();
+    //Click on files button
+    cy.contains("Files").should("be.visible").click();
 
-  cy.get(".MuiModalDialog-root").within(() => {
-    // Click the date header twice to sort descending
-    cy.contains("Date").click();
-    cy.contains("Date").click();
+    cy.get(".MuiModalDialog-root").within(() => {
+        // Click the date header twice to sort descending
+        cy.contains("Date").click();
+        cy.contains("Date").click();
 
-    //Checks if file is present
-    cy.contains(filename)
-      .should("be.visible")
-      .click();
+        //Checks if file is present
+        cy.contains(filename)
+            .should("be.visible")
+            .click();
 
+        switch (operation) {
+            case "checkFile":
+                // File presence already verified above
+                cy.log(`File ${filename} found successfully`);
+                //Click Close button
+                cy.get('[data-testid="CloseIcon"]')
+                    .should("be.visible")
+                    .click();
+                break;
+
+            case "renameFile":
+                cy.xpath('(//*[name()="svg"][contains(@class,"lucide lucide-more-vertical")])[1]')
+                    .should('be.visible')
+                    .click();
+
+                //Click rename button. Temporarily search outside the modal
+                cy.document().its('body').find('li[role="menuitem"]').contains('Rename')
+                    .should("be.visible")
+                    .click();
+
+                cy.get('input[value="' + filename + '"]')
+                    .should("be.visible")
+                    .clear()
+                    .type(newName)
+                    .type("{enter}");
+
+                cy.log(`File ${newName} renamed successfully`);
+                break;
+
+            case "deleteFile":
+                //Click delete button
+                cy.contains("Delete 1 File").should("be.visible").click();
+                cy.document().its('body').find('button').contains('Ok').click();
+                break;
+
+            case "addFile":
+                //click add file
+                cy.contains("Add 1 File").should("be.visible").click();
+
+                //wait for file to be added
+                cy.wait(2000);
+
+                cy.log("File added to Notebook Successfully.");
+                break;
+
+            case "verifyContent":
+                // New operation to verify file content
+                verifyFileContent(filename, expectedContent, testCase.filepath);
+                break;
+
+            default:
+                throw new Error(`Invalid file operation: ${operation}`);
+        }
+    });
+
+    // After closing the modal, confirm the file operations
     switch (operation) {
-      case "checkFile":
-        // File presence already verified above
-        cy.log(`File ${filename} found successfully`);
-        //Click Close button
-        cy.get('[data-testid="CloseIcon"]')
-          .should("be.visible")
-          .click();
-        break;
-
-      case "renameFile":
-        cy.xpath('(//*[name()="svg"][contains(@class,"lucide lucide-more-vertical")])[1]')
-        //   .find('button')
-          .should('be.visible')
-          .click();
-
-        //Click rename button. Temporarily search outside the modal
-        cy.document().its('body').find('li[role="menuitem"]').contains('Rename')
-          .should("be.visible")
-          .click();
-
-        cy.get('input[value="' + filename + '"]')
-          .should("be.visible")
-          .clear()
-          .type(newName)
-          .type("{enter}");
-
-        cy.log(`File ${newName} renamed successfully`);
-        //Click Close button
-        // cy.get('[data-testid="CloseIcon"]').eq(2).should("be.visible").click();
-
-        break;
-
-      case "deleteFile":
-        //Click delete button
-        cy.contains("Delete 1 File").should("be.visible").click();
-        cy.document().its('body').find('button').contains('Ok').click();
-        break;
-
-      case "addFile":
-        //click add file
-        cy.contains("Add 1 File").should("be.visible").click();
-
-        //wait for file to be added
-        cy.wait(2000);
-
-        cy.log("File added to Notebook Successfully.");
-        break;
-
-      default:
-        throw new Error(`Invalid file operation: ${operation}`);
+        case "deleteFile":
+            cy.contains(/Deleted \d+ files/)
+                .should("be.visible")
+            break;
     }
-  });
-
-  // After closing the modal, confirm the file operations
-  switch (operation) {
-    // case "addFile":
-    //   cy.get(".MuiChip-action").should("be.visible");
-    //   break;
-    case "deleteFile":
-      cy.contains(/Deleted \d+ files/)
-        .should("be.visible")
-      break;
-  }
 }
 
+// Add this helper function for content verification
+const verifyFileContent = (filename, expectedContent, filepath) => {
+    // Auto-detect file type
+    let fileType = 'text';
+    if (filepath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+        fileType = 'image';
+    } else if (filepath.match(/\.(pdf)$/i)) {
+        fileType = 'pdf';
+    }
+
+    cy.log(`Verifying ${fileType} content for: ${filename}`);
+
+    // Close the files modal first
+    cy.get('.MuiSvgIcon-sizeMd', { timeout: DEFAULT_TIMEOUT })
+        .eq(2)
+        .should('be.visible')
+        .click();
+        
+    // Open the session files panel
+    cy.get('[aria-label="Session Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should("be.visible")
+        .click();
+
+    // Look for the file in the chat/notebook interface
+    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Handle different file types
+    switch (fileType) {
+        case 'image':
+            // Wait for image modal to appear
+            cy.get('[data-testid="image-modal"], [data-testid="content-viewer"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+
+            // Verify image loaded successfully
+            cy.get('img')
+                .should('be.visible')
+                .and(($img) => {
+                    expect($img[0].naturalWidth).to.be.greaterThan(0);
+                    expect($img[0].naturalHeight).to.be.greaterThan(0);
+                });
+
+            // Check AI response for image content
+            if (expectedContent.contains) {
+                expectedContent.contains.forEach(content => {
+                    cy.get('[data-testid="ai-response"]', { timeout: 60000 })
+                        .should('contain.text', content, { matchCase: false });
+                });
+            }
+            break;
+
+        case 'pdf':
+            // Wait for PDF viewer to load
+            cy.get('[data-testid="pdf-viewer"], iframe, embed', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+
+            // Check PDF content verification
+            if (expectedContent.contains) {
+                expectedContent.contains.forEach(content => {
+                    cy.get('[data-testid="ai-response"]', { timeout: 60000 })
+                        .should('contain.text', content, { matchCase: false });
+                });
+            }
+            break;
+
+        case 'text':
+        default:
+            // Check text file content in AI response
+            if (expectedContent.contains) {
+                expectedContent.contains.forEach(content => {
+                    cy.get('[data-testid="ai-response"]', { timeout: 60000 })
+                        .should('contain.text', content, { matchCase: false });
+                });
+            }
+            break;
+    }
+
+    // Close any open viewer/modal
+    const closeSelectors = [
+        '[data-testid="CloseIcon"]',
+        '[data-testid="close-modal-button"]',
+        '.close-button',
+        'button[aria-label="Close"]'
+    ];
+
+    closeSelectors.forEach(selector => {
+        cy.get('body').then($body => {
+            if ($body.find(selector).length > 0) {
+                cy.get(selector).first().click({ force: true });
+                return false;
+            }
+        });
+    });
+
+    cy.log(`Content verification completed for ${filename}`);
+};
 
 const handleResearchAgent = (action, agent) => {
     // Click File
@@ -572,6 +667,7 @@ class Notebook {
             selectTxtModel(model);
             uploadFile(promptType);
             fileOperation('addFile', promptType);
+            fileOperation('verifyContent', promptType, '', {contains: ['Cranberries', 'Garlic', 'Potato']});
             sendPrompt(promptType,promptNo,model);
         });
     }
