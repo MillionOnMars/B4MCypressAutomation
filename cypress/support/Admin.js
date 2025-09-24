@@ -166,6 +166,91 @@ const DeleteUser = (username) => {
     cy.contains('User deleted successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
+let inviteCode;
+const CreateInviteCode = (createdby) => {
+    inviteCode = null;
+    navigateToAdminDashboard();
+    //Click Invite Codes tab
+    cy.contains('Invite Codes')
+        .should('be.visible')
+        .click();
+    //Click Create button
+    cy.xpath("//button[normalize-space()='Create']")
+        .should('be.visible')
+        .click();
+    //Click submit button
+    cy.contains('button', 'Submit')
+        .should('be.visible')
+        .click();
+    //Verify success message
+    cy.contains('Registration invite(s) created', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+    //Verify created by
+    cy.contains(createdby, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+    //Copy invite code
+    cy.get('span[aria-label="Click to Copy"]')
+        .eq(0) // Get the first invite code in the list
+        .invoke('text')
+        .then((text) => {
+            inviteCode = text;
+            cy.log('Invite Code:', inviteCode);
+        });
+}
+const UseInviteCode = (username, email, password, fullname) => {
+    // Wait for user menu button and force click
+    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click();
+    // Wait for logout icon and force click
+    cy.get('[data-testid="LogoutIcon"]')
+        .should('exist')
+        .click({ force: true });
+    // Ensure logout is successful 
+    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT })
+        .should('exist');
+    cy.url().should('contain', '/login');
+    // Navigate to the signup page
+    cy.get('button').contains('Sign Up')
+        .should('be.visible')
+        .click();
+    // Ensure the signup page is loaded
+    cy.url()
+        .should('include', '/register', { timeout: DEFAULT_TIMEOUT });
+    // Enter the invite code
+    cy.get('input[name="inviteCode"]')
+        .should('be.visible')
+        .type(inviteCode);
+    // Fill out the rest of the registration form
+    cy.get('#username').should('be.visible').type(username);
+    cy.get('.MuiInput-root > #email').should('be.visible').type(email);
+    cy.get('#password').should('be.visible').type(password);
+    cy.get('#confirmPassword').should('be.visible').type(password);
+    cy.get('.MuiInput-root > #fullName').should('be.visible').type(fullname);
+    // Submit the form
+    cy.get('	.MuiButton-fullWidth').should('be.visible').click();
+    // Verify successful signup
+    //cy.contains(fullname+' (Personal)').should('be.visible');
+    //cy.contains('How to work with Bike4Mind?').should('be.visible');
+}
+const DeleteInviteCode = (username) => {
+    //Delete user created with invite code
+    DeleteUser(username);
+    //Click escape to close any open dialogs
+    cy.get('body').type('{esc}');
+    //Click Invite Codes tab
+    cy.contains('Invite Codes')
+        .should('be.visible')
+        .click();
+    //Click Delete button
+    cy.get('[data-testid="DeleteForeverIcon"]')
+        .eq(0) // Target the first matching element
+        .should('be.visible')
+        .click();
+    //Verify success message
+    cy.contains('Registration invite(s) deleted', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
+}
 
 class Admin {
     static User(username, email) {
@@ -207,5 +292,30 @@ class Admin {
             });
         });
     }
+    static CreateInviteCode(createdby) {
+        describe('Create Invite Code Tests', () => {
+            it('Create invite code', () => {
+                CreateInviteCode(createdby);
+            });
+        });
+    }
+    static UseInviteCode() {
+        describe('Use Invite Code Tests', () => {
+            it('Use invite code', () => {
+                cy.fixture('accounts.json').then((accounts) => {
+                    const user4 = accounts.newUsers.user4;
+                    UseInviteCode(user4.username, user4.email, user4.password, user4.fullname);
+                });
+            });
+        });
+    }
+    static DeleteInviteCode(username) {
+        describe('Delete Invite Code Tests', () => {
+            it('Delete invite code', () => {
+                DeleteInviteCode(username);
+            });
+        });
+    }
+
 }
 export default Admin;
