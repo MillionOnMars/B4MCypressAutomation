@@ -1,7 +1,7 @@
 import { login } from '../support/login.js';
-import Settings from '../support/Settings.js';
+import Profile from '../support/profile.js';
 
-describe('Settings Tests', () => {
+describe('Profile Tests', () => {
     beforeEach(() => {
         // Load existing user credentials from accounts.json
         cy.fixture('accounts.json').then((accounts) => {
@@ -10,8 +10,8 @@ describe('Settings Tests', () => {
         });
     });
     // Update User Settings
-    Settings.UpdateUserSettings();
+    Profile.UpdateUserSettings();
     // Revert User Settings
-    Settings.RevertUserSettings();
+    Profile.RevertUserSettings();
 
 });
