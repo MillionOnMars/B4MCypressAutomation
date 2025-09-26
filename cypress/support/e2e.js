@@ -19,9 +19,10 @@ import './commands';
 import Notebook from './Notebook.js';
 import Signup from './Signup.js';
 import Projects from './Projects.js';
-import Login from './login.js'; 
+import Login from './login.js';
 import Auth from './Auth.js';
 import Admin from './Admin.js';
+import Profile from './profile.js';
 
 
 export {
@@ -30,6 +31,7 @@ export {
     Projects,
     Login,
     Auth,
-    Admin
+    Admin,
+    Profile
 };
 
