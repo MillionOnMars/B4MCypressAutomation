@@ -2,19 +2,12 @@ const DEFAULT_TIMEOUT = 10000;
 
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
-    // Navigate to the admin panel
-    cy.get('[aria-label="Profile"]')
-        .should('be.visible')
+    // Wait for user menu button and force click
+    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
         .click();
-    // Ensure the admin panel is loaded
-    cy.url()
-        .should('include', '/profile', { timeout: DEFAULT_TIMEOUT });
-    //click admin tab
-    cy.contains('Admin')
-        .should('be.visible')
-        .click();
-    //click admin dashboard
-    cy.contains('Admin Dashboard')
+    // Click admin option
+    cy.contains('Admin', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     // Ensure the admin dashboard is loaded
@@ -229,12 +222,9 @@ const UseInviteCode = (username, email, password, fullname) => {
     cy.get('.MuiInput-root > #fullName').should('be.visible').type(fullname);
     // Submit the form
     cy.get('	.MuiButton-fullWidth').should('be.visible').click();
-    // Verify successful signup
-    //cy.contains(fullname+' (Personal)').should('be.visible');
-    //cy.contains('How to work with Bike4Mind?').should('be.visible');
 }
 const DeleteInviteCode = (username) => {
-    //Delete user created with invite code
+    //Delete user created with invite code 
     DeleteUser(username);
     //Click escape to close any open dialogs
     cy.get('body').type('{esc}');
