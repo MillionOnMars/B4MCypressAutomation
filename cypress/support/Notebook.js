@@ -1,6 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
 const textModels = ['Claude 4 Opus', 'O3', 'GPT-4.1', 'Gemini 2.5 Pro Preview']; // Add your text models here
+const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
 let prompts;
 
@@ -426,6 +427,91 @@ const fileOperation = (operation, promptType, newName) => {
 }
 
 
+const handleResearchAgent = (action, agent) => {
+    // Click File
+    cy.get('[aria-label="File Browser"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    //Click Research button
+    cy.get('[aria-label="Open Research"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    switch(action) {
+        case 'create':
+            cy.contains('button', 'Create New Agent', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            cy.get('input[placeholder="Give your AI agent a memorable name..."]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .type(agent.agentName);
+
+            cy.get('textarea[placeholder="Describe what this agent specializes in and what kind of research it should focus on..."]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .type(agent.description)
+                .click();
+
+            cy.contains('Create Agent', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            cy.contains('Research agent created successfully', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+            break;
+
+        case 'edit':     
+            cy.contains(agent.agentName, { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click({ force: true });
+
+            cy.get('[data-testid="EditIcon"]', { timeout: DEFAULT_TIMEOUT })
+                .eq(1)
+                .should('be.visible')
+                .click();
+
+            cy.get('input[placeholder="Give your AI agent a memorable name..."]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .clear()
+                .type(agent.newName);
+
+            cy.get('textarea[placeholder="Describe what this agent specializes in and what kind of research it should focus on..."]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .clear()
+                .type(agent.newDescription)
+                .click();
+
+            cy.contains('Save Changes', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            cy.contains('Research agent updated successfully', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+            break;
+
+        case 'delete':
+            cy.contains(agent.newName, { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click({ force: true });
+
+            cy.contains('button', 'Delete Agent', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            cy.get('.confirmation-modal-confirm-button', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+
+            cy.contains('Research agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+            break;
+
+        default:
+            throw new Error(`Invalid action: ${action}. Use 'create', 'edit', or 'delete'`);
+    }
+};
+
+
 class Notebook {
     static createNotebook(prompt, model) {
         describe(`Text Model: ${model}`, () => {
@@ -524,6 +610,20 @@ class Notebook {
             });
         });
     }
+        static manageResearchAgent(agent) {
+            describe(`Research Agent Operations for: ${agent.agentName}`, () => {
+                it('Should create new agent.', () => {
+                    handleResearchAgent('create', agent);
+                });
+                it(`Should edit it to ${agent.newName}.`, () => {
+                    handleResearchAgent('edit', agent);
+                });
+                it(`Should delete ${agent.newName}.`, () => {
+                    handleResearchAgent('delete', agent);
+                });
+            });
+        }
+    
 }
 
 export default Notebook;
