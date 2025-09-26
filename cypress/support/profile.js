@@ -111,6 +111,24 @@ const RevertUserSettings = (user) => {
         .should('be.visible');
 
 }
+const verifyProfileElements = () => {
+    navigateToProfileSettings();
+    // Verify presence of Credits
+    cy.contains('Credits')
+        .should('be.visible');
+    cy.get('.profile-detail-tab-value')
+        .should('be.visible');
+    // Verify presence of Storage Used
+    cy.contains('Storage Used')
+        .should('be.visible');
+    cy.get('.profile-detail-tab-storage-value')
+        .should('be.visible');
+    // Verify the presence of the Collections element
+    cy.contains('Collection')
+        .should('be.visible');
+    cy.get('.profile-collection-section-item')
+        .should('be.visible');
+};
 
 class Profile {
     static openProfileTab(tabName) {
@@ -137,6 +155,13 @@ class Profile {
                         RevertUserSettings(user);
                     });
                 });
+            });
+        });
+    }
+    static VerifyProfileElements() {
+        describe('Verify Profile Elements Tests', () => {
+            it('Verify profile elements', () => {
+                verifyProfileElements();
             });
         });
     }
