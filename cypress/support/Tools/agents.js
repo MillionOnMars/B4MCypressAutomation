@@ -48,10 +48,11 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             // Click create agent button
-            cy.contains('.MuiButton-sizeMd', 'Create Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.get('.MuiButton-sizeMd')
+                .contains('Create Agent', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should('be.visible')
-                .click();
+                .click({ force: true });
 
             // Verify success message
             cy.contains('Agent created successfully', { timeout: DEFAULT_TIMEOUT })
