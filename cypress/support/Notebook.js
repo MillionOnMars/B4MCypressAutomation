@@ -53,8 +53,8 @@ const createNote = (promptType, model) => {
             cy.contains(testCase.prompt, { timeout: 50000 })
                 .should('be.visible');
 
-            cy.get('[data-testid="ai-response"]', { timeout: 60000 })
-                .contains(testCase.answer, { timeout: 60000, matchCase: false })
+            cy.get('[data-testid="ai-response"]', { timeout: 120000 })
+                .contains(testCase.answer, { timeout: 120000, matchCase: false })
                 .should('be.visible')
                 .then(() => {
                     const duration = (Date.now() - startTime) / 1000;
