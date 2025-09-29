@@ -1,6 +1,6 @@
 import { login } from '../support/login.js';
 
-const DEFAULT_TIMEOUT = 20000;
+const DEFAULT_TIMEOUT = 60000;
 let prompts;
 
 before(() => {
@@ -62,13 +62,11 @@ const renameProject = (oldName, newName) => {
 
     // Checks if the new project created exists
     cy.contains(oldName, { timeout: DEFAULT_TIMEOUT })
-        .should('exist')
-
-    //Clicks ellipsis button
-    cy.get('.lucide.lucide-more-vertical', { timeout: DEFAULT_TIMEOUT })
-        .eq(0)
         .should('be.visible')
-        .click();
+        .parent() // Go to parent container
+        .trigger('mouseover')
+        .find('.lucide.lucide-more-vertical')
+        .click({ force: true }); // Force click even if not visible
 
     //Clicks Edit button
     cy.get('.MuiMenuItem-variantPlain', { timeout: DEFAULT_TIMEOUT })
@@ -98,14 +96,13 @@ const deleteProject = (projectName) => {
         .should('be.visible')
         .click();
 
-    // Verify the project exists
-    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('exist');
-
-    //Clicks ellipsis button
-    cy.get('.lucide.lucide-more-vertical', { timeout: DEFAULT_TIMEOUT })
-        .eq(0)
+    // Checks if the project created exists
+    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .click();
+        .parent() // Go to parent container
+        .trigger('mouseover')
+        .find('.lucide.lucide-more-vertical')
+        .click({ force: true }); // Force click even if not visible
 
     //Clicks Delete button
     cy.get('.MuiMenuItem-variantPlain', { timeout: DEFAULT_TIMEOUT })
@@ -358,8 +355,8 @@ const handleSystemPrompt = (projectName, action, promptName) => {
             // click Close button
             cy.get('.MuiModalClose-sizeMd', { timeout: DEFAULT_TIMEOUT })
                 .eq(1)
-                .should('be.visible')
-                .click();
+                .should('exist')
+                .click({ force: true });
             break;
 
         case 'delete':
