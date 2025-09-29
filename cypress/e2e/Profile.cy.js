@@ -13,5 +13,6 @@ describe('Profile Tests', () => {
     Profile.UpdateUserSettings();
     // Revert User Settings
     Profile.RevertUserSettings();
-
+    // Verify Profile Elements
+    Profile.VerifyProfileElements();
 });
