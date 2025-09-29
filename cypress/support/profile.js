@@ -129,6 +129,143 @@ const verifyProfileElements = () => {
     cy.get('.profile-collection-section-item')
         .should('be.visible');
 };
+const verifyExperimentalFeaturesToggle = (EnabledColor, DisabledColor) => {
+    navigateToProfileSettings();
+    // Navigate to Settings tab
+    openProfileTabs('Settings');
+    //Verify Quest Master toggle
+    cy.contains('Quest Master')
+        .should('be.visible');
+    // Toggle Quest Master feature
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(0)
+        .should('be.visible')
+        .click();
+    // Verify the toggle state has changed and the background color is correct
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(0)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${EnabledColor};`);
+    //Revert Quest Master toggle to original state
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(0)
+        .should('be.visible')
+        .click();
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(0)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${DisabledColor};`);
+    //Toggle Mementos feature
+    cy.contains('Mementos')
+        .should('be.visible');
+    // Toggle Mementos feature
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(1)
+        .should('be.visible')
+        .click();
+    // Verify the toggle state has changed and the background color is correct
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(1)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${EnabledColor};`);
+    //Revert Mementos toggle to original state
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(1)
+        .should('be.visible')
+        .click();
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(1)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${DisabledColor};`);
+    //Toggle Artifatcts feature
+    cy.contains('Artifacts')
+        .should('be.visible');
+    // Toggle Artifacts feature
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(2)
+        .should('be.visible')
+        .click();
+    // Verify the toggle state has changed and the background color is correct
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(2)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${EnabledColor};`);
+    //Revert Artifacts toggle to original state
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(2)
+        .should('be.visible')
+        .click();
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(2)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${DisabledColor};`);
+    //Toggle Agents feature
+    cy.contains('Agents')
+        .should('be.visible');
+    // Toggle Agents feature
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(3)
+        .should('be.visible')
+        .click();
+    // Verify the toggle state has changed and the background color is correct
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(3)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${EnabledColor};`);
+    //Revert Agents toggle to original state
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(3)
+        .should('be.visible')
+        .click();
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(3)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${DisabledColor};`);
+    //Toggle Research Mode feature
+    cy.contains('Research Mode')
+        .should('be.visible');
+    // Toggle Research Mode feature
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(4)
+        .should('be.visible')
+        .click();
+    // Verify the toggle state has changed and the background color is correct
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(4)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${EnabledColor};`);
+    //Revert Research Mode toggle to original state
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(4)
+        .should('be.visible')
+        .click();
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(4)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${DisabledColor};`);
+    //Toggle Hottest Models feature
+    cy.contains('Hottest Models')
+        .should('be.visible');
+    // Toggle Hottest Models feature
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(5)
+        .should('be.visible')
+        .click();
+    // Verify the toggle state has changed and the background color is correct
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(5)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${EnabledColor};`);
+    //Revert Hottest Models toggle to original state
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(5)
+        .should('be.visible')
+        .click();
+    cy.get('div.experimental-feature-toggle-container button')
+        .eq(5)
+        .should('have.attr', 'style')
+        .and('include', `background-color: ${DisabledColor};`);
+}
 
 class Profile {
     static openProfileTab(tabName) {
@@ -162,6 +299,13 @@ class Profile {
         describe('Verify Profile Elements Tests', () => {
             it('Verify profile elements', () => {
                 verifyProfileElements();
+            });
+        });
+    }
+    static ToggleExperimentalFeatures(EnabledColor, DisabledColor) {
+        describe('Toggle Experimental Features Tests', () => {
+            it('Verify Experimental Features toggle', () => {
+                verifyExperimentalFeaturesToggle(EnabledColor, DisabledColor);
             });
         });
     }
