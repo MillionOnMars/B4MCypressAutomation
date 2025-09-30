@@ -37,4 +37,6 @@ describe('Notebook Operations', () => {
     });
     // Create/renamed & delete an agent
     Agents.manageAgent('Test Agent', 'Renamed Agent');
+    // Validate agent prompt content
+    Agents.validateAgentPrompt('Renamed Agent', 'movie')
 });

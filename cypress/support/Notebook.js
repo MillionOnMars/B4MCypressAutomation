@@ -628,4 +628,4 @@ class Notebook {
 }
 
 export default Notebook;
-export { getRandomTextModels };
+export { getRandomTextModels, selectTxtModel };

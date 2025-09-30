@@ -1,6 +1,15 @@
 import { openProfileTabs } from '../profile.js';
+import { selectTxtModel } from '../Notebook.js';
+
 const DEFAULT_TIMEOUT = 60000;
 
+let prompts;
+
+before(() => {
+    cy.fixture('prompts.json').then((promptsData) => {
+       prompts = promptsData;
+    });
+});
 
 const setAgentSettings = (settings, enable) => {
     cy.log(`Opening profile tab: ${settings}`);
@@ -16,6 +25,53 @@ const setAgentSettings = (settings, enable) => {
         .should('be.visible')
         .click({ force: true });
 };
+
+const validateAgentPrompt = (agentName, promptType, model) => {
+    const testCase = prompts[promptType];
+
+    // Click the "New Chat" button
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
+        .should('be.visible')
+        .click();
+
+    selectTxtModel(model);
+    //Verify if models is selected
+    cy.contains(model, { timeout: 20000})
+        .should('be.visible');
+
+    // Click the "Agents" button
+    cy.contains('Agents', { timeout: 50000 })
+        .should('be.visible')
+        .click();
+
+    // Enable the agent by clicking on the agent name from the menu
+    cy.contains('ul[role="menu"].MuiMenu-root',agentName, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .parent() // Go to parent container
+        .trigger('mouseover')
+        .within(() => {
+            cy.get('button.relative.rounded-md.transition-colors.duration-300')
+                .eq(0)
+                .should('be.visible')
+                .click();
+        });
+
+    // Type the question in the textarea
+    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+        .should('be.visible')
+        .type(testCase.prompt)
+        .type('{enter}');
+    
+    // Check if agent response is visible
+    cy.contains('Agent Response:', { timeout: 50000 })
+        .should('be.visible');
+    //contains the agent name
+    cy.contains(agentName, { timeout: 50000 }).should('be.visible');
+    // Validate the answer
+    cy.contains(testCase.answer, { timeout: 50000 }).should('be.visible');
+    cy.log('Agent prompt validated successfully.');
+}
+
 
 
 const handleAgentOperations = (action, agentName, newName) => {
@@ -131,9 +187,17 @@ class Agents {
                 setAgentSettings('Settings', true);
                 handleAgentOperations('rename', agentName, newName);
             });
-            it(`Should delete ${newName}.`, () => {
+        });
+    }
+        static validateAgentPrompt(agentName, promptType) {
+        describe(`Agent Prompt Validation for: ${agentName}`, () => {
+            it('Should validate agent prompt content', () => {
                 setAgentSettings('Settings', true);
-                handleAgentOperations('delete', newName);
+                validateAgentPrompt(agentName, promptType, 'GPT-5');
+            });
+            it(`Should delete ${agentName}.`, () => {
+                setAgentSettings('Settings', true);
+                handleAgentOperations('delete', agentName);
             });
         });
     }
