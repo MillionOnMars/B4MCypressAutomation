@@ -189,11 +189,11 @@ class Agents {
             });
         });
     }
-        static validateAgentPrompt(agentName, promptType) {
+        static validateAgentPrompt(agentName, promptType, model) {
         describe(`Agent Prompt Validation for: ${agentName}`, () => {
-            it('Should validate agent prompt content', () => {
+            it(`${model}: Should validate agent prompt content.`, () => {
                 setAgentSettings('Settings', true);
-                validateAgentPrompt(agentName, promptType, 'GPT-5');
+                validateAgentPrompt(agentName, promptType, model);
             });
             it(`Should delete ${agentName}.`, () => {
                 setAgentSettings('Settings', true);

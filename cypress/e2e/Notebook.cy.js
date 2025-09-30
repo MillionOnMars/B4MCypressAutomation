@@ -37,6 +37,8 @@ describe('Notebook Operations', () => {
     });
     // Create/renamed & delete an agent
     Agents.manageAgent('Test Agent', 'Renamed Agent');
-    // Validate agent prompt content
-    Agents.validateAgentPrompt('Renamed Agent', 'movie')
+    // Validate agent prompt with random model
+    const randomIndex = Math.floor(Math.random() * 4);
+     // Validate agent prompt content
+    Agents.validateAgentPrompt('Renamed Agent', 'movie', randomTextModels[randomIndex])
 });
