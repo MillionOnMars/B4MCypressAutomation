@@ -9,6 +9,11 @@
         "answer": "Paris",
         "filepath": "cypress/fixtures/upload/cat.png"
     },
+        "movie": {
+        "prompt": "Could you list the top movie apps?",
+        "answer": "Netflix",
+        "filepath": "cypress/fixtures/upload/cat.png"
+    },
     "sinigang": {
         "prompt": "What is the recipe for Sinigang?",
         "answer": "pork",
