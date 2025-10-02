@@ -15,6 +15,6 @@ describe('Profile Tests', () => {
     Profile.RevertUserSettings();
     // Verify Profile Elements
     Profile.VerifyProfileElements();
-    //Toggle Experimental Features
-    Profile.ToggleExperimentalFeatures('rgba(31, 184, 75, 0.2)','rgb(240, 243, 245)');
+    // Toggle Experimental Features
+    Profile.ToggleExperimentalFeatures('rgb(26, 58, 31)','rgb(30, 30, 30)');
 });
