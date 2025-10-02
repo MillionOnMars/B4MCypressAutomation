@@ -272,38 +272,43 @@ const logCreditsToJSON = (models, ResponseTime) => {
             cy.log('Cleaned credits.json file');
         }
 
-        // Click to view credits
-        cy.get('[data-testid="credits-used"]', {timeout: 10000})
-            .eq(0)
-            .should('be.visible')
-            .click();
-
-        // Get credits value, handle case where text is not found
-        cy.contains('Credits Used', { timeout: 50000 })
-            .should('exist')
-            .invoke('text')
-            .then((credits) => {
-                // Extract only the number using regex
-                const creditsNumber = credits?.match(/\d+/)?.[0] || null;
-                
-                // Read existing data first
-                cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
-                    const newData = existingData || [];
-
-                    // Add new credit data
-                    newData.push({
-                        textModel: model,
-                        Credits: creditsNumber ? parseInt(creditsNumber) : null,
-                        ResponseTime: Number(ResponseTime) + ' secs.'
+        // Try to find credits-used element, handle case where it doesn't exist
+        cy.get('body').then($body => {
+            if ($body.find('[data-testid="credits-used"]').length > 0) {
+                // Element exists, proceed with credits logging
+                cy.get('[data-testid="credits-used"]', {timeout: 10000})
+                    .eq(0)
+                    .should('be.visible')
+                    .click()
+                    .then(() => {
+                        cy.contains('Credits Used', { timeout: 50000 })
+                            .should('exist')
+                            .invoke('text')
+                            .then((credits) => {
+                                const creditsNumber = credits?.match(/\d+/)?.[0] || null;
+                                logModelData(model, creditsNumber, ResponseTime);
+                            });
                     });
+            } else {
+                // Element doesn't exist, log null credits
+                logModelData(model, null, ResponseTime);
+            }
+        });
 
-                    // Write back the combined data
-                    cy.writeFile('cypress/fixtures/credits.json', newData);
+        // Helper function to log data
+        const logModelData = (model, creditsNumber, ResponseTime) => {
+            cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
+                const newData = existingData || [];
+                newData.push({
+                    textModel: model,
+                    Credits: creditsNumber ? parseInt(creditsNumber) : null,
+                    ResponseTime: Number(ResponseTime) + ' secs.'
                 });
-
-                // Process next model
+                cy.writeFile('cypress/fixtures/credits.json', newData);
+                cy.log(`Logged credits for ${model}: ${creditsNumber || 'null'}`);
                 processModel(index + 1);
             });
+        };
     };
 
     // Start processing with first model
