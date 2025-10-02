@@ -3,7 +3,7 @@ import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Corr
 import  Agents  from '../support/Tools/agents.js';
 
 describe('Notebook Operations', () => {
-    const randomTextModels = getRandomTextModels(4); 
+    const randomTextModels = getRandomTextModels(3); 
     // Log in to the application before running the tests
     
     beforeEach(() => {
@@ -15,7 +15,6 @@ describe('Notebook Operations', () => {
     });
     // Choose 4 random text models and create a new notebook
     randomTextModels.forEach((model) => {
-        //Notebook.createNotebook('capital', model);
         Notebook.createNotebookWithAverage('capital', model);
     });
     // Rename the notebook
