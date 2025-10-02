@@ -53,8 +53,8 @@ const createNote = (promptType, model) => {
             cy.contains(testCase.prompt, { timeout: 50000 })
                 .should('be.visible');
 
-            cy.get('[data-testid="ai-response"]', { timeout: 120000 })
-                .contains(testCase.answer, { timeout: 120000, matchCase: false })
+            cy.get('[data-testid="ai-response"]', { timeout: 60000 })
+                .contains(testCase.answer, { timeout: 60000, matchCase: false })
                 .should('be.visible')
                 .then(() => {
                     const duration = (Date.now() - startTime) / 1000;
@@ -584,29 +584,42 @@ class Notebook {
     }
     static createNotebookWithAverage(prompt, model) {
         describe(`Text Model: ${model} - Average Response Time`, () => {
-            let responseTimes = [];
+            const responseTimes = [];
+            const totalRuns = 3;
 
             beforeEach(() => {
                 selectTxtModel(model);
             });
 
             // Run the test 3 times
-            Array.from({ length: 3 }).forEach((_, index) => {
+            Array.from({ length: totalRuns }).forEach((_, index) => {
                 it(`Run ${index + 1}: Create notebook and measure response time`, () => {
-                    createNote(prompt, model).then(duration => {
-                        // Format duration to 2 decimal places
-                        const formattedDuration = Number(duration.toFixed(2));
-                        responseTimes.push(formattedDuration);
-                        cy.log(`Run ${index + 1} response time: ${formattedDuration} seconds`);
+                    cy.wrap(createNote(prompt, model)).then(duration => {
+                        if (duration) {
+                            // Format duration to 2 decimal places
+                            const formattedDuration = Number(duration.toFixed(2));
+                            responseTimes.push(formattedDuration);
+                            cy.log(`Run ${index + 1} response time: ${formattedDuration} seconds`);
+                        }
                     });
                 });
             });
 
             after(() => {
-                const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
-                const formattedAverage = Number(average.toFixed(2));
-                cy.log(`Average response time for ${model}: ${formattedAverage} seconds`);
-                logCreditsToJSON([model], formattedAverage);
+                // Only calculate average if we have at least one successful run
+                if (responseTimes.length > 0) {
+                    const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
+                    const formattedAverage = Number(average.toFixed(2));
+                    cy.log(`Average response time for ${model}: ${formattedAverage} seconds`);
+                    cy.log(`Successful runs: ${responseTimes.length} out of ${totalRuns}`);
+                    
+                    // Log the results with RepRate showing success ratio
+                    logCreditsToJSON([model], formattedAverage, `${responseTimes.length}/${totalRuns}`);
+                } else {
+                    cy.log(`No successful runs for ${model}`);
+                    // Log null and 0/3 if all runs failed
+                    logCreditsToJSON([model], null, `0/${totalRuns}`);
+                }
             });
         });
     }
