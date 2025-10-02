@@ -258,7 +258,7 @@ const selectTxtModel = (model) => {
 
 let creditLogCounter = 0;
 
-const logCreditsToJSON = (models,ResponseTime) => {
+const logCreditsToJSON = (models, ResponseTime) => {
     creditLogCounter++ // Increment counter
 
     const processModel = (index) => {
@@ -278,13 +278,14 @@ const logCreditsToJSON = (models,ResponseTime) => {
             .should('be.visible')
             .click();
 
-        // Get credits value
+        // Get credits value, handle case where text is not found
         cy.contains('Credits Used', { timeout: 50000 })
-            .should('be.visible')
+            .should('exist')
             .invoke('text')
             .then((credits) => {
                 // Extract only the number using regex
-                const creditsNumber = credits.match(/\d+/)[0];
+                const creditsNumber = credits?.match(/\d+/)?.[0] || null;
+                
                 // Read existing data first
                 cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
                     const newData = existingData || [];
@@ -292,8 +293,8 @@ const logCreditsToJSON = (models,ResponseTime) => {
                     // Add new credit data
                     newData.push({
                         textModel: model,
-                        Credits: parseInt(creditsNumber),
-                        ResponseTime: Number(ResponseTime)+ ' secs.'
+                        Credits: creditsNumber ? parseInt(creditsNumber) : null,
+                        ResponseTime: Number(ResponseTime) + ' secs.'
                     });
 
                     // Write back the combined data

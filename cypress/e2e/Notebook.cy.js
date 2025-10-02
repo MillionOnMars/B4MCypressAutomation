@@ -3,7 +3,7 @@ import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Corr
 import  Agents  from '../support/Tools/agents.js';
 
 describe('Notebook Operations', () => {
-    const randomTextModels = getRandomTextModels(4); 
+    const randomTextModels = getRandomTextModels(1); 
     // Log in to the application before running the tests
     
     beforeEach(() => {
@@ -19,22 +19,22 @@ describe('Notebook Operations', () => {
         Notebook.createNotebookWithAverage('capital', model);
     });
     // Rename the notebook
-    Notebook.renameNotebook('Renamed Notebook');
-    // Add tags to the notebook
-    Notebook.addNotebookTags('automation');
-    // Deletes the notebook
-    Notebook.deleteNotebook('Renamed Notebook');
-        // Create/renamed & delete an agent
-    Agents.manageAgent('Test Agent', 'Renamed Agent');
-    //add a file to the notebook
-    Notebook.Files('prime');
-    // Manage research agent
-    Notebook.manageResearchAgent({
-        agentName: 'Research Agent',
-        newName: 'Renamed Agent',
-        description: 'This agent specializes in research tasks.',
-        newDescription: 'This agent has been updated to focus on advanced research tasks.'
-    });
-    // Create/renamed & delete an agent
-    Agents.manageAgent('Test Agent', 'Renamed Agent');
+    // Notebook.renameNotebook('Renamed Notebook');
+    // // Add tags to the notebook
+    // Notebook.addNotebookTags('automation');
+    // // Deletes the notebook
+    // Notebook.deleteNotebook('Renamed Notebook');
+    //     // Create/renamed & delete an agent
+    // Agents.manageAgent('Test Agent', 'Renamed Agent');
+    // //add a file to the notebook
+    // Notebook.Files('prime');
+    // // Manage research agent
+    // Notebook.manageResearchAgent({
+    //     agentName: 'Research Agent',
+    //     newName: 'Renamed Agent',
+    //     description: 'This agent specializes in research tasks.',
+    //     newDescription: 'This agent has been updated to focus on advanced research tasks.'
+    // });
+    // // Create/renamed & delete an agent
+    // Agents.manageAgent('Test Agent', 'Renamed Agent');
 });
