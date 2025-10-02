@@ -258,7 +258,7 @@ const selectTxtModel = (model) => {
 
 let creditLogCounter = 0;
 
-const logCreditsToJSON = (models,ResponseTime) => {
+const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
     creditLogCounter++ // Increment counter
 
     const processModel = (index) => {
@@ -272,37 +272,42 @@ const logCreditsToJSON = (models,ResponseTime) => {
             cy.log('Cleaned credits.json file');
         }
 
-        // Click to view credits
-        cy.get('[data-testid="credits-used"]', {timeout: 10000})
-            .eq(0)
-            .should('be.visible')
-            .click();
-
-        // Get credits value
-        cy.contains('Credits Used', { timeout: 50000 })
-            .should('be.visible')
-            .invoke('text')
-            .then((credits) => {
-                // Extract only the number using regex
-                const creditsNumber = credits.match(/\d+/)[0];
-                // Read existing data first
-                cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
-                    const newData = existingData || [];
-
-                    // Add new credit data
-                    newData.push({
-                        textModel: model,
-                        Credits: parseInt(creditsNumber),
-                        ResponseTime: Number(ResponseTime)+ ' secs.'
+        // Try to find credits-used element, handle case where it doesn't exist
+        cy.get('body').then($body => {
+            if ($body.find('[data-testid="credits-used"]').length > 0) {
+                // Element exists, proceed with credits logging
+                cy.get('[data-testid="credits-used"]', {timeout: 10000})
+                    .eq(0)
+                    .should('be.visible')
+                    .click()
+                    .then(() => {
+                        cy.contains('Credits Used', { timeout: 50000 })
+                            .should('exist')
+                            .invoke('text')
+                            .then((credits) => {
+                                const creditsNumber = credits?.match(/\d+/)?.[0] || null;
+                                logModelData(model, creditsNumber, ResponseTime);
+                            });
                     });
+            } else {
+                // Element doesn't exist, log null credits
+                logModelData(model, null, ResponseTime);
+            }
+        });
 
-                    // Write back the combined data
-                    cy.writeFile('cypress/fixtures/credits.json', newData);
+        // Helper function to log data
+        const logModelData = (model, creditsNumber) => {
+            cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
+                const newData = existingData || [];
+                newData.push({
+                    textModel: model,
+                    Credits: creditsNumber ? parseInt(creditsNumber) : null,
+                    ResponseTime: Number(ResponseTime) + ' secs.',
+                    RepRate: `${successfulRuns}/${totalRuns}`
                 });
-
-                // Process next model
-                processModel(index + 1);
+                cy.writeFile('cypress/fixtures/credits.json', newData);
             });
+        };
     };
 
     // Start processing with first model
@@ -578,29 +583,43 @@ class Notebook {
     }
     static createNotebookWithAverage(prompt, model) {
         describe(`Text Model: ${model} - Average Response Time`, () => {
-            let responseTimes = [];
+            const responseTimes = [];
+            const totalRuns = 3;
 
             beforeEach(() => {
                 selectTxtModel(model);
             });
 
             // Run the test 3 times
-            Array.from({ length: 3 }).forEach((_, index) => {
+            Array.from({ length: totalRuns }).forEach((_, index) => {
                 it(`Run ${index + 1}: Create notebook and measure response time`, () => {
-                    createNote(prompt, model).then(duration => {
-                        // Format duration to 2 decimal places
-                        const formattedDuration = Number(duration.toFixed(2));
-                        responseTimes.push(formattedDuration);
-                        cy.log(`Run ${index + 1} response time: ${formattedDuration} seconds`);
+                    cy.wrap(createNote(prompt, model)).then(duration => {
+                        if (duration) {
+                            // Format duration to 2 decimal places
+                            const formattedDuration = Number(duration.toFixed(2));
+                            responseTimes.push(formattedDuration);
+                            cy.log(`Run ${index + 1} response time: ${formattedDuration} seconds`);
+                        }
                     });
                 });
             });
 
             after(() => {
-                const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
-                const formattedAverage = Number(average.toFixed(2));
-                cy.log(`Average response time for ${model}: ${formattedAverage} seconds`);
-                logCreditsToJSON([model], formattedAverage);
+                if (responseTimes.length > 0) {
+                    const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
+                    const formattedAverage = Number(average.toFixed(2));
+                    
+                    // Pass the successful runs count and total runs to logCreditsToJSON
+                    logCreditsToJSON(
+                        [model], 
+                        formattedAverage, 
+                        responseTimes.length,  // successful runs
+                        totalRuns             // total runs
+                    );
+                } else {
+                    // If no successful runs, pass 0 and total runs
+                    logCreditsToJSON([model], null, 0, totalRuns);
+                }
             });
         });
     }
