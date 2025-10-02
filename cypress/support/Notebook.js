@@ -258,7 +258,7 @@ const selectTxtModel = (model) => {
 
 let creditLogCounter = 0;
 
-const logCreditsToJSON = (models, ResponseTime) => {
+const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
     creditLogCounter++ // Increment counter
 
     const processModel = (index) => {
@@ -296,17 +296,16 @@ const logCreditsToJSON = (models, ResponseTime) => {
         });
 
         // Helper function to log data
-        const logModelData = (model, creditsNumber, ResponseTime) => {
+        const logModelData = (model, creditsNumber) => {
             cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
                 const newData = existingData || [];
                 newData.push({
                     textModel: model,
                     Credits: creditsNumber ? parseInt(creditsNumber) : null,
-                    ResponseTime: Number(ResponseTime) + ' secs.'
+                    ResponseTime: Number(ResponseTime) + ' secs.',
+                    RepRate: `${successfulRuns}/${totalRuns}`
                 });
                 cy.writeFile('cypress/fixtures/credits.json', newData);
-                cy.log(`Logged credits for ${model}: ${creditsNumber || 'null'}`);
-                processModel(index + 1);
             });
         };
     };
@@ -606,19 +605,20 @@ class Notebook {
             });
 
             after(() => {
-                // Only calculate average if we have at least one successful run
                 if (responseTimes.length > 0) {
                     const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
                     const formattedAverage = Number(average.toFixed(2));
-                    cy.log(`Average response time for ${model}: ${formattedAverage} seconds`);
-                    cy.log(`Successful runs: ${responseTimes.length} out of ${totalRuns}`);
                     
-                    // Log the results with RepRate showing success ratio
-                    logCreditsToJSON([model], formattedAverage, `${responseTimes.length}/${totalRuns}`);
+                    // Pass the successful runs count and total runs to logCreditsToJSON
+                    logCreditsToJSON(
+                        [model], 
+                        formattedAverage, 
+                        responseTimes.length,  // successful runs
+                        totalRuns             // total runs
+                    );
                 } else {
-                    cy.log(`No successful runs for ${model}`);
-                    // Log null and 0/3 if all runs failed
-                    logCreditsToJSON([model], null, `0/${totalRuns}`);
+                    // If no successful runs, pass 0 and total runs
+                    logCreditsToJSON([model], null, 0, totalRuns);
                 }
             });
         });
