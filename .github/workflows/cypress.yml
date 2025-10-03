@@ -152,16 +152,23 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data including RepRate using jq
-          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime), success rate: \(.RepRate)") | join("\n")' cypress/fixtures/credits.json)
-          # Escape newlines for GitHub Actions output
+          CREDITS=$(jq -r '
+            "```\n📊 Performance Report\n" +
+            "╔════════════════════════╤═══════════╤════════════════╤══════════════╗\n" +
+            "║ Model                  │ Credits   │ Response Time  │ Success Rate ║\n" +
+            "╠════════════════════════╪═══════════╪════════════════╪══════════════╣\n" +
+            (map("║ " + 
+              (.textModel | printf "%-20s") + "│ " + 
+              (if .Credits == null then "   --    " else (.Credits | tostring | printf "%7s") end) + " │ " +
+              (.ResponseTime | printf "%12s") + " │ " +
+              (.RepRate | printf "%10s") + " ║\n"
+            ) | join("")) +
+            "╚════════════════════════╧═══════════╧════════════════╧══════════════╝\n```"
+          ' cypress/fixtures/credits.json)
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
-          echo "Found credits data:"
-          echo "$CREDITS" 
         else
-          echo "No credits.json file found"
-          echo "credits=No credits data available" >> $GITHUB_OUTPUT
+          echo "credits=No performance data available" >> $GITHUB_OUTPUT
         fi
 
     - name: Send Slack notification
@@ -172,7 +179,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
