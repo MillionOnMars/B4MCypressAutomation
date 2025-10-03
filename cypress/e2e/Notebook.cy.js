@@ -17,27 +17,27 @@ describe('Notebook Operations', () => {
     randomTextModels.forEach((model) => {
         Notebook.createNotebookWithAverage('capital', model);
     });
-    // // Rename the notebook
-    // Notebook.renameNotebook('Renamed Notebook');
-    // // Add tags to the notebook
-    // Notebook.addNotebookTags('automation');
-    // // Deletes the notebook
-    // Notebook.deleteNotebook('Renamed Notebook');
-    //     // Create/renamed & delete an agent
-    // Agents.manageAgent('Test Agent', 'Renamed Agent');
-    // //add a file to the notebook
-    // Notebook.Files('prime');
-    // // Manage research agent
-    // Notebook.manageResearchAgent({
-    //     agentName: 'Research Agent',
-    //     newName: 'Renamed Agent',
-    //     description: 'This agent specializes in research tasks.',
-    //     newDescription: 'This agent has been updated to focus on advanced research tasks.'
-    // });
-    // // Create/renamed & delete an agent
-    // Agents.manageAgent('Test Agent', 'Renamed Agent');
-    // // Validate agent prompt with random model
-    // const randomIndex = Math.floor(Math.random() * 4);
-    //  // Validate agent prompt content
-    // Agents.validateAgentPrompt('Renamed Agent', 'movie', randomTextModels[randomIndex])
+    // Rename the notebook
+    Notebook.renameNotebook('Renamed Notebook');
+    // Add tags to the notebook
+    Notebook.addNotebookTags('automation');
+    // Deletes the notebook
+    Notebook.deleteNotebook('Renamed Notebook');
+        // Create/renamed & delete an agent
+    Agents.manageAgent('Test Agent', 'Renamed Agent');
+    //add a file to the notebook
+    Notebook.Files('prime');
+    // Manage research agent
+    Notebook.manageResearchAgent({
+        agentName: 'Research Agent',
+        newName: 'Renamed Agent',
+        description: 'This agent specializes in research tasks.',
+        newDescription: 'This agent has been updated to focus on advanced research tasks.'
+    });
+    // Create/renamed & delete an agent
+    Agents.manageAgent('Test Agent', 'Renamed Agent');
+    // Validate agent prompt with random model
+    const randomIndex = Math.floor(Math.random() * 4);
+     // Validate agent prompt content
+    Agents.validateAgentPrompt('Renamed Agent', 'movie', randomTextModels[randomIndex])
 });
