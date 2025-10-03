@@ -65,7 +65,7 @@ const renameProject = (oldName, newName) => {
         .should('be.visible')
         .parent() // Go to parent container
         .trigger('mouseover')
-        .find('.lucide.lucide-more-vertical')
+        .find('.project-card-menu-button')
         .click({ force: true }); // Force click even if not visible
 
     //Clicks Edit button
@@ -101,7 +101,7 @@ const deleteProject = (projectName) => {
         .should('be.visible')
         .parent() // Go to parent container
         .trigger('mouseover')
-        .find('.lucide.lucide-more-vertical')
+        .find('.project-card-menu-button')
         .click({ force: true }); // Force click even if not visible
 
     //Clicks Delete button
