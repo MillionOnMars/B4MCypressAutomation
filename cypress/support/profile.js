@@ -132,12 +132,17 @@ const verifyProfileElements = () => {
         .should('be.visible');
 };
 
-const toggleExperimentalFeature = (index, EnabledColor, DisabledColor) => {
+const toggleExperimentalFeature = (index, EnabledColor, DisabledColor, featureName) => {
     // Toggle the feature
     cy.get('div.experimental-feature-toggle-container button')
         .eq(index)
         .should('be.visible')
         .click();
+
+    // Check that the feature name is visible after toggling
+    cy.contains(featureName)
+    .scrollIntoView({ duration: 300, timeout: DEFAULT_TIMEOUT })
+    .should('be.visible');
 
     // Verify the toggle state has changed and the background color is correct
     cy.get('div.experimental-feature-toggle-container button')
@@ -177,14 +182,14 @@ const verifyQuestMasterFeature = (EnabledColor, DisabledColor) => {
     };
 
     // Toggle Quest Master ON and verify
-    toggleExperimentalFeature(index, EnabledColor, DisabledColor);
+    toggleExperimentalFeature(index, EnabledColor, DisabledColor, 'Quest Master');
     cy.contains('Quest Master').should('be.visible');
     verifyQuestMasterFunctionality(true);
 
     // Toggle Quest Master OFF and verify
     navigateToProfileSettings();
     openProfileTabs('Settings');
-    toggleExperimentalFeature(index, DisabledColor, EnabledColor);
+    toggleExperimentalFeature(index, DisabledColor, EnabledColor, 'Quest Master');
     verifyQuestMasterFunctionality(false);
 };
 
@@ -209,11 +214,11 @@ const verifyMementosFeature = (EnabledColor, DisabledColor) => {
     };
 
     // Toggle Mementos ON and verify
-    toggleExperimentalFeature(index, EnabledColor, DisabledColor);
+    toggleExperimentalFeature(index, EnabledColor, DisabledColor, 'Mementos');
     verifyMementosState(true);
 
     // Toggle Mementos OFF and verify
-    toggleExperimentalFeature(index, DisabledColor, EnabledColor);
+    toggleExperimentalFeature(index, DisabledColor, EnabledColor, 'Mementos');
     verifyMementosState(false);
 };
 
@@ -238,14 +243,14 @@ const verifArtifactsFeature = (EnabledColor, DisabledColor) => {
     };
 
     // Toggle Artifacts ON and verify
-    toggleExperimentalFeature(index, EnabledColor, DisabledColor);
+    toggleExperimentalFeature(index, EnabledColor, DisabledColor, 'Artifacts');
     cy.contains('Artifacts').should('be.visible');
     sendMessageAndVerifyArtifact(true);
 
     // Toggle Artifacts OFF and verify
     navigateToProfileSettings();
     openProfileTabs('Settings');
-    toggleExperimentalFeature(index, DisabledColor, EnabledColor);
+    toggleExperimentalFeature(index, DisabledColor, EnabledColor, 'Artifacts');
     sendMessageAndVerifyArtifact(false);
 };
 
@@ -285,7 +290,9 @@ class Profile {
             });
         });
     }
-    static ToggleExperimentalFeatures(EnabledColor, DisabledColor) {
+    static ToggleExperimentalFeatures() {
+        const EnabledColor = 'rgb(26, 58, 31)';
+        const DisabledColor = 'rgb(30, 30, 30)';
         describe('Toggle Experimental Features Tests', () => {
             it('Verify Quest Master', () => {
                 verifyQuestMasterFeature(EnabledColor, DisabledColor);
