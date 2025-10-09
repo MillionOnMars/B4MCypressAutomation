@@ -259,7 +259,7 @@ const selectTxtModel = (model) => {
 let creditLogCounter = 0;
 
 const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
-    creditLogCounter++ // Increment counter
+    creditLogCounter++;
 
     const processModel = (index) => {
         if (index >= models.length) {
@@ -267,10 +267,33 @@ const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
         }
 
         const model = models[index];
-        if (creditLogCounter == 1) {
-            cy.writeFile('cypress/fixtures/credits.json', []);
-            cy.log('Cleaned credits.json file');
+        if (creditLogCounter === 1) {
+            cy.writeFile('cypress/fixtures/credits.json', []).then(() => {
+                cy.log('Cleaned credits.json file');
+            });
         }
+
+        const logModelData = (model, creditsNumber) => {
+            cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
+                const newData = existingData || [];
+                // Format ResponseTime as null if no successful runs
+                const formattedResponse = successfulRuns === 0 ? 
+                    null : 
+                    `${Number(ResponseTime)} secs.`;
+                
+                newData.push({
+                    textModel: model,
+                    Credits: creditsNumber ? parseInt(creditsNumber) : null,
+                    ResponseTime: formattedResponse,
+                    RepRate: `${successfulRuns}/${totalRuns}`
+                });
+                
+                cy.writeFile('cypress/fixtures/credits.json', newData).then(() => {
+                    cy.log(`Logged data for ${model} - Credits: ${creditsNumber || 'null'}, RepRate: ${successfulRuns}/${totalRuns}`);
+                    processModel(index + 1);
+                });
+            });
+        };
 
         // Try to find credits-used element, handle case where it doesn't exist
         cy.get('body').then($body => {
@@ -294,20 +317,6 @@ const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
                 logModelData(model, null, ResponseTime);
             }
         });
-
-        // Helper function to log data
-        const logModelData = (model, creditsNumber) => {
-            cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
-                const newData = existingData || [];
-                newData.push({
-                    textModel: model,
-                    Credits: creditsNumber ? parseInt(creditsNumber) : null,
-                    ResponseTime: Number(ResponseTime) + ' secs.',
-                    RepRate: `${successfulRuns}/${totalRuns}`
-                });
-                cy.writeFile('cypress/fixtures/credits.json', newData);
-            });
-        };
     };
 
     // Start processing with first model

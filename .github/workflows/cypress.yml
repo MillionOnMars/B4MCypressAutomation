@@ -61,49 +61,24 @@ jobs:
       id: test-results
       if: always()
       run: |
-        # First try the results.json file (most reliable)
         if [ -f "cypress/reports/results.json" ]; then
-          echo "Processing results from results.json"
-          
-          # Install jq if needed
-          if ! command -v jq &> /dev/null; then
-            echo "Installing jq..."
-            apt-get update && apt-get install -y jq
-          fi
-          
-          # Extract test counts
+          # Extract test counts including skipped
           TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
           PASSING=$(jq -r '.totalPassed' cypress/reports/results.json)
           FAILING=$(jq -r '.totalFailed' cypress/reports/results.json)
+          SKIPPED=$(jq -r '.totalPending // 0' cypress/reports/results.json)
           
-          echo "Test Results Summary:"
-          echo "┌────────────────────────────────┐"
-          echo "│ Total Tests: $TOTAL"
-          echo "│ Passing: $PASSING"
-          echo "│ Failing: $FAILING"
-          echo "└────────────────────────────────┘"
-          
-          # Set environment variables and outputs
-          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
-          echo "PASSING_TESTS=$PASSING" >> $GITHUB_ENV
-          echo "FAILING_TESTS=$FAILING" >> $GITHUB_ENV
-          
+          # Set outputs
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "passing=$PASSING" >> $GITHUB_OUTPUT
           echo "failing=$FAILING" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
         else
-          echo "No results.json found"
-          echo "Available files:"
-          find cypress/reports -type f | sort
-          
           # Default values if no results found
-          echo "TOTAL_TESTS=0" >> $GITHUB_ENV
-          echo "PASSING_TESTS=0" >> $GITHUB_ENV
-          echo "FAILING_TESTS=0" >> $GITHUB_ENV
-          
           echo "total=0" >> $GITHUB_OUTPUT
           echo "passing=0" >> $GITHUB_OUTPUT
           echo "failing=0" >> $GITHUB_OUTPUT
+          echo "skipped=0" >> $GITHUB_OUTPUT
         fi
 
     - name: Display test results
@@ -172,7 +147,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
