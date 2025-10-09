@@ -63,10 +63,16 @@ jobs:
       run: |
         if [ -f "cypress/reports/results.json" ]; then
           # Extract test counts including skipped
-          TOTAL=$(jq -r '.totalTests' cypress/reports/results.json)
-          PASSING=$(jq -r '.totalPassed' cypress/reports/results.json)
-          FAILING=$(jq -r '.totalFailed' cypress/reports/results.json)
-          SKIPPED=$(jq -r '.totalPending // 0' cypress/reports/results.json)
+          TOTAL=$(jq '.totalTests' cypress/reports/results.json)
+          PASSING=$(jq '.totalPassed' cypress/reports/results.json)
+          FAILING=$(jq '.totalFailed' cypress/reports/results.json)
+          SKIPPED=$(jq '(.totalSkipped + .totalPending)' cypress/reports/results.json)
+          
+          echo "Found test results:"
+          echo "Total: $TOTAL"
+          echo "Passing: $PASSING"
+          echo "Failing: $FAILING"
+          echo "Skipped: $SKIPPED"
           
           # Set outputs
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
@@ -74,7 +80,7 @@ jobs:
           echo "failing=$FAILING" >> $GITHUB_OUTPUT
           echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
         else
-          # Default values if no results found
+          echo "No results.json file found"
           echo "total=0" >> $GITHUB_OUTPUT
           echo "passing=0" >> $GITHUB_OUTPUT
           echo "failing=0" >> $GITHUB_OUTPUT
@@ -147,7 +153,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing || env.PASSING_TESTS || 0 }}\n❌ Failed: ${{ steps.test-results.outputs.failing || env.FAILING_TESTS || 0 }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped || 0 }}\n📝 Total: ${{ steps.test-results.outputs.total || env.TOTAL_TESTS || 0 }}\n\n⚡ Performance\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
