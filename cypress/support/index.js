@@ -21,18 +21,16 @@ Cypress.on('uncaught:exception', (err) => {
 setupGlobalErrorTracking();
 
 // Add custom error handling for uncaught exceptions
-Cypress.on('uncaught:exception', (err) => {
-    // Log the error to our console errors file
-    cy.writeFile('cypress/reports/consoleErrors.json', {
-        type: 'Uncaught Exception',
-        message: err.message,
-        timestamp: new Date().toISOString(),
-        stack: err.stack
-    }, { flag: 'a+' });
+Cypress.on('uncaught:exception', (err, runnable) => {
+    // Ignore React minified errors during tests
+    if (err.message.includes('Minified React error')) {
+        console.warn('Suppressed React error:', err.message)
+        return false  // Prevent test failure
+    }
     
-    return false;
-});
-
+    // Let other errors fail tests
+    return true
+})
 // Cypress.Cookies.defaults({
 //     preserve: 'sessionid',
 // })
