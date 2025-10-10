@@ -235,8 +235,9 @@ const selectTxtModel = (model) => {
         .click();
 
     //input text model
-    cy.xpath("(//input[@placeholder='Search'])[3]")
-        .should('be.visible')
+    cy.get("input[placeholder='Search models']", { timeout: 50000 })
+        .eq(1)
+        .should('exist')
         .type(model)
         .type('{enter}');
 
@@ -246,8 +247,8 @@ const selectTxtModel = (model) => {
         .click({ force: true });
 
     // clicks close button
-    cy.get(".MuiBox-root.css-6zgsse > button")
-        .eq(1)
+    cy.get("[data-testid='CloseIcon']")
+        .last()
         .should('be.visible')
         .click();
     // Verify the model is visible
@@ -281,7 +282,7 @@ const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
                     .should('be.visible')
                     .click()
                     .then(() => {
-                        cy.contains('Credits Used', { timeout: 50000 })
+                        cy.get('[data-testid="credits-used"]', { timeout: 50000 })
                             .should('exist')
                             .invoke('text')
                             .then((credits) => {

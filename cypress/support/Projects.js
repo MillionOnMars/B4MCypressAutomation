@@ -63,9 +63,10 @@ const renameProject = (oldName, newName) => {
     // Checks if the new project created exists
     cy.contains(oldName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .parent() // Go to parent container
-        .trigger('mouseover')
-        .find('.project-card-menu-button')
+        // .trigger('mouseover')
+        // .parent() // Go to parent container
+    cy.get('.project-card-menu-button').eq(0)
+        .should('exist')
         .click({ force: true }); // Force click even if not visible
 
     //Clicks Edit button
@@ -99,9 +100,11 @@ const deleteProject = (projectName) => {
     // Checks if the project created exists
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .parent() // Go to parent container
-        .trigger('mouseover')
-        .find('.project-card-menu-button')
+        // .parent() // Go to parent container
+        // .trigger('mouseover')
+        // .find('.project-card-menu-button')
+    cy.get('.project-card-menu-button').eq(0)
+        .should('exist')
         .click({ force: true }); // Force click even if not visible
 
     //Clicks Delete button
