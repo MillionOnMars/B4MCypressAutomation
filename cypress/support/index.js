@@ -2,6 +2,9 @@ import './commands';
 import { setupGlobalErrorTracking } from './consoleErrorTracker';
 require('cypress-xpath');
 
+// Storage for uncaught exceptions (in-memory)
+const uncaughtExceptions = [];
+
 // filepath: /Users/Automation/Documents/my-cypress-project/cypress/support/index.js
 Cypress.on('uncaught:exception', (err) => {
     if (err.message.includes('ResizeObserver loop completed with undelivered notifications')) {
@@ -22,15 +25,41 @@ setupGlobalErrorTracking();
 
 // Add custom error handling for uncaught exceptions
 Cypress.on('uncaught:exception', (err) => {
-    // Log the error to our console errors file
-    cy.writeFile('cypress/reports/consoleErrors.json', {
+    // Store the error in memory (cannot use cy commands inside event handlers)
+    uncaughtExceptions.push({
         type: 'Uncaught Exception',
         message: err.message,
         timestamp: new Date().toISOString(),
         stack: err.stack
-    }, { flag: 'a+' });
+    });
+    
+    console.log('Uncaught Exception:', err.message);
     
     return false;
+});
+
+// Write stored exceptions to file after each test
+afterEach(function() {
+    if (uncaughtExceptions.length > 0) {
+        const testInfo = {
+            test: this.currentTest?.title || 'Unknown Test',
+            suite: this.currentTest?.parent?.title || 'Unknown Suite'
+        };
+        
+        // Add test context to each error
+        const errorsWithContext = uncaughtExceptions.map(err => ({
+            ...err,
+            ...testInfo
+        }));
+        
+        cy.task('updateErrorLog', {
+            filePath: 'cypress/reports/consoleErrors.json',
+            newErrors: errorsWithContext
+        });
+        
+        // Clear the array for the next test
+        uncaughtExceptions.length = 0;
+    }
 });
 
 // Cypress.Cookies.defaults({
