@@ -1,14 +1,26 @@
 [
   {
-    "textModel": "claude 3.7 sonnet",
-    "Credits": 5
+    "textModel": "GPT-5",
+    "Credits": null,
+    "ResponseTime": "23.83 secs.",
+    "RepRate": "3/3"
   },
   {
-    "textModel": "o3",
-    "Credits": 5
+    "textModel": "Grok 3 Mini",
+    "Credits": null,
+    "ResponseTime": "29.21 secs.",
+    "RepRate": "3/3"
   },
   {
-    "textModel": "gpt-4.1",
-    "Credits": 1
+    "textModel": "GPT-5 Nano",
+    "Credits": null,
+    "ResponseTime": "20.77 secs.",
+    "RepRate": "3/3"
+  },
+  {
+    "textModel": "Gemini 2.5 Flash Preview",
+    "Credits": null,
+    "ResponseTime": "32.73 secs.",
+    "RepRate": "3/3"
   }
 ]
