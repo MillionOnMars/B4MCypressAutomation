@@ -44,7 +44,7 @@ const createNote = (promptType, model) => {
         testCase.answer.forEach((answer) => {
             cy.contains(answer, { timeout: 50000 }).should('be.visible');
         });
-        return 0; // Return 0 for array answers or handle differently
+        return { duration: 0, credits: null }; // Return object for array answers
     } else {
         return new Cypress.Promise(resolve => {
             cy.window().then(() => { startTime = Date.now(); });
@@ -59,13 +59,32 @@ const createNote = (promptType, model) => {
                 .then(() => {
                     const duration = (Date.now() - startTime) / 1000;
                     cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                    resolve(duration);
+                    
+                    // Get credits after response
+                    cy.get('body').then($body => {
+                        if ($body.find('[data-testid="credits-used"]').length > 0) {
+                            cy.get('[data-testid="credits-used"]')
+                                .should('be.visible')
+                                .click()
+                                .then(() => {
+                                    cy.contains('Credits Used', { timeout: 10000 })
+                                        .should('exist')
+                                        .invoke('text')
+                                        .then((creditsText) => {
+                                            const credits = creditsText?.match(/\d+/)?.[0] || null;
+                                            cy.log(`Credits used: ${credits}`);
+                                            resolve({ duration, credits: credits ? parseInt(credits) : null });
+                                        });
+                                });
+                        } else {
+                            resolve({ duration, credits: null });
+                        }
+                    });
                 });
         });
     }
     cy.log('Notebook creation completed successfully.');
 };
-
 
 const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
@@ -235,8 +254,9 @@ const selectTxtModel = (model) => {
         .click();
 
     //input text model
-    cy.xpath("(//input[@placeholder='Search'])[3]")
-        .should('be.visible')
+    cy.get("input[placeholder='Search models']", { timeout: 50000 })
+        .eq(1)
+        .should('exist')
         .type(model)
         .type('{enter}');
 
@@ -246,8 +266,8 @@ const selectTxtModel = (model) => {
         .click({ force: true });
 
     // clicks close button
-    cy.get(".MuiBox-root.css-6zgsse > button")
-        .eq(1)
+    cy.get("[data-testid='CloseIcon']")
+        .last()
         .should('be.visible')
         .click();
     // Verify the model is visible
@@ -258,8 +278,8 @@ const selectTxtModel = (model) => {
 
 let creditLogCounter = 0;
 
-const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
-    creditLogCounter++ // Increment counter
+const logCreditsToJSON = (models, responseData, successfulRuns, totalRuns) => {
+    creditLogCounter++;
 
     const processModel = (index) => {
         if (index >= models.length) {
@@ -267,47 +287,51 @@ const logCreditsToJSON = (models, ResponseTime, successfulRuns, totalRuns) => {
         }
 
         const model = models[index];
-        if (creditLogCounter == 1) {
-            cy.writeFile('cypress/fixtures/credits.json', []);
-            cy.log('Cleaned credits.json file');
+        if (creditLogCounter === 1) {
+            cy.writeFile('cypress/fixtures/credits.json', []).then(() => {
+                cy.log('Cleaned credits.json file');
+            });
         }
 
-        // Try to find credits-used element, handle case where it doesn't exist
-        cy.get('body').then($body => {
-            if ($body.find('[data-testid="credits-used"]').length > 0) {
-                // Element exists, proceed with credits logging
-                cy.get('[data-testid="credits-used"]', {timeout: 10000})
-                    .eq(0)
-                    .should('be.visible')
-                    .click()
-                    .then(() => {
-                        cy.contains('Credits Used', { timeout: 50000 })
-                            .should('exist')
-                            .invoke('text')
-                            .then((credits) => {
-                                const creditsNumber = credits?.match(/\d+/)?.[0] || null;
-                                logModelData(model, creditsNumber, ResponseTime);
-                            });
-                    });
-            } else {
-                // Element doesn't exist, log null credits
-                logModelData(model, null, ResponseTime);
-            }
-        });
-
-        // Helper function to log data
-        const logModelData = (model, creditsNumber) => {
+        const logModelData = (model, avgCredits, avgResponseTime) => {
             cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
                 const newData = existingData || [];
+                
+                // Format ResponseTime as null if no successful runs
+                const formattedResponse = successfulRuns === 0 ? 
+                    null : 
+                    `${Number(avgResponseTime)} secs.`;
+                
                 newData.push({
                     textModel: model,
-                    Credits: creditsNumber ? parseInt(creditsNumber) : null,
-                    ResponseTime: Number(ResponseTime) + ' secs.',
+                    Credits: avgCredits,
+                    ResponseTime: formattedResponse,
                     RepRate: `${successfulRuns}/${totalRuns}`
                 });
-                cy.writeFile('cypress/fixtures/credits.json', newData);
+                
+                cy.writeFile('cypress/fixtures/credits.json', newData).then(() => {
+                    cy.log(`Logged data for ${model} - Average Credits: ${avgCredits || 'null'}, Average Response Time: ${avgResponseTime || 'null'}, RepRate: ${successfulRuns}/${totalRuns}`);
+                    processModel(index + 1);
+                });
             });
         };
+
+        // Calculate averages from responseData
+        if (responseData && responseData.length > 0) {
+            const validResponses = responseData.filter(data => data.duration > 0);
+            const avgResponseTime = validResponses.length > 0 ? 
+                (validResponses.reduce((sum, data) => sum + data.duration, 0) / validResponses.length).toFixed(2) : 
+                null;
+            
+            const creditsData = responseData.filter(data => data.credits !== null);
+            const avgCredits = creditsData.length > 0 ? 
+                Math.round(creditsData.reduce((sum, data) => sum + data.credits, 0) / creditsData.length) : 
+                null;
+            
+            logModelData(model, avgCredits, avgResponseTime);
+        } else {
+            logModelData(model, null, null);
+        }
     };
 
     // Start processing with first model
@@ -583,7 +607,7 @@ class Notebook {
     }
     static createNotebookWithAverage(prompt, model) {
         describe(`Text Model: ${model} - Average Response Time`, () => {
-            const responseTimes = [];
+            const responseData = []; // Store both duration and credits
             const totalRuns = 3;
 
             beforeEach(() => {
@@ -593,32 +617,32 @@ class Notebook {
             // Run the test 3 times
             Array.from({ length: totalRuns }).forEach((_, index) => {
                 it(`Run ${index + 1}: Create notebook and measure response time`, () => {
-                    cy.wrap(createNote(prompt, model)).then(duration => {
-                        if (duration) {
+                    cy.wrap(createNote(prompt, model)).then(result => {
+                        if (result && result.duration) {
                             // Format duration to 2 decimal places
-                            const formattedDuration = Number(duration.toFixed(2));
-                            responseTimes.push(formattedDuration);
-                            cy.log(`Run ${index + 1} response time: ${formattedDuration} seconds`);
+                            const formattedDuration = Number(result.duration.toFixed(2));
+                            responseData.push({
+                                duration: formattedDuration,
+                                credits: result.credits
+                            });
+                            cy.log(`Run ${index + 1} - Response time: ${formattedDuration} seconds, Credits: ${result.credits || 'null'}`);
                         }
                     });
                 });
             });
 
             after(() => {
-                if (responseTimes.length > 0) {
-                    const average = (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
-                    const formattedAverage = Number(average.toFixed(2));
+                const successfulRuns = responseData.filter(data => data.duration > 0).length;
+                
+                if (successfulRuns > 0) {
+                    cy.log(`Total successful runs: ${successfulRuns} out of ${totalRuns}`);
+                    cy.log('Individual run data:', JSON.stringify(responseData, null, 2));
                     
-                    // Pass the successful runs count and total runs to logCreditsToJSON
-                    logCreditsToJSON(
-                        [model], 
-                        formattedAverage, 
-                        responseTimes.length,  // successful runs
-                        totalRuns             // total runs
-                    );
+                    // Log with response data array containing both duration and credits
+                    logCreditsToJSON([model], responseData, successfulRuns, totalRuns);
                 } else {
-                    // If no successful runs, pass 0 and total runs
-                    logCreditsToJSON([model], null, 0, totalRuns);
+                    cy.log(`No successful runs for ${model}`);
+                    logCreditsToJSON([model], [], 0, totalRuns);
                 }
             });
         });
