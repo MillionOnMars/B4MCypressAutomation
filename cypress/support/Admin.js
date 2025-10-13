@@ -182,7 +182,7 @@ const CreateInviteCode = (createdby) => {
     cy.contains(createdby, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     //Copy invite code
-    cy.get('span[aria-label="Click to Copy"]')
+    cy.get('div[aria-label="Click to Copy"]')
         .eq(0) // Get the first invite code in the list
         .invoke('text')
         .then((text) => {
