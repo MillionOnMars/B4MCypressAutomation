@@ -31,11 +31,7 @@ export const setupSelectorQualityTracking = () => {
         const issues = analyzeSelectorQuality(errorMessage, testTitle, suiteName);
         
         issues.forEach(issue => {
-            const issueKey = JSON.stringify({
-                selector: issue.selector,
-                suite: issue.suite,
-                test: issue.test
-            });
+            const issueKey = JSON.stringify(issue);
             selectorIssues.add(issueKey);
         });
 

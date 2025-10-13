@@ -36,6 +36,7 @@ This project provides automated testing for the Bike4Mind platform, covering cri
 - **Slack Integration**: Automated test result notifications
 - **Visual Reports**: Mochawesome HTML reports with charts and embedded screenshots
 - **Error Tracking**: Console error monitoring and reporting
+- **Selector Quality Tracking**: Identifies missing test IDs, aria labels, and fragile selectors
 - **CI/CD Ready**: GitHub Actions workflow included
 - **Credits Monitoring**: Track usage credits across different models
 - **Public Report Sharing**: Ngrok integration for temporary report hosting
@@ -102,6 +103,16 @@ This command will:
 3. Generate HTML reports
 4. Send results to Slack with public report link
 
+### Analyze Selector Quality
+```bash
+npm run analyze:selectors
+```
+
+This command analyzes your test failures and generates a report identifying:
+- Fragile CSS selectors that may break with UI updates
+- Elements missing `data-testid` attributes
+- Interactive elements lacking `aria-label` for accessibility
+
 ### Individual Test Files
 ```bash
 npx cypress run --spec "cypress/e2e/Auth.cy.js"
@@ -155,13 +166,40 @@ The test suite generates comprehensive reports using Mochawesome:
 - **Test Results**: Pass/fail statistics by spec file
 - **Credits Usage**: Model-specific credit consumption tracking
 - **Error Logs**: Console error tracking and deduplication
+- **Selector Quality**: Identifies UI elements needing better test attributes
 - **Visual Evidence**: Screenshots and videos for failures
 - **Public Sharing**: 1-hour accessible reports via Ngrok
+
+### Selector Quality Tracking 🔍
+
+The test suite automatically tracks selector quality issues when tests fail:
+
+**Tracked Issues:**
+- 🔴 **Fragile CSS Selectors**: Elements using complex MUI class chains
+- 🟡 **Missing Test IDs**: Elements without `data-testid` attributes  
+- 🟡 **Missing Aria Labels**: Interactive elements lacking accessibility attributes
+
+**Report Location:** `cypress/reports/selectorQuality.json`
+
+**View Detailed Report:**
+```bash
+npm run analyze:selectors
+```
+
+**Benefits:**
+- Improves test reliability and reduces flakiness
+- Enhances application accessibility
+- Makes tests easier to maintain
+- Self-documenting UI element purposes
+
+**Documentation:** See `cypress/reports/SELECTOR_QUALITY_GUIDE.md` for detailed guidance on fixing selector quality issues.
 
 ### Slack Integration
 Automated Slack notifications include:
 - Test execution summary
 - Credits usage breakdown
+- Console error counts
+- Selector quality issues summary
 - Direct links to full HTML reports
 - Real-time failure alerts
 
