@@ -164,12 +164,19 @@ jobs:
       run: |
         SLOW=false
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Extract and check if any ResponseTime > 15
-          SLOW_COUNT=$(jq '[.[] | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 15)] | length' cypress/fixtures/credits.json)
+          # Extract and check if any ResponseTime > 15, handling null values
+          SLOW_COUNT=$(jq '[.[] | select(.ResponseTime != null) | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 15)] | length' cypress/fixtures/credits.json)
+          
+          echo "Found $SLOW_COUNT slow responses (>15 sec)"
+          
           if [ "$SLOW_COUNT" -gt 0 ]; then
             SLOW=true
             echo "There are $SLOW_COUNT slow responses (>15 sec) in credits.json"
+          else
+            echo "No slow responses found"
           fi
+        else
+          echo "No credits.json file found"
         fi
         echo "slow=$SLOW" >> $GITHUB_OUTPUT
 
