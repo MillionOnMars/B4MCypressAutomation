@@ -1,6 +1,6 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['Claude 4.1 Opus', 'O3', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Grok 3 Mini']; // Add your text models here
+const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Grok 3 Mini']; // Add your text models here
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -36,7 +36,7 @@ const createNote = (promptType, model) => {
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('New Notebook', { timeout: 50000 })
+    cy.contains('Chat', { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers

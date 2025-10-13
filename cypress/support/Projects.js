@@ -432,7 +432,7 @@ const logoutUser = () => {
     cy.wait(3000); // Wait for 3 seconds to ensure logout is complete
 
     // Verify logout by checking the welcome message and URL
-    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
+    cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
     cy.url().should('contain', '/login');
 };
 

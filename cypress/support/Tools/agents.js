@@ -76,7 +76,7 @@ const validateAgentPrompt = (agentName, promptType, model) => {
 
 const handleAgentOperations = (action, agentName, newName) => {
     // Click Agents tab
-    cy.get('[aria-label="Agents"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-agents-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 

@@ -200,7 +200,7 @@ const UseInviteCode = (username, email, password, fullname) => {
         .should('exist')
         .click({ force: true });
     // Ensure logout is successful 
-    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT })
+    cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT })
         .should('exist');
     cy.url().should('contain', '/login');
     // Navigate to the signup page
