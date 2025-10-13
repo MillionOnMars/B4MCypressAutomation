@@ -112,6 +112,33 @@ jobs:
           echo "No consoleErrors.json found"
         fi
 
+    - name: Get selector quality issues
+      id: selector-quality
+      if: always()
+      run: |
+        if [ -f "cypress/reports/selectorQuality.json" ]; then
+          TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/selectorQuality.json)
+          FRAGILE=$(jq -r '.summary.fragileSelectors' cypress/reports/selectorQuality.json)
+          MISSING_TESTIDS=$(jq -r '.summary.missingTestIds' cypress/reports/selectorQuality.json)
+          MISSING_ARIA=$(jq -r '.summary.missingAriaLabels' cypress/reports/selectorQuality.json)
+          
+          echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
+          echo "fragile=$FRAGILE" >> "$GITHUB_OUTPUT"
+          echo "missingTestIds=$MISSING_TESTIDS" >> "$GITHUB_OUTPUT"
+          echo "missingAria=$MISSING_ARIA" >> "$GITHUB_OUTPUT"
+          
+          echo "Found $TOTAL_ISSUES selector quality issues"
+          echo "  - Fragile selectors: $FRAGILE"
+          echo "  - Missing test IDs: $MISSING_TESTIDS"
+          echo "  - Missing aria labels: $MISSING_ARIA"
+        else
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "fragile=0" >> "$GITHUB_OUTPUT"
+          echo "missingTestIds=0" >> "$GITHUB_OUTPUT"
+          echo "missingAria=0" >> "$GITHUB_OUTPUT"
+          echo "No selectorQuality.json found"
+        fi
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
@@ -124,6 +151,7 @@ jobs:
           cypress/videos/**/*.mp4
           cypress/fixtures/credits.json
           cypress/reports/consoleErrors.json
+          cypress/reports/selectorQuality.json
           cypress/reports/results.json
         if-no-files-found: warn
         retention-days: 14
@@ -153,7 +181,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Selector Quality Issues: {0} found\n  • Fragile selectors: {1}\n  • Missing test IDs: {2}\n  • Missing aria labels: {3}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.fragile, steps.selector-quality.outputs.missingTestIds, steps.selector-quality.outputs.missingAria) || '✨ No selector quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -214,6 +242,17 @@ jobs:
         payload: |
           {
             "text": "⚠️ One or more requests used 0 credits or 20+ credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
+
+    - name: Send Slack notification for selector quality issues
+      if: steps.selector-quality.outputs.total > 5
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "🔍 Found ${{ steps.selector-quality.outputs.total }} selector quality issues!\n• Fragile selectors: ${{ steps.selector-quality.outputs.fragile }}\n• Missing test IDs: ${{ steps.selector-quality.outputs.missingTestIds }}\n• Missing aria labels: ${{ steps.selector-quality.outputs.missingAria }}\n\nThese elements need data-testid or aria-label attributes for better test reliability. Check <#C08QZ42L9KM|b4m-automation-results> for details."
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}

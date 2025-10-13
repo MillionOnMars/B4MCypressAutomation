@@ -125,6 +125,66 @@ module.exports = defineConfig({
 
           fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
           return null;
+        },
+        updateSelectorQualityLog({ filePath, newIssues }) {
+          let existingData = { 
+            issues: [], 
+            totalIssues: 0,
+            summary: {
+              fragileSelectors: 0,
+              missingTestIds: 0,
+              missingAriaLabels: 0
+            }
+          };
+          
+          if (fs.existsSync(filePath)) {
+            existingData = JSON.parse(fs.readFileSync(filePath));
+          }
+
+          // Deduplicate existing issues
+          const existingSet = new Set(
+            existingData.issues.map(issue => JSON.stringify({
+              selector: issue.selector,
+              suite: issue.suite,
+              test: issue.test
+            }))
+          );
+
+          // Add new unique issues
+          const allIssues = [...existingData.issues];
+          for (const issue of newIssues) {
+            const issueKey = JSON.stringify({
+              selector: issue.selector,
+              suite: issue.suite,
+              test: issue.test
+            });
+
+            if (!existingSet.has(issueKey)) {
+              allIssues.push(issue);
+              existingSet.add(issueKey);
+            }
+          }
+
+          // Calculate summary statistics
+          const summary = {
+            fragileSelectors: allIssues.filter(i => 
+              i.type.includes('Fragile')).length,
+            missingTestIds: allIssues.filter(i => 
+              i.type === 'Missing Test ID').length,
+            missingAriaLabels: allIssues.filter(i => 
+              i.type === 'Missing Aria Label').length
+          };
+
+          // Write deduplicated issues
+          const updatedData = {
+            lastUpdate: new Date().toISOString(),
+            totalIssues: allIssues.length,
+            summary,
+            issues: allIssues
+          };
+
+          fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
+          return null;
         }
       });
 
