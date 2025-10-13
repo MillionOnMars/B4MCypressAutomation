@@ -122,10 +122,23 @@ jobs:
           MISSING_TESTIDS=$(jq -r '.summary.missingTestIds' cypress/reports/selectorQuality.json)
           MISSING_ARIA=$(jq -r '.summary.missingAriaLabels' cypress/reports/selectorQuality.json)
           
+          # Extract top 3 specific issues for Slack (prioritize high severity)
+          SPECIFIC_ISSUES=$(jq -r '
+            [.issues[] | select(.severity == "high")] as $high |
+            [.issues[] | select(.severity == "medium")] as $medium |
+            ($high + $medium)[0:3] | 
+            map("• \(.test): \(.selector | split(".") | .[0:3] | join("."))...\n  Fix: \(.recommendation)") | 
+            join("\n")
+          ' cypress/reports/selectorQuality.json)
+          
+          # Escape newlines for GitHub Actions output
+          SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
+          
           echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
           echo "fragile=$FRAGILE" >> "$GITHUB_OUTPUT"
           echo "missingTestIds=$MISSING_TESTIDS" >> "$GITHUB_OUTPUT"
           echo "missingAria=$MISSING_ARIA" >> "$GITHUB_OUTPUT"
+          echo "examples=$SPECIFIC_ISSUES" >> "$GITHUB_OUTPUT"
           
           echo "Found $TOTAL_ISSUES selector quality issues"
           echo "  - Fragile selectors: $FRAGILE"
@@ -136,6 +149,7 @@ jobs:
           echo "fragile=0" >> "$GITHUB_OUTPUT"
           echo "missingTestIds=0" >> "$GITHUB_OUTPUT"
           echo "missingAria=0" >> "$GITHUB_OUTPUT"
+          echo "examples=" >> "$GITHUB_OUTPUT"
           echo "No selectorQuality.json found"
         fi
 
@@ -181,7 +195,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Selector Quality Issues: {0} found\n  • Fragile selectors: {1}\n  • Missing test IDs: {2}\n  • Missing aria labels: {3}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.fragile, steps.selector-quality.outputs.missingTestIds, steps.selector-quality.outputs.missingAria) || '✨ No selector quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Selector Quality Issues: {0} found\n  • Fragile selectors: {1}\n  • Missing test IDs: {2}\n  • Missing aria labels: {3}\n\nTop Issues:\n{4}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.fragile, steps.selector-quality.outputs.missingTestIds, steps.selector-quality.outputs.missingAria, steps.selector-quality.outputs.examples) || '✨ No selector quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -252,7 +266,7 @@ jobs:
       with:
         payload: |
           {
-            "text": "🔍 Found ${{ steps.selector-quality.outputs.total }} selector quality issues!\n• Fragile selectors: ${{ steps.selector-quality.outputs.fragile }}\n• Missing test IDs: ${{ steps.selector-quality.outputs.missingTestIds }}\n• Missing aria labels: ${{ steps.selector-quality.outputs.missingAria }}\n\nThese elements need data-testid or aria-label attributes for better test reliability. Check <#C08QZ42L9KM|b4m-automation-results> for details."
+            "text": "🔍 Found ${{ steps.selector-quality.outputs.total }} selector quality issues!\n• Fragile selectors: ${{ steps.selector-quality.outputs.fragile }}\n• Missing test IDs: ${{ steps.selector-quality.outputs.missingTestIds }}\n• Missing aria labels: ${{ steps.selector-quality.outputs.missingAria }}\n\n📋 Examples (Top 3):\n${{ steps.selector-quality.outputs.examples }}\n\nThese elements need data-testid or aria-label attributes for better test reliability.\nCheck <#C08QZ42L9KM|b4m-automation-results> for details."
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
