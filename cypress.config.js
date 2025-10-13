@@ -168,11 +168,11 @@ module.exports = defineConfig({
           // Calculate summary statistics
           const summary = {
             fragileSelectors: allIssues.filter(i => 
-              i.type.includes('Fragile')).length,
+              i && i.type && i.type.includes('Fragile')).length,
             missingTestIds: allIssues.filter(i => 
-              i.type === 'Missing Test ID').length,
+              i && i.type === 'Missing Test ID').length,
             missingAriaLabels: allIssues.filter(i => 
-              i.type === 'Missing Aria Label').length
+              i && i.type === 'Missing Aria Label').length
           };
 
           // Write deduplicated issues
