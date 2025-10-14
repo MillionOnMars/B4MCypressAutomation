@@ -64,7 +64,7 @@ Interactive elements that are covered by other elements or lack accessibility at
 
 ## Report Structure
 
-The `selectorQuality.json` file contains:
+The `testQuality.json` file contains:
 
 ```json
 {
@@ -184,7 +184,7 @@ These elements need data-testid or aria-label attributes for better test reliabi
 ```
 
 ### Artifacts
-The `selectorQuality.json` report is uploaded with each test run and retained for 14 days.
+The `testQuality.json` report is uploaded with each test run and retained for 14 days.
 
 ## Example Fixes for Your Current Issues
 

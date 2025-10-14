@@ -1,9 +1,0 @@
-{
-  "issues": [],
-  "totalIssues": 0,
-  "summary": {
-    "fragileSelectors": 0,
-    "missingTestIds": 0,
-    "missingAriaLabels": 0
-  }
-}

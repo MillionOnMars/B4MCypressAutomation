@@ -94,6 +94,57 @@ async function runTests() {
             `• Model: ${credit.textModel}\n  ↳ Credits: ${credit.Credits}`
         ).join('\n');
 
+        // Read test quality report
+        let qualityReport = '';
+        let qualityIssues = '';
+        try {
+            const qualityPath = path.join(reportsDir, 'testQuality.json');
+            const qualityData = await fs.readFile(qualityPath, 'utf8');
+            const quality = JSON.parse(qualityData);
+            
+            if (quality.totalIssues > 0) {
+                const summary = quality.summary;
+                qualityReport = `*Test Quality Issues* 🔍\n` +
+                    `• Total: ${quality.totalIssues} (🔴 ${summary.high || 0} High, 🟡 ${summary.medium || 0} Medium)\n` +
+                    `• Selector Issues: ${summary.selectorIssues || 0}\n` +
+                    `• Data Validation: ${summary.dataValidation || 0}\n` +
+                    `• Visibility Issues: ${summary.visibilityIssues || 0}\n` +
+                    `• Performance: ${summary.performance || 0}\n`;
+                
+                // Get top 3 high severity issues
+                const topIssues = quality.issues
+                    .filter(i => i.severity === 'high')
+                    .slice(0, 3)
+                    .map(issue => {
+                        const rec = issue.recommendation.split('\n')[0];
+                        return `• [${issue.category}] ${issue.test}\n  ↳ ${issue.type}\n  💡 ${rec}`;
+                    })
+                    .join('\n\n');
+                
+                if (topIssues) {
+                    qualityIssues = `\n\n*Top Issues*\n${topIssues}`;
+                }
+            } else {
+                qualityReport = `*Test Quality* ✅\n• No issues detected!`;
+            }
+        } catch (error) {
+            qualityReport = `*Test Quality*\n• No report available`;
+        }
+
+        // Read console errors
+        let consoleErrorsReport = '';
+        try {
+            const errorsPath = path.join(reportsDir, 'consoleErrors.json');
+            const errorsData = await fs.readFile(errorsPath, 'utf8');
+            const errors = JSON.parse(errorsData);
+            
+            if (errors.totalErrors > 0) {
+                consoleErrorsReport = `\n\n*Console Errors* ⚠️\n• Total: ${errors.totalErrors}`;
+            }
+        } catch (error) {
+            // Console errors file might not exist
+        }
+
         // Format test results for each spec file
         const specResults = results.runs.map(run => {
             return `• File: ${run.spec.name}\n  ↳ Total: ${run.stats.tests}\n  ↳ Passing: ${run.stats.passes}\n  ↳ Failing: ${run.stats.failures}`;
@@ -131,6 +182,23 @@ async function runTests() {
         const reportUrl = `${publicUrl}/mochawesome.html`;
         console.log(`Public report URL: ${reportUrl}`);
 
+        // Build Slack message
+        const slackMessage = [
+            `*Test Run Summary*`,
+            specResults,
+            `\n*Overall Results*`,
+            `• Total: ${results.totalTests}`,
+            `• Passing: ${results.totalPassed}`,
+            `• Failing: ${results.totalFailed}`,
+            `\n*Credits Usage*`,
+            creditsResults,
+            consoleErrorsReport,
+            `\n${qualityReport}`,
+            qualityIssues,
+            `\n\n*Full Report*`,
+            `<${reportUrl}|View Full Report> _(Available for 1 hour)_`
+        ].filter(Boolean).join('\n');
+
         // Send results to Slack with public URL
         await webhook.send({
             channel: '#b4m-automation-results',
@@ -141,7 +209,7 @@ async function runTests() {
                     type: "section",
                     text: {
                         type: "mrkdwn",
-                        text: `*Test Run Summary*\n${specResults}\n\n*Credits Usage*\n${creditsResults}\n\n*Overall Results*\n• Total: ${results.totalTests}\n• Passing: ${results.totalPassed}\n• Failing: ${results.totalFailed}\n\n*Full Report*\n<${reportUrl}|View Full Report> _(Report will be available for 1 hour)_`
+                        text: slackMessage
                     }
                 }
             ]

@@ -23,10 +23,10 @@ import Login from './login.js';
 import Auth from './Auth.js';
 import Admin from './Admin.js';
 import Profile from './profile.js';
-import { setupSelectorQualityTracking } from './selectorQualityTracker.js';
+import { setupTestQualityTracking } from './testQualityTracker.js';
 
-// Initialize selector quality tracking
-setupSelectorQualityTracking();
+// Initialize test quality tracking (selectors, data validation, visibility, performance)
+setupTestQualityTracking();
 
 export {
     Notebook,

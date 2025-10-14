@@ -126,14 +126,27 @@ module.exports = defineConfig({
           fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
           return null;
         },
-        updateSelectorQualityLog({ filePath, newIssues }) {
+        updateTestQualityLog({ filePath, newIssues }) {
           let existingData = { 
             issues: [], 
             totalIssues: 0,
             summary: {
+              // By Category
+              selectorIssues: 0,
+              dataValidation: 0,
+              visibilityIssues: 0,
+              performance: 0,
+              
+              // By Type (legacy support)
               fragileSelectors: 0,
               missingTestIds: 0,
-              missingAriaLabels: 0
+              missingAriaLabels: 0,
+              contentNotFound: 0,
+              elementNotFound: 0,
+              
+              // By Severity
+              high: 0,
+              medium: 0
             }
           };
           
@@ -159,14 +172,29 @@ module.exports = defineConfig({
 
           const allIssues = Array.from(existingMap.values());
 
-          // Calculate summary statistics
+          // Calculate summary statistics by category and type
           const summary = {
+            // By Category
+            selectorIssues: allIssues.filter(i => i && i.category === 'Selector Issue').length,
+            dataValidation: allIssues.filter(i => i && i.category === 'Data Validation').length,
+            visibilityIssues: allIssues.filter(i => i && i.category === 'Visibility Issue').length,
+            performance: allIssues.filter(i => i && i.category === 'Performance').length,
+            
+            // By Type (legacy support)
             fragileSelectors: allIssues.filter(i => 
               i && i.type && i.type.includes('Fragile')).length,
             missingTestIds: allIssues.filter(i => 
               i && i.type === 'Missing Test ID').length,
             missingAriaLabels: allIssues.filter(i => 
-              i && i.type === 'Missing Aria Label').length
+              i && i.type === 'Missing Aria Label').length,
+            contentNotFound: allIssues.filter(i => 
+              i && i.type === 'Content Not Found').length,
+            elementNotFound: allIssues.filter(i => 
+              i && i.type === 'Element Not Found').length,
+            
+            // By Severity
+            high: allIssues.filter(i => i && i.severity === 'high').length,
+            medium: allIssues.filter(i => i && i.severity === 'medium').length
           };
 
           // Write deduplicated issues

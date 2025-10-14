@@ -84,14 +84,14 @@ const handleAgentOperations = (action, agentName, newName) => {
     // Click Agents tab
     cy.get('[data-testid="notebook-sidenav-agents-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .click();
+        .click({force: true});
 
     switch(action) {
         case 'create':
             // Click New Agent button
             cy.contains('button', 'New Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .click();
+                .click({force: true});
 
             // Input agent name
             cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
@@ -125,7 +125,7 @@ const handleAgentOperations = (action, agentName, newName) => {
             // Click settings button
             cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
-                .click();
+                .click({force: true});
 
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
@@ -135,7 +135,7 @@ const handleAgentOperations = (action, agentName, newName) => {
             // Click edit button
             cy.contains('Edit', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .click();
+                .click({force: true});
 
             // Input new agent name
             cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })

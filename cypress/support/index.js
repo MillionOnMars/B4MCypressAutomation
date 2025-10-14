@@ -1,6 +1,6 @@
 import './commands';
 import { setupGlobalErrorTracking } from './consoleErrorTracker';
-import { setupSelectorQualityTracking } from './selectorQualityTracker';
+import { setupTestQualityTracking } from './testQualityTracker';
 require('cypress-xpath');
 
 // Storage for uncaught exceptions (in-memory)
@@ -24,8 +24,8 @@ Cypress.on('uncaught:exception', (err) => {
 // Set up global error tracking for all tests
 setupGlobalErrorTracking();
 
-// Set up selector quality tracking for all tests
-setupSelectorQualityTracking();
+// Set up test quality tracking for all tests (selectors, data validation, visibility, performance)
+setupTestQualityTracking();
 
 // Add custom error handling for uncaught exceptions
 Cypress.on('uncaught:exception', (err) => {
