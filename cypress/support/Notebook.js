@@ -1,6 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Grok 3 Mini']; // Add your text models here
+// ensure that these allow both image and text uploads since we ask it wat color is the cat.
+const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Claude 4.5 Sonnet']; // Add your text models here
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -41,8 +42,11 @@ const createNote = (promptType, model) => {
 
     // Handle both array and string answers
     if (Array.isArray(testCase.answer)) {
-        testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 50000 }).should('be.visible');
+        cy.verifyAnswers(testCase.answer, {
+            logic: testCase.answerLogic || 'and',
+            selector: 'body',
+            timeout: 50000,
+            matchCase: false
         });
         return { duration: 0, credits: null }; // Return object for array answers
     } else {
@@ -133,17 +137,12 @@ const sendPrompt = (promptType, promptNo, model) => {
         }
 
         // Handle both array and single answer verification
-        if (Array.isArray(currentPromptData.answer)) {
-            // For array of answers, check each one
-            currentPromptData.answer.forEach((answer) => {
-                cy.get('[data-testid="ai-response"]', { timeout: 60000 }).contains(answer, { timeout: 50000, matchCase: false })
-                    .should('be.visible');
-            });
-        } else {
-            // For single answer
-            cy.get('[data-testid="ai-response"]', { timeout: 60000 }).contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
-                .should('be.visible');
-        }
+        cy.verifyAnswers(currentPromptData.answer, {
+            logic: currentPromptData.answerLogic || 'and',
+            selector: '[data-testid="ai-response"]',
+            timeout: 60000,
+            matchCase: false
+        });
 
         cy.log(`Completed prompt ${currentPrompt + 1} of ${promptNo}`);
     };

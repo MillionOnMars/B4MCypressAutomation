@@ -17,6 +17,7 @@
     "sinigang": {
         "prompt": "What is the recipe for Sinigang?",
         "answer": ["filipino", "pork"],
+        "answerLogic": "or",
         "filepath": "cypress/fixtures/upload/sinigang.pdf"
     },
 

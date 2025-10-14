@@ -245,13 +245,16 @@ const createNotebook = (promptType, projectName) => {
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('New Notebook', { timeout: 50000 })
+    cy.contains('Chat', { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers
     if (Array.isArray(testCase.answer)) {
-        testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 50000 }).should('be.visible');
+        cy.verifyAnswers(testCase.answer, {
+            logic: testCase.answerLogic || 'and',
+            selector: 'body',
+            timeout: 50000,
+            matchCase: false
         });
         return 0; // Return 0 for array answers or handle differently
     } else {

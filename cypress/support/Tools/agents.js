@@ -67,14 +67,13 @@ const validateAgentPrompt = (agentName, promptType, model) => {
         .should('be.visible');
     //contains the agent name
     cy.contains(agentName, { timeout: 50000 }).should('be.visible');
-    // Validate the answer (supports both string and array)
-    if (Array.isArray(testCase.answer)) {
-        testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 50000, matchCase: false }).should('be.visible');
-        });
-    } else {
-        cy.contains(testCase.answer, { timeout: 50000, matchCase: false }).should('be.visible');
-    }
+    // Validate the answer (supports both string and array with AND/OR logic)
+    cy.verifyAnswers(testCase.answer, {
+        logic: testCase.answerLogic || 'and',
+        selector: 'body',
+        timeout: 50000,
+        matchCase: false
+    });
     cy.log('Agent prompt validated successfully.');
 }
 
@@ -89,7 +88,7 @@ const handleAgentOperations = (action, agentName, newName) => {
     switch(action) {
         case 'create':
             // Click New Agent button
-            cy.contains('button', 'New Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('button', 'Create Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({force: true});
 
