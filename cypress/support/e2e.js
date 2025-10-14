@@ -23,7 +23,10 @@ import Login from './login.js';
 import Auth from './Auth.js';
 import Admin from './Admin.js';
 import Profile from './profile.js';
+import { setupSelectorQualityTracking } from './selectorQualityTracker.js';
 
+// Initialize selector quality tracking
+setupSelectorQualityTracking();
 
 export {
     Notebook,

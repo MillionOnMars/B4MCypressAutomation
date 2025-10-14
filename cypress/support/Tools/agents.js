@@ -67,8 +67,14 @@ const validateAgentPrompt = (agentName, promptType, model) => {
         .should('be.visible');
     //contains the agent name
     cy.contains(agentName, { timeout: 50000 }).should('be.visible');
-    // Validate the answer
-    cy.contains(testCase.answer, { timeout: 50000 }).should('be.visible');
+    // Validate the answer (supports both string and array)
+    if (Array.isArray(testCase.answer)) {
+        testCase.answer.forEach((answer) => {
+            cy.contains(answer, { timeout: 50000, matchCase: false }).should('be.visible');
+        });
+    } else {
+        cy.contains(testCase.answer, { timeout: 50000, matchCase: false }).should('be.visible');
+    }
     cy.log('Agent prompt validated successfully.');
 }
 
