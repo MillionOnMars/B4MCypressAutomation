@@ -141,29 +141,23 @@ module.exports = defineConfig({
             existingData = JSON.parse(fs.readFileSync(filePath));
           }
 
-          // Deduplicate existing issues
-          const existingSet = new Set(
-            existingData.issues.map(issue => JSON.stringify({
-              selector: issue.selector,
-              suite: issue.suite,
-              test: issue.test
-            }))
-          );
+          // Deduplicate existing issues based on selector, suite, and test
+          // but preserve all fields in the stored issues
+          const existingMap = new Map();
+          existingData.issues.forEach(issue => {
+            const key = `${issue.selector}|${issue.suite}|${issue.test}`;
+            existingMap.set(key, issue);
+          });
 
-          // Add new unique issues
-          const allIssues = [...existingData.issues];
+          // Add new unique issues (keeping all fields)
           for (const issue of newIssues) {
-            const issueKey = JSON.stringify({
-              selector: issue.selector,
-              suite: issue.suite,
-              test: issue.test
-            });
-
-            if (!existingSet.has(issueKey)) {
-              allIssues.push(issue);
-              existingSet.add(issueKey);
+            const key = `${issue.selector}|${issue.suite}|${issue.test}`;
+            if (!existingMap.has(key)) {
+              existingMap.set(key, issue);
             }
           }
+
+          const allIssues = Array.from(existingMap.values());
 
           // Calculate summary statistics
           const summary = {
