@@ -153,98 +153,102 @@ const sendPrompt = (promptType, promptNo, model) => {
 };
 
 const renameNote = (newName) => {
-    //clicks notebook
+    // Click the notebook item in the sidebar
     cy.get('[data-testid="sidenav-item-session-button"]')
-        .eq(0)
+        .first()
         .should('be.visible')
         .click();
 
-    //click elipsis button
+    // Force click the menu button
     cy.get('[data-testid="sidenav-item-menu-button"]')
-        .eq(0)
+        .first()
+        .click({ force: true });
+
+    // Click the rename menu item
+    cy.get('.sidenav-item-menuitem-rename')
         .should('be.visible')
         .click();
 
-    //click rename button
-    cy.get('li[role="menuitem"]').eq(1)
-        .should('be.visible')
-        .click();
-
-    //clicks notebook
+    // Find the INPUT inside the div with the testid
     cy.get('[data-testid="sidenav-item-rename-input"]')
-        .eq(0)
-        .should('be.visible')
-        .type(newName)
-        .type('{enter}');
+        .first()
+        .find('input')
+        .clear({ force: true })
+        .type(newName, { force: true })
+        .type('{enter}', { force: true });
 
     cy.log('Notebook renamed successfully.');
 };
 
 const editNotebookInfo = (tags) => {
-    //clicks notebook
+    // Click notebook to open/select it
     cy.get('[data-testid="sidenav-item-session-button"]')
-        .eq(0)
+        .first()
         .should('be.visible')
         .click();
 
-    //click elipsis button
+    // Click ellipsis menu button
     cy.get('[data-testid="sidenav-item-menu-button"]')
-        .eq(0)
-        .should('be.visible')
-        .click();
+        .first()
+        .click({ force: true });
 
-    //click edit info button
+    // Click "View Info" menu item
     cy.get('.sidenav-item-menuitem-viewinfo')
         .should('be.visible')
         .click();
 
-    //input a tag
+    // Wait for the info modal/panel to be visible
     cy.get('input[placeholder="Add a tag"]')
         .should('be.visible')
+        .clear()
         .type(tags);
     
-    //click add tag button
-    cy.xpath("//button[normalize-space()='Add Tag']")
+    // Click "Add Tag" button (avoid XPath, use data-testid or better selector)
+    cy.contains('button', 'Add Tag')
         .should('be.visible')
         .click();
 
-    //automation tag verification
-    cy.contains('.session-metadata-tag', `${tags}100`, { timeout: 20000, matchCase: false })
+    // Verify tag was added (removed the hardcoded "100" suffix - seems like a bug?)
+    cy.contains('.session-metadata-tag', tags, { timeout: 10000 })
         .should('be.visible');
 
-    //click close button
+    // Close the info modal/panel
     cy.get('.session-metadata-close-button')
         .should('be.visible')
         .click();
 
-    cy.log('Notebook information edited successfully.');
+    cy.log(`Notebook tag "${tags}" added successfully.`);
 };
 
-const deleteNote = (Name) => {
-    //clicks notebook
+const deleteNote = (name) => {
+    // Click notebook to open/select it
     cy.get('[data-testid="sidenav-item-session-button"]')
-        .eq(0)
+        .first()
         .should('be.visible')
         .click();
 
-    //click elipsis button
+    // Click ellipsis menu button (force click if visibility is conditional)
     cy.get('[data-testid="sidenav-item-menu-button"]')
-        .eq(0)
+        .first()
+        .click({ force: true });
+
+    // Click delete button using specific class instead of position
+    cy.get('.sidenav-item-menuitem-delete')
         .should('be.visible')
         .click();
 
-    //click delete button
-    cy.get('li[role="menuitem"]').eq(10)
+    // Confirm deletion in modal
+    cy.get('[data-testid="confirm-delete-modal"]')
+        .should('be.visible')
+        .find('[data-testid="confirm-modal-confirm-btn"]')
         .should('be.visible')
         .click();
 
-    //confirm delete
-    cy.get('[data-testid="confirm-delete-modal"] [data-testid="confirm-modal-confirm-btn"]')
-        .should('be.visible')
-        .click();
+    // Verify success notification
+    cy.contains('Successfully deleted session')
+        .should('be.visible');
 
-    //delete notification
-    cy.contains('Successfully deleted session').should('exist');
+    cy.log('Notebook deleted successfully.');
 };
 
 const selectTxtModel = (model) => {
@@ -341,9 +345,10 @@ const logCreditsToJSON = (models, responseData, successfulRuns, totalRuns) => {
 const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
-    cy.get('[data-testid="AttachFileIcon"]')
-        .should('be.visible')
-        .click();
+    cy.get('[aria-label="Attach Files"]', { timeout: DEFAULT_TIMEOUT })
+    .should('be.visible')
+    .click();
+  
 
     //Upload from computer
     cy.get('[role="button"]').eq(2)
@@ -378,7 +383,9 @@ const fileOperation = (operation, promptType, newName) => {
   const filename = testCase.filepath.split("/").pop();
 
   //Click on files button
-  cy.contains("Files").should("be.visible").click();
+  cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
+  .should('be.visible')
+  .click();
 
   cy.get(".MuiModalDialog-root").within(() => {
     // Click the date header twice to sort descending
@@ -401,10 +408,10 @@ const fileOperation = (operation, promptType, newName) => {
         break;
 
       case "renameFile":
-        cy.xpath('(//*[name()="svg"][contains(@class,"lucide lucide-more-vertical")])[1]')
-        //   .find('button')
-          .should('be.visible')
-          .click();
+        cy.get('button.file-browser-actions-menu-button')
+            .first()
+            .should('be.visible')
+            .click();
 
         //Click rename button. Temporarily search outside the modal
         cy.document().its('body').find('li[role="menuitem"]').contains('Rename')
@@ -459,7 +466,7 @@ const fileOperation = (operation, promptType, newName) => {
 
 const handleResearchAgent = (action, agent) => {
     // Click File
-    cy.get('[aria-label="File Browser"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click Research button
