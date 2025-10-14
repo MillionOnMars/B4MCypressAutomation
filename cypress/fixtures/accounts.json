@@ -31,9 +31,9 @@
     },
     "existingUsers": {
         "admin": {
-            "username": "b4m-auto",
+            "username": "b4m-autoa",
             "email": "b4m-automation@milliononmars.com",
-            "password": "Password123456!",
+            "password": "Password12345!",
             "fullname": "Test User",
             "code": "ADMINCODE"
         },
