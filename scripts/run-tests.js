@@ -94,7 +94,7 @@ async function runTests() {
             `• Model: ${credit.textModel}\n  ↳ Credits: ${credit.Credits}`
         ).join('\n');
 
-        // Read test quality report
+        // Read test quality report (separate from test failures)
         let qualityReport = '';
         let qualityIssues = '';
         try {
@@ -104,12 +104,12 @@ async function runTests() {
             
             if (quality.totalIssues > 0) {
                 const summary = quality.summary;
-                qualityReport = `*Test Quality Issues* 🔍\n` +
-                    `• Total: ${quality.totalIssues} (🔴 ${summary.high || 0} High, 🟡 ${summary.medium || 0} Medium)\n` +
+                qualityReport = `🔍 *Code Quality Issues* (Selector/Performance)\n` +
+                    `• Total: ${quality.totalIssues} issues (🔴 ${summary.high || 0} High, 🟡 ${summary.medium || 0} Medium)\n` +
                     `• Selector Issues: ${summary.selectorIssues || 0}\n` +
                     `• Data Validation: ${summary.dataValidation || 0}\n` +
                     `• Visibility Issues: ${summary.visibilityIssues || 0}\n` +
-                    `• Performance: ${summary.performance || 0}\n`;
+                    `• Performance: ${summary.performance || 0}`;
                 
                 // Get top 3 high severity issues
                 const topIssues = quality.issues
@@ -117,18 +117,18 @@ async function runTests() {
                     .slice(0, 3)
                     .map(issue => {
                         const rec = issue.recommendation.split('\n')[0];
-                        return `• [${issue.category}] ${issue.test}\n  ↳ ${issue.type}\n  💡 ${rec}`;
+                        return `  • [${issue.category}] ${issue.test}\n    ↳ ${issue.type}`;
                     })
-                    .join('\n\n');
+                    .join('\n');
                 
                 if (topIssues) {
-                    qualityIssues = `\n\n*Top Issues*\n${topIssues}`;
+                    qualityIssues = `\n\n*Top Quality Issues:*\n${topIssues}`;
                 }
             } else {
-                qualityReport = `*Test Quality* ✅\n• No issues detected!`;
+                qualityReport = `🔍 *Code Quality* ✅\n• No selector or performance issues detected!`;
             }
         } catch (error) {
-            qualityReport = `*Test Quality*\n• No report available`;
+            qualityReport = `🔍 *Code Quality*\n• No quality report available`;
         }
 
         // Read console errors
@@ -145,10 +145,45 @@ async function runTests() {
             // Console errors file might not exist
         }
 
+        // Read saved results to get failure details
+        let failureDetails = '';
+        try {
+            const resultsPath = path.join(reportsDir, 'results.json');
+            const resultsData = await fs.readFile(resultsPath, 'utf8');
+            const savedResults = JSON.parse(resultsData);
+            
+            if (savedResults.failures && savedResults.failures.length > 0) {
+                // Group failures by spec
+                const failuresBySpec = {};
+                savedResults.failures.forEach(failure => {
+                    if (!failuresBySpec[failure.specName]) {
+                        failuresBySpec[failure.specName] = [];
+                    }
+                    failuresBySpec[failure.specName].push(failure);
+                });
+
+                // Format failures for Slack
+                const failureMessages = Object.keys(failuresBySpec).map(specName => {
+                    const specFailures = failuresBySpec[specName];
+                    const failureList = specFailures.map(f => {
+                        // Truncate error message to first line only
+                        const errorFirstLine = f.error.split('\n')[0].substring(0, 150);
+                        return `    ❌ ${f.testName}\n       ${errorFirstLine}`;
+                    }).join('\n');
+                    return `  📄 *${specName}*\n${failureList}`;
+                }).join('\n\n');
+
+                failureDetails = `\n\n*Failed Tests* ❌\n${failureMessages}`;
+            }
+        } catch (error) {
+            console.error('Error reading failure details:', error);
+        }
+
         // Format test results for each spec file
         const specResults = results.runs.map(run => {
-            return `• File: ${run.spec.name}\n  ↳ Total: ${run.stats.tests}\n  ↳ Passing: ${run.stats.passes}\n  ↳ Failing: ${run.stats.failures}`;
-        }).join('\n\n');
+            const status = run.stats.failures > 0 ? '❌' : '✅';
+            return `${status} *${run.spec.name}*\n  • Total: ${run.stats.tests} | Passed: ${run.stats.passes} | Failed: ${run.stats.failures}`;
+        }).join('\n');
 
         // Find available port
         const port = await findAvailablePort(8080);
@@ -182,21 +217,24 @@ async function runTests() {
         const reportUrl = `${publicUrl}/mochawesome.html`;
         console.log(`Public report URL: ${reportUrl}`);
 
-        // Build Slack message
+        // Build Slack message with clear sections
         const slackMessage = [
-            `*Test Run Summary*`,
+            `*🧪 Test Run Summary*`,
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `*Overall*: ${results.totalPassed}/${results.totalTests} passed ${results.totalFailed > 0 ? '❌' : '✅'}`,
+            `\n*Spec Files*`,
             specResults,
-            `\n*Overall Results*`,
-            `• Total: ${results.totalTests}`,
-            `• Passing: ${results.totalPassed}`,
-            `• Failing: ${results.totalFailed}`,
-            `\n*Credits Usage*`,
+            failureDetails,
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `\n💳 *Credits Usage*`,
             creditsResults,
             consoleErrorsReport,
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
             `\n${qualityReport}`,
             qualityIssues,
-            `\n\n*Full Report*`,
-            `<${reportUrl}|View Full Report> _(Available for 1 hour)_`
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `\n📊 *Full Report*`,
+            `<${reportUrl}|View Detailed HTML Report> _(Available for 1 hour)_`
         ].filter(Boolean).join('\n');
 
         // Send results to Slack with public URL

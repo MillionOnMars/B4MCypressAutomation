@@ -30,6 +30,30 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       on('after:run', (results) => {
         if (results) {
+          // Extract detailed failure information
+          const failures = [];
+          results.runs.forEach(run => {
+            if (run.tests) {
+              run.tests.forEach(test => {
+                if (test.state === 'failed') {
+                  const attempts = test.attempts || [];
+                  const lastAttempt = attempts[attempts.length - 1];
+                  if (lastAttempt && lastAttempt.error) {
+                    failures.push({
+                      specName: run.spec.name,
+                      suite: test.title.join(' > ').split(' > ').slice(0, -1).join(' > '),
+                      testName: test.title[test.title.length - 1],
+                      fullTitle: test.title.join(' > '),
+                      error: lastAttempt.error.message,
+                      stack: lastAttempt.error.stack,
+                      attempt: attempts.length
+                    });
+                  }
+                }
+              });
+            }
+          });
+
           // Create a comprehensive test summary
           const summary = {
             totalTests: results.totalTests || 0,
@@ -50,7 +74,8 @@ module.exports = defineConfig({
               failures: run.stats.failures,
               pending: run.stats.pending,
               skipped: run.stats.skipped
-            }))
+            })),
+            failures: failures
           };
 
           // Ensure directory exists
@@ -66,14 +91,25 @@ module.exports = defineConfig({
           );
 
           // Log summary to console for debugging
-          console.log('Test Results Summary:');
-          console.log('=====================');
-          console.log(`Total: ${summary.totalTests}`);
-          console.log(`Passed: ${summary.totalPassed}`);
-          console.log(`Failed: ${summary.totalFailed}`);
-          console.log(`Pending: ${summary.totalPending}`);
-          console.log(`Skipped: ${summary.totalSkipped}`);
-          console.log('=====================');
+          console.log('\n' + '='.repeat(60));
+          console.log('  TEST RESULTS SUMMARY');
+          console.log('='.repeat(60));
+          console.log(`  Total:   ${summary.totalTests}`);
+          console.log(`  Passed:  ${summary.totalPassed} ✅`);
+          console.log(`  Failed:  ${summary.totalFailed} ${summary.totalFailed > 0 ? '❌' : ''}`);
+          console.log(`  Pending: ${summary.totalPending}`);
+          console.log(`  Skipped: ${summary.totalSkipped}`);
+          
+          if (failures.length > 0) {
+            console.log('\n' + '-'.repeat(60));
+            console.log('  FAILED TESTS:');
+            console.log('-'.repeat(60));
+            failures.forEach((failure, index) => {
+              console.log(`\n  ${index + 1}. ${failure.fullTitle}`);
+              console.log(`     Error: ${failure.error.split('\n')[0]}`);
+            });
+          }
+          console.log('\n' + '='.repeat(60) + '\n');
         }
       });
 

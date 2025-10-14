@@ -60,7 +60,7 @@
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": "lorem ipsum"
+                "answer": ["lorem ipsum", "layout", "cv", "resume"]
             },
             {
                 "prompt": "What is the content of the file?",
