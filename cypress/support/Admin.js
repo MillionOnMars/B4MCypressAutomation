@@ -31,19 +31,28 @@ const searchUser = (username, email) => {
 const sortname = (username, sortBy) => {
     navigateToAdminDashboard(); // Call the navigation function
     cy.log("Sorting by:", sortBy);
+    
+    // Map sortBy value to the correct data-testid
+    const sortTestIdMap = {
+        'Name': 'sort-option-name',
+        'Created At': 'sort-option-created-at'
+    };
+    
     // Click Sort Combobox
     cy.get('[data-testid="admin-sort-by-select"]')
         .should('be.visible')
-        .click({ force: true });
-    // Click the "Name" option in the dropdown, scoped to the open listbox
-    cy.get('[role="listbox"]')
-        .contains(String(sortBy)) // Convert sortBy to a string
-        .should('be.visible')
         .click();
+    
+    // Wait for the dropdown to open and click the sort option using data-testid
+    cy.get(`[data-testid="${sortTestIdMap[sortBy]}"]`, { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click({ force: true });
+    
     //Click order to change to A-Z
     cy.get('[data-testid="admin-sort-order-button"]')
         .should('be.visible')
         .click();
+    
     // Verify that username is visible in the results
     cy.get('.MuiGrid-spacing-xs-2').eq(2)
         .contains(username, { timeout: DEFAULT_TIMEOUT })

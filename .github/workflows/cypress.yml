@@ -112,12 +112,21 @@ jobs:
           echo "No consoleErrors.json found"
         fi
 
-    - name: Get selector quality issues
+    - name: Get quality issues
       id: selector-quality
       if: always()
       run: |
         if [ -f "cypress/reports/testQuality.json" ]; then
           TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/testQuality.json)
+          
+          # By Category
+          SELECTOR_ISSUES=$(jq -r '.summary.selectorIssues' cypress/reports/testQuality.json)
+          DATA_VALIDATION=$(jq -r '.summary.dataValidation' cypress/reports/testQuality.json)
+          VISIBILITY_ISSUES=$(jq -r '.summary.visibilityIssues' cypress/reports/testQuality.json)
+          PERFORMANCE=$(jq -r '.summary.performance' cypress/reports/testQuality.json)
+          ASSERTION_ERRORS=$(jq -r '.summary.assertionErrors' cypress/reports/testQuality.json)
+          
+          # Legacy fields (for backward compatibility)
           FRAGILE=$(jq -r '.summary.fragileSelectors' cypress/reports/testQuality.json)
           MISSING_TESTIDS=$(jq -r '.summary.missingTestIds' cypress/reports/testQuality.json)
           MISSING_ARIA=$(jq -r '.summary.missingAriaLabels' cypress/reports/testQuality.json)
@@ -127,25 +136,54 @@ jobs:
             [.issues[] | select(.severity == "high")] as $high |
             [.issues[] | select(.severity == "medium")] as $medium |
             ($high + $medium)[0:3] | 
-            map("• \(.test): \(.selector | split(".") | .[0:3] | join("."))...\n  Fix: \(.recommendation)") | 
-            join("\n")
+            map(
+              if .selector then
+                "• \(.test): \(.selector | split(".") | .[0:3] | join("."))...\n  Category: \(.category)\n  Fix: \(.recommendation | split("\n")[0])"
+              elif .errorMessage then
+                "• \(.test): \(.type)\n  Category: \(.category)\n  Details: \(.errorMessage | split("\n")[0] | .[0:80])...\n  Fix: \(.recommendation | split("\n")[0])"
+              else
+                "• \(.test): \(.type)\n  Category: \(.category)\n  Fix: \(.recommendation | split("\n")[0])"
+              end
+            ) | 
+            join("\n\n")
           ' cypress/reports/testQuality.json)
           
           # Escape newlines for GitHub Actions output
           SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
           
           echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
+          
+          # By Category
+          echo "selectorIssues=$SELECTOR_ISSUES" >> "$GITHUB_OUTPUT"
+          echo "dataValidation=$DATA_VALIDATION" >> "$GITHUB_OUTPUT"
+          echo "visibilityIssues=$VISIBILITY_ISSUES" >> "$GITHUB_OUTPUT"
+          echo "performance=$PERFORMANCE" >> "$GITHUB_OUTPUT"
+          echo "assertionErrors=$ASSERTION_ERRORS" >> "$GITHUB_OUTPUT"
+          
+          # Legacy fields
           echo "fragile=$FRAGILE" >> "$GITHUB_OUTPUT"
           echo "missingTestIds=$MISSING_TESTIDS" >> "$GITHUB_OUTPUT"
           echo "missingAria=$MISSING_ARIA" >> "$GITHUB_OUTPUT"
           echo "examples=$SPECIFIC_ISSUES" >> "$GITHUB_OUTPUT"
           
-          echo "Found $TOTAL_ISSUES selector quality issues"
-          echo "  - Fragile selectors: $FRAGILE"
-          echo "  - Missing test IDs: $MISSING_TESTIDS"
-          echo "  - Missing aria labels: $MISSING_ARIA"
+          echo "Found $TOTAL_ISSUES test quality issues"
+          echo "  By Category:"
+          echo "    - Selector Issues: $SELECTOR_ISSUES"
+          echo "    - Data Validation: $DATA_VALIDATION"
+          echo "    - Visibility Issues: $VISIBILITY_ISSUES"
+          echo "    - Performance: $PERFORMANCE"
+          echo "    - Assertion Errors: $ASSERTION_ERRORS"
+          echo "  Legacy breakdown:"
+          echo "    - Fragile selectors: $FRAGILE"
+          echo "    - Missing test IDs: $MISSING_TESTIDS"
+          echo "    - Missing aria labels: $MISSING_ARIA"
         else
           echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "selectorIssues=0" >> "$GITHUB_OUTPUT"
+          echo "dataValidation=0" >> "$GITHUB_OUTPUT"
+          echo "visibilityIssues=0" >> "$GITHUB_OUTPUT"
+          echo "performance=0" >> "$GITHUB_OUTPUT"
+          echo "assertionErrors=0" >> "$GITHUB_OUTPUT"
           echo "fragile=0" >> "$GITHUB_OUTPUT"
           echo "missingTestIds=0" >> "$GITHUB_OUTPUT"
           echo "missingAria=0" >> "$GITHUB_OUTPUT"
@@ -195,7 +233,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Selector Quality Issues: {0} found\n  • Fragile selectors: {1}\n  • Missing test IDs: {2}\n  • Missing aria labels: {3}\n\nTop Issues:\n{4}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.fragile, steps.selector-quality.outputs.missingTestIds, steps.selector-quality.outputs.missingAria, steps.selector-quality.outputs.examples) || '✨ No selector quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n  📍 Selector Issues: {1}\n  📊 Data Validation: {2}\n  👁️ Visibility Issues: {3}\n  ⚡ Performance: {4}\n  ❗ Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -260,13 +298,13 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
 
-    - name: Send Slack notification for selector quality issues
+    - name: Send Slack notification for test quality issues
       if: steps.selector-quality.outputs.total > 5
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
           {
-            "text": "🔍 Found ${{ steps.selector-quality.outputs.total }} selector quality issues!\n• Fragile selectors: ${{ steps.selector-quality.outputs.fragile }}\n• Missing test IDs: ${{ steps.selector-quality.outputs.missingTestIds }}\n• Missing aria labels: ${{ steps.selector-quality.outputs.missingAria }}\n\n📋 Examples (Top 3):\n${{ steps.selector-quality.outputs.examples }}\n\nThese elements need data-testid or aria-label attributes for better test reliability.\nCheck <#C08QZ42L9KM|b4m-automation-results> for details."
+            "text": "🔍 Found ${{ steps.selector-quality.outputs.total }} test quality issues!\n\n📊 By Category:\n  📍 Selector Issues: ${{ steps.selector-quality.outputs.selectorIssues }}\n  📊 Data Validation: ${{ steps.selector-quality.outputs.dataValidation }}\n  👁️ Visibility Issues: ${{ steps.selector-quality.outputs.visibilityIssues }}\n  ⚡ Performance: ${{ steps.selector-quality.outputs.performance }}\n  ❗ Assertion Errors: ${{ steps.selector-quality.outputs.assertionErrors }}\n\n📋 Examples (Top 3):\n${{ steps.selector-quality.outputs.examples }}\n\nCheck <#C08QZ42L9KM|b4m-automation-results> for details."
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}

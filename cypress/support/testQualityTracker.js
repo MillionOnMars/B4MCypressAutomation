@@ -1,40 +1,7 @@
+const issuesFilePath = 'cypress/reports/testQuality.json';
+let testIssues = new Set();
+
 export const setupTestQualityTracking = () => {
-    const issuesFilePath = 'cypress/reports/testQuality.json';
-    let testIssues = new Set();
-
-    before(() => {
-        cy.task('writeFile', {
-            filePath: issuesFilePath,
-            content: { 
-                issues: [], 
-                totalIssues: 0,
-                summary: {
-                    // By Category
-                    selectorIssues: 0,
-                    dataValidation: 0,
-                    visibilityIssues: 0,
-                    performance: 0,
-                    assertionErrors: 0,
-                    
-                    // By Type (legacy support)
-                    fragileSelectors: 0,
-                    missingTestIds: 0,
-                    missingAriaLabels: 0,
-                    contentNotFound: 0,
-                    elementNotFound: 0,
-                    
-                    // By Severity
-                    high: 0,
-                    medium: 0
-                }
-            }
-        });
-    });
-
-    beforeEach(() => {
-        testIssues.clear();
-    });
-
     // Intercept test failures to analyze all types of issues
     Cypress.on('fail', (error, runnable) => {
         const testTitle = runnable.title;
@@ -44,29 +11,71 @@ export const setupTestQualityTracking = () => {
         const errorMessage = error.message;
         const issues = analyzeTestFailure(errorMessage, testTitle, suiteName);
         
+        // Add issues to the set
         issues.forEach(issue => {
             const issueKey = JSON.stringify(issue);
             testIssues.add(issueKey);
         });
 
+        // Log for debugging
+        if (issues.length > 0) {
+            console.log(`[Test Quality] Detected ${issues.length} issue(s) in ${testTitle}`);
+            issues.forEach(issue => console.log(`  - ${issue.type}: ${issue.category}`));
+        }
+
         // Re-throw the error to maintain normal Cypress behavior
         throw error;
     });
+};
 
-    afterEach(() => {
-        if (testIssues.size > 0) {
-            const uniqueIssues = Array.from(testIssues).map(issueKey => JSON.parse(issueKey));
-            
-            cy.task('updateTestQualityLog', {
-                filePath: issuesFilePath,
-                newIssues: uniqueIssues
-            }).then(() => {
-                cy.log(`Logged ${uniqueIssues.length} test quality issues`);
-                testIssues.clear();
-            });
+// Initialize the test quality file before all tests
+before(function() {
+    cy.task('writeFile', {
+        filePath: issuesFilePath,
+        content: { 
+            issues: [], 
+            totalIssues: 0,
+            summary: {
+                // By Category
+                selectorIssues: 0,
+                dataValidation: 0,
+                visibilityIssues: 0,
+                performance: 0,
+                assertionErrors: 0,
+                
+                // By Type (legacy support)
+                fragileSelectors: 0,
+                missingTestIds: 0,
+                missingAriaLabels: 0,
+                contentNotFound: 0,
+                elementNotFound: 0,
+                
+                // By Severity
+                high: 0,
+                medium: 0
+            }
         }
     });
-};
+});
+
+// Clear issues before each test
+beforeEach(function() {
+    testIssues.clear();
+});
+
+// Log issues after each test (runs even on failure)
+afterEach(function() {
+    if (testIssues.size > 0) {
+        const uniqueIssues = Array.from(testIssues).map(issueKey => JSON.parse(issueKey));
+        
+        cy.task('updateTestQualityLog', {
+            filePath: issuesFilePath,
+            newIssues: uniqueIssues
+        }, { log: false }).then(() => {
+            cy.log(`✓ Logged ${uniqueIssues.length} test quality issue(s)`);
+        });
+    }
+});
 
 /**
  * Analyzes error messages to detect various test failure types

@@ -172,6 +172,7 @@ module.exports = defineConfig({
               dataValidation: 0,
               visibilityIssues: 0,
               performance: 0,
+              assertionErrors: 0,
               
               // By Type (legacy support)
               fragileSelectors: 0,
@@ -215,6 +216,7 @@ module.exports = defineConfig({
             dataValidation: allIssues.filter(i => i && i.category === 'Data Validation').length,
             visibilityIssues: allIssues.filter(i => i && i.category === 'Visibility Issue').length,
             performance: allIssues.filter(i => i && i.category === 'Performance').length,
+            assertionErrors: allIssues.filter(i => i && i.category === 'Assertion Error').length,
             
             // By Type (legacy support)
             fragileSelectors: allIssues.filter(i => 

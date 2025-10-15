@@ -249,40 +249,13 @@ const createNotebook = (promptType, projectName) => {
         .should('be.visible');
 
     // Handle both array and string answers
-    if (Array.isArray(testCase.answer)) {
-        cy.verifyAnswers(testCase.answer, {
-            logic: testCase.answerLogic || 'and',
-            selector: 'body',
-            timeout: 50000,
-            matchCase: false
-        });
-        return 0; // Return 0 for array answers or handle differently
-    } else {
-        return new Cypress.Promise(resolve => {
-            cy.window().then(() => { startTime = Date.now(); });
 
-            // Wait until the question appears
-            cy.contains(testCase.prompt, { timeout: 50000 })
-                .should('be.visible');
-
-            cy.get('p.MuiTypography-root')
-                .contains(testCase.answer, { timeout: 50000, matchCase: false })
-                .should('be.visible')
-                .then(() => {
-                    const duration = (Date.now() - startTime) / 1000;
-                    cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                    resolve(duration);
-                });
-            cy.contains(projectName, { timeout: 50000 })
-                .should('be.visible');
-            cy.log('Notebook creation completed successfully.');
-
-        });
-
-    }
-
-
-
+    cy.verifyAnswers(testCase.answer, {
+        logic: testCase.answerLogic || 'and',
+        selector: 'body',
+        timeout: 50000,
+        matchCase: false
+    });
 };
 
 const clickMembersTab = (projectName) => {
