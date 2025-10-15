@@ -15,4 +15,6 @@ describe('Profile Tests', () => {
     Profile.RevertUserSettings();
     // Verify Profile Elements
     Profile.VerifyProfileElements();
+    // Toggle Experimental Features
+    Profile.ToggleExperimentalFeatures();
 });
