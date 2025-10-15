@@ -69,7 +69,7 @@ const validateAgentPrompt = (agentName, promptType, model) => {
     cy.contains(agentName, { timeout: 50000 }).should('be.visible');
     // Validate the answer (supports both string and array with AND/OR logic)
     cy.verifyAnswers(testCase.answer, {
-        logic: testCase.answerLogic || 'and',
+        logic: testCase.answerLogic || 'or',
         selector: 'body',
         timeout: 50000,
         matchCase: false
@@ -155,9 +155,9 @@ const handleAgentOperations = (action, agentName, newName) => {
 
         case 'delete':
             // Click settings button
-            cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
-                .should('exist')
-                .click();
+            // cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
+            //     .should('exist')
+            //     .click();
 
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })

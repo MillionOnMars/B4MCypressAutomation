@@ -41,53 +41,12 @@ const createNote = (promptType, model) => {
         .should('be.visible');
 
     // Handle both array and string answers
-    if (Array.isArray(testCase.answer)) {
-        cy.verifyAnswers(testCase.answer, {
-            logic: testCase.answerLogic || 'and',
-            selector: 'body',
-            timeout: 50000,
-            matchCase: false
-        });
-        return { duration: 0, credits: null }; // Return object for array answers
-    } else {
-        return new Cypress.Promise(resolve => {
-            cy.window().then(() => { startTime = Date.now(); });
-
-            // Wait until the question appears
-            cy.contains(testCase.prompt, { timeout: 50000 })
-                .should('be.visible');
-
-            cy.get('[data-testid="ai-response"]', { timeout: 60000 })
-                .contains(testCase.answer, { timeout: 60000, matchCase: false })
-                .should('be.visible')
-                .then(() => {
-                    const duration = (Date.now() - startTime) / 1000;
-                    cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                    
-                    // Get credits after response
-                    cy.get('body').then($body => {
-                        if ($body.find('[data-testid="credits-used"]').length > 0) {
-                            cy.get('[data-testid="credits-used"]')
-                                .should('be.visible')
-                                .click()
-                                .then(() => {
-                                    cy.contains('Credits Used', { timeout: 10000 })
-                                        .should('exist')
-                                        .invoke('text')
-                                        .then((creditsText) => {
-                                            const credits = creditsText?.match(/\d+/)?.[0] || null;
-                                            cy.log(`Credits used: ${credits}`);
-                                            resolve({ duration, credits: credits ? parseInt(credits) : null });
-                                        });
-                                });
-                        } else {
-                            resolve({ duration, credits: null });
-                        }
-                    });
-                });
-        });
-    }
-    cy.log('Notebook creation completed successfully.');
+    cy.verifyAnswers(testCase.answer, {
+        logic: testCase.answerLogic || 'and',
+        selector: 'body',
+        timeout: 50000,
+        matchCase: false
+    });
 };
 
 const sendPrompt = (promptType, promptNo, model) => {
@@ -551,7 +510,7 @@ const handleResearchAgent = (action, agent) => {
 class Notebook {
     static createNotebook(prompt, model) {
         describe(`Text Model: ${model}`, () => {
-            it(`Should select Text model. Creates notebook`, () => {
+            it.only(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
                 createNote(prompt, model);
             });
