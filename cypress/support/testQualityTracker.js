@@ -14,6 +14,7 @@ export const setupTestQualityTracking = () => {
                     dataValidation: 0,
                     visibilityIssues: 0,
                     performance: 0,
+                    assertionErrors: 0,
                     
                     // By Type (legacy support)
                     fragileSelectors: 0,
@@ -69,11 +70,14 @@ export const setupTestQualityTracking = () => {
 
 /**
  * Analyzes error messages to detect various test failure types
- * Categories: Selector Issues, Data Validation, Visibility Issues, Performance
+ * Categories: Selector Issues, Data Validation, Visibility Issues, Performance, Assertion Errors
  */
 function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     const issues = [];
     let match;
+    
+    // Check if this is an AssertionError
+    const isAssertionError = errorMessage.includes('AssertionError');
     
     // Pattern 1: Content/Text not found
     const contentNotFoundPattern = /Expected to find content:\s*'([^']+)'.*but never did/i;
@@ -217,9 +221,9 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         });
     }
     
-    // Pattern 7: Timeout errors
+    // Pattern 7: Timeout errors (only if not an assertion error)
     const timeoutPattern = /Timed out retrying after (\d+)ms/i;
-    if ((match = timeoutPattern.exec(errorMessage)) !== null && issues.length === 0) {
+    if ((match = timeoutPattern.exec(errorMessage)) !== null && !isAssertionError && issues.length === 0) {
         const timeout = match[1];
         issues.push({
             type: 'Timeout',
@@ -231,6 +235,166 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             suite: suiteName,
             timestamp: new Date().toISOString()
         });
+    }
+    
+    // ==================== ASSERTION ERROR PATTERNS ====================
+    // Only process assertion patterns if this is an AssertionError
+    if (isAssertionError) {
+        // Extract the core assertion message (remove "Timed out retrying after Xms:" prefix if present)
+        const coreMessage = errorMessage.replace(/^.*?Timed out retrying after \d+ms:\s*/i, '');
+        
+        // Pattern 8: Boolean assertions (expected true/false to be true/false)
+        const booleanPattern = /expected\s+(true|false)\s+to\s+(?:be|equal)\s+(true|false)/i;
+        if ((match = booleanPattern.exec(coreMessage)) !== null) {
+            const actual = match[1];
+            const expected = match[2];
+            
+            // Extract context from the message before "expected"
+            const contextMatch = /^(.+?):\s*expected/i.exec(coreMessage);
+            const context = contextMatch ? contextMatch[1].trim() : 'Assertion failed';
+            
+            issues.push({
+                type: 'Assertion Failure - Boolean',
+                category: 'Assertion Error',
+                severity: 'high',
+                expected: expected,
+                actual: actual,
+                context: context,
+                errorMessage: coreMessage,
+                recommendation: `Boolean assertion failed: ${context}. Check:\n  1. Verify the condition logic in your test\n  2. Ensure elements or data exist as expected\n  3. Check if custom assertion message provides clues\n  4. Review the test's preconditions`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 9: "expected X to be Y" - General state/value assertions (visible, hidden, checked, etc.)
+        else if ((match = /expected\s+['"]?(.+?)['"]?\s+to\s+be\s+['"]?([^'"]+?)['"]?$/i.exec(coreMessage)) !== null) {
+            const subject = match[1].trim();
+            const expectedState = match[2].trim();
+            
+            issues.push({
+                type: 'Assertion Failure - State',
+                category: 'Assertion Error',
+                severity: 'medium',
+                subject: subject,
+                expectedState: expectedState,
+                errorMessage: coreMessage,
+                recommendation: `Expected '${subject}' to be '${expectedState}'. Check:\n  1. Verify element reaches the expected state\n  2. Wait for animations/transitions to complete\n  3. Check if element selector is correct\n  4. Ensure proper visibility/rendering conditions`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 10: "expected X to equal/deep.equal Y"
+        else if ((match = /expected\s+(.+?)\s+to\s+(equal|deep\.equal|strictly\s+equal|eql)\s+(.+)/i.exec(coreMessage)) !== null) {
+            const actual = match[1].trim();
+            const assertion = match[2].trim();
+            const expected = match[3].trim();
+            
+            issues.push({
+                type: 'Assertion Failure - Equality',
+                category: 'Assertion Error',
+                severity: 'high',
+                expected: expected,
+                actual: actual,
+                assertionType: assertion,
+                errorMessage: coreMessage,
+                recommendation: `Expected ${actual} to ${assertion} ${expected}. Check:\n  1. Verify expected values in fixtures/test data\n  2. Check if API response structure changed\n  3. Ensure data is fully loaded before assertion\n  4. Review data type compatibility`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 11: "expected X to have length/contain/include Y"
+        else if ((match = /expected\s+(.+?)\s+to\s+(have\s+(?:a\s+)?length|contain|include)\s+(.+)/i.exec(coreMessage)) !== null) {
+            const subject = match[1].trim();
+            const assertion = match[2].trim();
+            const expected = match[3].trim();
+            
+            issues.push({
+                type: 'Assertion Failure - Collection',
+                category: 'Assertion Error',
+                severity: 'medium',
+                subject: subject,
+                assertionType: assertion,
+                expected: expected,
+                errorMessage: coreMessage,
+                recommendation: `Expected ${subject} to ${assertion} ${expected}. Check:\n  1. Verify collection/array contents\n  2. Check if filters are applied correctly\n  3. Ensure all items are loaded (pagination)\n  4. Review test data consistency`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 12: "expected X to have property/attribute/class Y"
+        else if ((match = /expected\s+(.+?)\s+to\s+have\s+(property|attribute|class)\s+(.+)/i.exec(coreMessage)) !== null) {
+            const subject = match[1].trim();
+            const type = match[2].trim();
+            const expected = match[3].trim();
+            
+            issues.push({
+                type: `Assertion Failure - ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+                category: 'Assertion Error',
+                severity: 'medium',
+                subject: subject,
+                expected: expected,
+                errorMessage: coreMessage,
+                recommendation: `Expected ${type} '${expected}' not found. Check:\n  1. Verify the ${type} exists on the element\n  2. Check if naming conventions changed\n  3. Ensure proper rendering/initialization\n  4. Review component library updates`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 13: "expected X to exist/not exist"
+        else if ((match = /expected\s+(.+?)\s+(not\s+)?to\s+exist/i.exec(coreMessage)) !== null) {
+            const subject = match[1].trim();
+            const shouldNotExist = !!match[2];
+            
+            issues.push({
+                type: 'Assertion Failure - Existence',
+                category: 'Assertion Error',
+                severity: 'high',
+                subject: subject,
+                shouldNotExist: shouldNotExist,
+                errorMessage: coreMessage,
+                recommendation: shouldNotExist 
+                    ? `Expected '${subject}' not to exist but it does. Check:\n  1. Verify element is properly removed\n  2. Check if delete action completed\n  3. Review cleanup operations`
+                    : `Expected '${subject}' to exist but it doesn't. Check:\n  1. Verify element is rendered\n  2. Check if creation completed\n  3. Review permissions/feature flags`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 14: Generic "expected X to ..." catch-all for any other assertion patterns
+        else if ((match = /expected\s+(.+?)\s+to\s+(.+)/i.exec(coreMessage)) !== null) {
+            const subject = match[1].trim();
+            const expectation = match[2].trim();
+            
+            issues.push({
+                type: 'Assertion Failure - General',
+                category: 'Assertion Error',
+                severity: 'medium',
+                subject: subject,
+                expectation: expectation,
+                errorMessage: coreMessage,
+                recommendation: `Assertion failed: expected ${subject} to ${expectation}. Check:\n  1. Review the full error message for context\n  2. Verify test expectations match actual behavior\n  3. Check if feature implementation changed\n  4. Ensure test data and fixtures are up to date`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 15: Catch-all for any other AssertionError format
+        else {
+            issues.push({
+                type: 'Assertion Failure - Unknown',
+                category: 'Assertion Error',
+                severity: 'medium',
+                errorMessage: coreMessage,
+                recommendation: `Assertion failed. Review the error message:\n"${coreMessage.substring(0, 200)}..."\n\nCheck:\n  1. Review the custom assertion message for clues\n  2. Verify test expectations\n  3. Check if this is a custom chai assertion\n  4. Ensure test setup is correct`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
     }
     
     return issues;
