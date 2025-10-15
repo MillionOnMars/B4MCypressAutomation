@@ -1,6 +1,7 @@
 export const setupTestQualityTracking = () => {
     const issuesFilePath = 'cypress/reports/testQuality.json';
-    let testIssues = new Set();
+    // Use a Map keyed by test name to persist issues across retries
+    const allTestIssues = new Map();
 
     before(() => {
         cy.task('writeFile', {
@@ -30,39 +31,53 @@ export const setupTestQualityTracking = () => {
         });
     });
 
-    beforeEach(() => {
-        testIssues.clear();
-    });
-
     // Intercept test failures to analyze all types of issues
     Cypress.on('fail', (error, runnable) => {
         const testTitle = runnable.title;
         const suiteName = runnable.parent?.title || 'Unknown Suite';
+        const testKey = `${suiteName}::${testTitle}`;
         
         // Analyze the error message for various test quality issues
         const errorMessage = error.message;
         const issues = analyzeTestFailure(errorMessage, testTitle, suiteName);
         
-        issues.forEach(issue => {
-            const issueKey = JSON.stringify(issue);
-            testIssues.add(issueKey);
-        });
+        // Store issues for this specific test (persists across retries)
+        if (issues.length > 0) {
+            if (!allTestIssues.has(testKey)) {
+                allTestIssues.set(testKey, new Set());
+            }
+            const testIssuesSet = allTestIssues.get(testKey);
+            issues.forEach(issue => {
+                const issueKey = JSON.stringify(issue);
+                testIssuesSet.add(issueKey);
+                // Log quality issue detection
+                console.log(`🔍 Quality Issue Detected: [${issue.category}] ${issue.type} in "${testTitle}"`);
+            });
+        }
 
         // Re-throw the error to maintain normal Cypress behavior
         throw error;
     });
 
-    afterEach(() => {
-        if (testIssues.size > 0) {
-            const uniqueIssues = Array.from(testIssues).map(issueKey => JSON.parse(issueKey));
+    afterEach(function() {
+        // Use function() to access 'this' context
+        const currentTestTitle = this.currentTest?.title;
+        const currentSuiteName = this.currentTest?.parent?.title || 'Unknown Suite';
+        const testKey = `${currentSuiteName}::${currentTestTitle}`;
+        
+        // Check if this test had any issues
+        if (allTestIssues.has(testKey)) {
+            const testIssuesSet = allTestIssues.get(testKey);
+            const uniqueIssues = Array.from(testIssuesSet).map(issueKey => JSON.parse(issueKey));
             
-            cy.task('updateTestQualityLog', {
-                filePath: issuesFilePath,
-                newIssues: uniqueIssues
-            }).then(() => {
-                cy.log(`Logged ${uniqueIssues.length} test quality issues`);
-                testIssues.clear();
-            });
+            if (uniqueIssues.length > 0) {
+                cy.task('updateTestQualityLog', {
+                    filePath: issuesFilePath,
+                    newIssues: uniqueIssues
+                }).then(() => {
+                    cy.log(`Logged ${uniqueIssues.length} test quality issues for ${currentTestTitle}`);
+                });
+            }
         }
     });
 };
@@ -78,8 +93,24 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     // Pattern 1: Content/Text not found
     const contentNotFoundPattern = /Expected to find content:\s*'([^']+)'.*but never did/i;
     const withinContentPattern = /Expected to find content:\s*'([^']+)'.*within.*<([^>]+)>.*but never did/i;
+    const atLeastOnePattern = /At least one of \[([^\]]+)\] should be visible in ([^:]+):/i;
     
-    if ((match = withinContentPattern.exec(errorMessage)) !== null) {
+    // Check for custom verifyAnswers OR logic failure
+    if ((match = atLeastOnePattern.exec(errorMessage)) !== null) {
+        const expectedValues = match[1];
+        const selector = match[2].trim();
+        issues.push({
+            type: 'Content Not Found (OR logic)',
+            category: 'Data Validation',
+            severity: 'high',
+            expectedContent: expectedValues,
+            context: `in ${selector}`,
+            recommendation: `None of the expected values [${expectedValues}] were found in ${selector}. Check if:\n  1. The AI response contains at least one expected keyword\n  2. Add more alternative keywords with answerLogic: "or"\n  3. The response time is sufficient (increase timeout)\n  4. The prompt in fixtures/prompts.json matches the test expectation`,
+            test: testTitle,
+            suite: suiteName,
+            timestamp: new Date().toISOString()
+        });
+    } else if ((match = withinContentPattern.exec(errorMessage)) !== null) {
         const expectedContent = match[1];
         const withinElement = match[2];
         issues.push({

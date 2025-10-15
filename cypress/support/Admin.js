@@ -32,17 +32,16 @@ const sortname = (username, sortBy) => {
     navigateToAdminDashboard(); // Call the navigation function
     cy.log("Sorting by:", sortBy);
     // Click Sort Combobox
-    cy.get('button[role="combobox"]')
-        .contains('Created At')
+    cy.get('[data-testid="admin-sort-by-select"]')
         .should('be.visible')
-        .click();
+        .click({ force: true });
     // Click the "Name" option in the dropdown, scoped to the open listbox
     cy.get('[role="listbox"]')
         .contains(String(sortBy)) // Convert sortBy to a string
         .should('be.visible')
         .click();
     //Click order to change to A-Z
-    cy.contains('button', 'Z → A')
+    cy.get('[data-testid="admin-sort-order-button"]')
         .should('be.visible')
         .click();
     // Verify that username is visible in the results

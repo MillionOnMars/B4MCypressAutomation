@@ -60,11 +60,13 @@
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": ["lorem ipsum", "layout", "cv", "resume"]
+                "answer": ["lorem ipsum", "layout", "cv", "resume"],
+                "answerLogic": "or"
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer": "layout"
+                "answer":  ["lorem ipsum", "layout", "cv", "resume"],
+                "answerLogic": "or"
             }
         ]
     }

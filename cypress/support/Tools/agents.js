@@ -122,9 +122,9 @@ const handleAgentOperations = (action, agentName, newName) => {
 
         case 'rename':     
             // Click settings button
-            cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
-                .should('exist')
-                .click({force: true});
+            // cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
+            //     .should('exist')
+            //     .click({force: true});
 
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
