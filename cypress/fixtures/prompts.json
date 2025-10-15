@@ -9,7 +9,7 @@
         "answer": "Paris",
         "filepath": "cypress/fixtures/upload/cat.png"
     },
-        "movie": {
+    "movie": {
         "prompt": "Could you list the top movie apps?",
         "answer": "Netflix",
         "filepath": "cypress/fixtures/upload/cat.png"
