@@ -116,11 +116,11 @@ jobs:
       id: selector-quality
       if: always()
       run: |
-        if [ -f "cypress/reports/selectorQuality.json" ]; then
-          TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/selectorQuality.json)
-          FRAGILE=$(jq -r '.summary.fragileSelectors' cypress/reports/selectorQuality.json)
-          MISSING_TESTIDS=$(jq -r '.summary.missingTestIds' cypress/reports/selectorQuality.json)
-          MISSING_ARIA=$(jq -r '.summary.missingAriaLabels' cypress/reports/selectorQuality.json)
+        if [ -f "cypress/reports/testQuality.json" ]; then
+          TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/testQuality.json)
+          FRAGILE=$(jq -r '.summary.fragileSelectors' cypress/reports/testQuality.json)
+          MISSING_TESTIDS=$(jq -r '.summary.missingTestIds' cypress/reports/testQuality.json)
+          MISSING_ARIA=$(jq -r '.summary.missingAriaLabels' cypress/reports/testQuality.json)
           
           # Extract top 3 specific issues for Slack (prioritize high severity)
           SPECIFIC_ISSUES=$(jq -r '
@@ -129,7 +129,7 @@ jobs:
             ($high + $medium)[0:3] | 
             map("• \(.test): \(.selector | split(".") | .[0:3] | join("."))...\n  Fix: \(.recommendation)") | 
             join("\n")
-          ' cypress/reports/selectorQuality.json)
+          ' cypress/reports/testQuality.json)
           
           # Escape newlines for GitHub Actions output
           SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
@@ -150,7 +150,7 @@ jobs:
           echo "missingTestIds=0" >> "$GITHUB_OUTPUT"
           echo "missingAria=0" >> "$GITHUB_OUTPUT"
           echo "examples=" >> "$GITHUB_OUTPUT"
-          echo "No selectorQuality.json found"
+          echo "No testQuality.json found"
         fi
 
     - name: Upload test results
@@ -165,7 +165,7 @@ jobs:
           cypress/videos/**/*.mp4
           cypress/fixtures/credits.json
           cypress/reports/consoleErrors.json
-          cypress/reports/selectorQuality.json
+          cypress/reports/testQuality.json
           cypress/reports/results.json
         if-no-files-found: warn
         retention-days: 14
