@@ -2,14 +2,20 @@ const issuesFilePath = 'cypress/reports/testQuality.json';
 let testIssues = new Set();
 
 export const setupTestQualityTracking = () => {
+    console.log('[Test Quality] Setting up test quality tracking...');
+    
     // Intercept test failures to analyze all types of issues
     Cypress.on('fail', (error, runnable) => {
+        console.log('[Test Quality] Test failed, analyzing error...');
         const testTitle = runnable.title;
         const suiteName = runnable.parent?.title || 'Unknown Suite';
         
         // Analyze the error message for various test quality issues
         const errorMessage = error.message;
+        console.log(`[Test Quality] Error message: ${errorMessage.substring(0, 100)}...`);
+        
         const issues = analyzeTestFailure(errorMessage, testTitle, suiteName);
+        console.log(`[Test Quality] Found ${issues.length} issues`);
         
         // Add issues to the set
         issues.forEach(issue => {
@@ -21,6 +27,8 @@ export const setupTestQualityTracking = () => {
         if (issues.length > 0) {
             console.log(`[Test Quality] Detected ${issues.length} issue(s) in ${testTitle}`);
             issues.forEach(issue => console.log(`  - ${issue.type}: ${issue.category}`));
+        } else {
+            console.log(`[Test Quality] No issues detected for: ${testTitle}`);
         }
 
         // Re-throw the error to maintain normal Cypress behavior
@@ -65,15 +73,20 @@ beforeEach(function() {
 
 // Log issues after each test (runs even on failure)
 afterEach(function() {
+    console.log(`[Test Quality] afterEach: ${testIssues.size} issues collected`);
     if (testIssues.size > 0) {
         const uniqueIssues = Array.from(testIssues).map(issueKey => JSON.parse(issueKey));
+        console.log(`[Test Quality] Logging ${uniqueIssues.length} issues:`, uniqueIssues.map(i => i.type));
         
         cy.task('updateTestQualityLog', {
             filePath: issuesFilePath,
             newIssues: uniqueIssues
         }, { log: false }).then(() => {
             cy.log(`✓ Logged ${uniqueIssues.length} test quality issue(s)`);
+            console.log(`[Test Quality] Successfully logged ${uniqueIssues.length} issues`);
         });
+    } else {
+        console.log('[Test Quality] No issues to log');
     }
 });
 
@@ -88,37 +101,40 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     // Check if this is an AssertionError
     const isAssertionError = errorMessage.includes('AssertionError');
     
-    // Pattern 1: Content/Text not found
-    const contentNotFoundPattern = /Expected to find content:\s*'([^']+)'.*but never did/i;
-    const withinContentPattern = /Expected to find content:\s*'([^']+)'.*within.*<([^>]+)>.*but never did/i;
-    
-    if ((match = withinContentPattern.exec(errorMessage)) !== null) {
-        const expectedContent = match[1];
-        const withinElement = match[2];
-        issues.push({
-            type: 'Content Not Found',
-            category: 'Data Validation',
-            severity: 'high',
-            expectedContent: expectedContent,
-            context: `within ${withinElement}`,
-            selector: withinElement,
-            recommendation: `Expected content "${expectedContent}" was not found. Check if:\n  1. The AI response contains the expected keyword\n  2. The response time is sufficient\n  3. The prompt in fixtures/prompts.json is accurate\n  4. The model supports this type of query`,
-            test: testTitle,
-            suite: suiteName,
-            timestamp: new Date().toISOString()
-        });
-    } else if ((match = contentNotFoundPattern.exec(errorMessage)) !== null) {
-        const expectedContent = match[1];
-        issues.push({
-            type: 'Content Not Found',
-            category: 'Data Validation',
-            severity: 'high',
-            expectedContent: expectedContent,
-            recommendation: `Expected content "${expectedContent}" was not found. Check if:\n  1. The element exists with correct content\n  2. The content is dynamically loaded and needs more wait time\n  3. The expected text in fixtures is correct`,
-            test: testTitle,
-            suite: suiteName,
-            timestamp: new Date().toISOString()
-        });
+    // Only process non-assertion patterns if it's NOT an AssertionError
+    if (!isAssertionError) {
+        // Pattern 1: Content/Text not found (non-assertion errors)
+        const contentNotFoundPattern = /Expected to find content:\s*['"]([^'"]+)['"].*but never did/i;
+        const withinContentPattern = /Expected to find content:\s*['"]([^'"]+)['"].*within.*<([^>]+)>.*but never did/i;
+        
+        if ((match = withinContentPattern.exec(errorMessage)) !== null) {
+            const expectedContent = match[1];
+            const withinElement = match[2];
+            issues.push({
+                type: 'Content Not Found',
+                category: 'Data Validation',
+                severity: 'high',
+                expectedContent: expectedContent,
+                context: `within ${withinElement}`,
+                selector: withinElement,
+                recommendation: `Expected content "${expectedContent}" was not found. Check if:\n  1. The AI response contains the expected keyword\n  2. The response time is sufficient\n  3. The prompt in fixtures/prompts.json is accurate\n  4. The model supports this type of query`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        } else if ((match = contentNotFoundPattern.exec(errorMessage)) !== null) {
+            const expectedContent = match[1];
+            issues.push({
+                type: 'Content Not Found',
+                category: 'Data Validation',
+                severity: 'high',
+                expectedContent: expectedContent,
+                recommendation: `Expected content "${expectedContent}" was not found. Check if:\n  1. The element exists with correct content\n  2. The content is dynamically loaded and needs more wait time\n  3. The expected text in fixtures is correct`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
     }
     
     // Pattern 2: Element not found with timeout
@@ -252,7 +268,23 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         // Extract the core assertion message (remove "Timed out retrying after Xms:" prefix if present)
         const coreMessage = errorMessage.replace(/^.*?Timed out retrying after \d+ms:\s*/i, '');
         
-        // Pattern 8: Boolean assertions (expected true/false to be true/false)
+        // Pattern 8: Content not found in assertion errors
+        const assertionContentPattern = /Expected to find content:\s*['"]([^'"]+)['"].*but never did/i;
+        if ((match = assertionContentPattern.exec(coreMessage)) !== null) {
+            const expectedContent = match[1];
+            issues.push({
+                type: 'Assertion Failure - Content Not Found',
+                category: 'Assertion Error',
+                severity: 'high',
+                expectedContent: expectedContent,
+                errorMessage: coreMessage,
+                recommendation: `Expected content "${expectedContent}" was not found. Check:\n  1. Verify the content exists in the UI\n  2. Check if content is dynamically loaded\n  3. Ensure sufficient wait time for content to appear\n  4. Review if the expected text is correct`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 9: Boolean assertions (expected true/false to be true/false)
         const booleanPattern = /expected\s+(true|false)\s+to\s+(?:be|equal)\s+(true|false)/i;
         if ((match = booleanPattern.exec(coreMessage)) !== null) {
             const actual = match[1];
@@ -276,7 +308,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
                 timestamp: new Date().toISOString()
             });
         }
-        // Pattern 9: "expected X to be Y" - General state/value assertions (visible, hidden, checked, etc.)
+        // Pattern 10: "expected X to be Y" - General state/value assertions (visible, hidden, checked, etc.)
         else if ((match = /expected\s+['"]?(.+?)['"]?\s+to\s+be\s+['"]?([^'"]+?)['"]?$/i.exec(coreMessage)) !== null) {
             const subject = match[1].trim();
             const expectedState = match[2].trim();
