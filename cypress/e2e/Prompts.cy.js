@@ -2,7 +2,7 @@ import { login } from '../support/login.js';
 import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Correctly import the default export
 
 describe("Prompts", () => {
-  const randomTextModels = getRandomTextModels(1);
+  const randomTextModels = getRandomTextModels(3);
   // Log in to the application before running the tests
 
   beforeEach(() => {

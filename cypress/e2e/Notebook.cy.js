@@ -3,7 +3,7 @@ import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Corr
 import  Agents  from '../support/Tools/agents.js';
 
 describe('Notebook Operations', () => {
-    const randomTextModels = getRandomTextModels(1); 
+    const randomTextModels = getRandomTextModels(4); 
     // Log in to the application before running the tests
     
     beforeEach(() => {
