@@ -14,17 +14,17 @@ describe('Project Operations', () => {
         // Rename the project
         Projects.renameProject('My New Project', 'Renamed Project');
         // Manage project content and members
-        // Projects.manageProjectContent('Renamed Project', {
-        //     notebook: 'France',
-        //     uploadFile: 'prime',
-        //     memberEmail: 'auto-share',
-        //     systemPrompt: 'sinigang',
-        //     createNotebook: 'sinigang'
-        // });
-        // //validate sharing the project
-        // Projects.shareProject('Renamed Project','France','auto-share');
-        // // Handle system prompt operations
-        // Projects.systemPromptOperations('Renamed Project', 'sinigang');
-        // // Deletes the project
-        // Projects.deleteProject('Renamed Project');
+        Projects.manageProjectContent('Renamed Project', {
+            notebook: 'France',
+            uploadFile: 'prime',
+            memberEmail: 'auto-share',
+            systemPrompt: 'sinigang',
+            createNotebook: 'sinigang'
+        });
+        //validate sharing the project
+        Projects.shareProject('Renamed Project','France','auto-share');
+        // Handle system prompt operations
+        Projects.systemPromptOperations('Renamed Project', 'sinigang');
+        // Deletes the project
+        Projects.deleteProject('Renamed Project');
 });

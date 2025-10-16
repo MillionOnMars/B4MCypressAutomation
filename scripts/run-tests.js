@@ -49,7 +49,6 @@ async function runTests() {
 
         // Run Cypress tests with updated Mochawesome configuration
         const results = await cypress.run({
-            spec: 'cypress/e2e/Projects.cy.js',
             config: {
                 video: true,
                 screenshotOnRunFailure: true
@@ -134,10 +133,14 @@ async function runTests() {
                     .filter(i => i.severity === 'high')
                     .slice(0, 3)
                     .map(issue => {
-                        const rec = issue.recommendation.split('\n')[0];
-                        return `  • [${issue.category}] ${issue.test}\n    ↳ ${issue.type}`;
+                        // Format multiline recommendation with proper indentation
+                        const recLines = issue.recommendation.split('\n');
+                        const formattedRec = recLines.map((line, idx) => 
+                            idx === 0 ? line : `       ${line}`
+                        ).join('\n');
+                        return `  • *${issue.test}* [${issue.category}]\n    ${formattedRec}`;
                     })
-                    .join('\n');
+                    .join('\n\n');
                 
                 if (topIssues) {
                     qualityIssues = `\n\n*Top Quality Issues:*\n${topIssues}`;
