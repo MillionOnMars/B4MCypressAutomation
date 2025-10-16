@@ -188,20 +188,30 @@ module.exports = defineConfig({
           };
           
           if (fs.existsSync(filePath)) {
-            existingData = JSON.parse(fs.readFileSync(filePath));
+            try {
+              const fileContent = fs.readFileSync(filePath, 'utf8');
+              existingData = JSON.parse(fileContent);
+            } catch (error) {
+              console.error('[Test Quality] Error reading file, resetting:', error.message);
+              // If file is corrupted, reset to default structure
+            }
           }
 
-          // Deduplicate existing issues based on type, suite, and test
-          // but preserve all fields in the stored issues
+          // Deduplicate issues based on type, suite, test, AND timestamp
+          // This allows tracking multiple instances across different test runs
           const existingMap = new Map();
-          existingData.issues.forEach(issue => {
-            const key = `${issue.type}|${issue.category}|${issue.suite}|${issue.test}`;
-            existingMap.set(key, issue);
-          });
+          
+          // Preserve existing issues
+          if (existingData.issues && Array.isArray(existingData.issues)) {
+            existingData.issues.forEach(issue => {
+              const key = `${issue.type}|${issue.category}|${issue.suite}|${issue.test}|${issue.timestamp}`;
+              existingMap.set(key, issue);
+            });
+          }
 
-          // Add new unique issues (keeping all fields)
+          // Add new issues (each with unique timestamp is kept)
           for (const issue of newIssues) {
-            const key = `${issue.type}|${issue.category}|${issue.suite}|${issue.test}`;
+            const key = `${issue.type}|${issue.category}|${issue.suite}|${issue.test}|${issue.timestamp}`;
             if (!existingMap.has(key)) {
               existingMap.set(key, issue);
             }
@@ -235,7 +245,7 @@ module.exports = defineConfig({
             medium: allIssues.filter(i => i && i.severity === 'medium').length
           };
 
-          // Write deduplicated issues
+          // Write deduplicated issues with validation
           const updatedData = {
             lastUpdate: new Date().toISOString(),
             totalIssues: allIssues.length,
@@ -243,7 +253,29 @@ module.exports = defineConfig({
             issues: allIssues
           };
 
-          fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
+          try {
+            // Ensure directory exists
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            
+            // Write with validation
+            const jsonString = JSON.stringify(updatedData, null, 2);
+            
+            // Validate JSON is parseable before writing
+            JSON.parse(jsonString);
+            
+            // Write atomically (write to temp file then rename)
+            const tempFile = filePath + '.tmp';
+            fs.writeFileSync(tempFile, jsonString, 'utf8');
+            fs.renameSync(tempFile, filePath);
+            
+            console.log(`[Test Quality] Successfully logged ${newIssues.length} new issue(s), total: ${allIssues.length}`);
+          } catch (error) {
+            console.error('[Test Quality] Error writing file:', error.message);
+          }
+          
           return null;
         }
       });

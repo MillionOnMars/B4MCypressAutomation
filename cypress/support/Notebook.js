@@ -1,7 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
 // ensure that these allow both image and text uploads since we ask it wat color is the cat.
-const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Claude 4.5 Sonnet']; // Add your text models here
+const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -99,7 +99,7 @@ const sendPrompt = (promptType, promptNo, model) => {
         cy.verifyAnswers(currentPromptData.answer, {
             logic: currentPromptData.answerLogic || 'and',
             selector: '[data-testid="ai-response"]',
-            timeout: 60000,
+            timeout: currentPromptData.timeout || 60000,
             matchCase: false
         });
 

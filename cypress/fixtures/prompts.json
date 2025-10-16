@@ -57,17 +57,15 @@
     },
     "pdf-lorem": {
         "filepath": "cypress/fixtures/upload/sample.pdf",
+        "timeout": 120000,
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": ["lorem ipsum", "layout", "cv", "resume"],
-                "answerLogic": "or"
+                "answer": "cv"
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer":  ["lorem ipsum", "layout", "cv", "resume"],
-                "answerLogic": "or"
-            }
+                "answer":  "cv"            }
         ]
     }
 

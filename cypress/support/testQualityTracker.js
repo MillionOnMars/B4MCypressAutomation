@@ -100,6 +100,8 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     
     // Check if this is an AssertionError
     const isAssertionError = errorMessage.includes('AssertionError');
+    console.log(`[Test Quality] isAssertionError: ${isAssertionError}`);
+    console.log(`[Test Quality] Error type: ${isAssertionError ? 'Assertion' : 'Non-Assertion'}`);
     
     // Only process non-assertion patterns if it's NOT an AssertionError
     if (!isAssertionError) {
@@ -267,10 +269,70 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     if (isAssertionError) {
         // Extract the core assertion message (remove "Timed out retrying after Xms:" prefix if present)
         const coreMessage = errorMessage.replace(/^.*?Timed out retrying after \d+ms:\s*/i, '');
+        console.log(`[Test Quality] Core message (first 200 chars): ${coreMessage.substring(0, 200)}`);
         
-        // Pattern 8: Content not found in assertion errors
-        const assertionContentPattern = /Expected to find content:\s*['"]([^'"]+)['"].*but never did/i;
-        if ((match = assertionContentPattern.exec(coreMessage)) !== null) {
+        // Pattern 8a: Streaming not complete error from verifyAnswers (check first - most specific)
+        const streamingPattern = /Waiting for streaming to complete.*expected.*to be true/i;
+        if (streamingPattern.test(coreMessage)) {
+            issues.push({
+                type: 'AI Response - Streaming Timeout',
+                category: 'Performance',
+                severity: 'high',
+                errorMessage: coreMessage,
+                recommendation: `AI response streaming did not complete in time.\n\nPossible causes:\n  1. Response is taking too long to generate\n  2. Streaming may have stalled or stopped\n  3. Network connectivity issues\n  4. Backend service timeout\n  5. Text stability check is too strict\n\nRecommendations:\n  - Increase timeout in verifyAnswers options\n  - Check backend logs for AI service errors\n  - Verify network stability\n  - Review text stability logic (may need adjustment)\n  - Check if this is a consistently slow prompt`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 8b: verifyAnswers custom error - answers not found (OR logic)
+        else if ((match = /At least one of \[([^\]]+)\] should be visible in (.+?)(?::|$)/i.exec(coreMessage)) !== null) {
+            console.log('[Test Quality] Pattern 8b matched! verifyAnswers error detected');
+            const expectedAnswers = match[1];
+            const selector = match[2];
+            const isAIResponse = selector.includes('ai-response');
+            console.log(`[Test Quality] Expected answers: ${expectedAnswers}`);
+            console.log(`[Test Quality] Selector: ${selector}`);
+            console.log(`[Test Quality] Is AI Response: ${isAIResponse}`);
+            
+            issues.push({
+                type: isAIResponse ? 'AI Response Validation - Streaming Issue' : 'Content Validation Failed',
+                category: 'Data Validation',
+                severity: 'high',
+                expectedAnswers: expectedAnswers.split(',').map(a => a.trim()),
+                selector: selector,
+                errorMessage: coreMessage,
+                recommendation: isAIResponse 
+                    ? `AI response validation failed. None of the expected answers [${expectedAnswers}] were found in ${selector}.\n\nPossible causes:\n  1. Streaming not complete - Response still generating (most common)\n  2. AI model didn't include expected keywords in response\n  3. Prompt in fixtures/prompts.json needs adjustment\n  4. Model doesn't support this type of query\n  5. File upload (if applicable) wasn't processed correctly\n\nRecommendations:\n  - Verify streaming completion logic in verifyAnswers\n  - Check if AI response contains ANY relevant content\n  - Review prompt quality and expected answers\n  - Try with a more deterministic prompt`
+                    : `Content validation failed. None of [${expectedAnswers}] found in ${selector}. Check:\n  1. Verify content is rendered\n  2. Ensure sufficient wait time\n  3. Check if selector is correct\n  4. Review expected values in test data`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 8c: Content not found within specific element (verifyAnswers AND logic failure)
+        else if ((match = /Expected to find content:\s*['"]([^'"]+)['"].*within.*<([^>]+)>.*but never did/i.exec(coreMessage)) !== null) {
+            const expectedContent = match[1];
+            const withinElement = match[2];
+            const isAIResponse = coreMessage.includes('ai-response') || withinElement.includes('ai-response');
+            
+            issues.push({
+                type: isAIResponse ? 'AI Response Validation - Content Missing' : 'Assertion Failure - Content Not Found',
+                category: isAIResponse ? 'Data Validation' : 'Assertion Error',
+                severity: 'high',
+                expectedContent: expectedContent,
+                selector: withinElement,
+                errorMessage: coreMessage,
+                recommendation: isAIResponse
+                    ? `AI response missing expected content "${expectedContent}".\n\nPossible causes:\n  1. Streaming not complete when checked\n  2. AI model didn't include this specific keyword\n  3. Prompt needs to be more specific\n  4. Model response is incomplete or truncated\n\nRecommendations:\n  - Check if response streaming completed\n  - Review actual AI response content in the UI\n  - Adjust prompt to be more explicit\n  - Consider using 'or' logic with multiple acceptable answers`
+                    : `Expected content "${expectedContent}" not found in ${withinElement}. Check:\n  1. Content exists in the target element\n  2. Wait time is sufficient\n  3. Element selector is correct\n  4. Expected text matches actual content`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 8d: General content not found in assertion errors
+        else if ((match = /Expected to find content:\s*['"]([^'"]+)['"].*but never did/i.exec(coreMessage)) !== null) {
             const expectedContent = match[1];
             issues.push({
                 type: 'Assertion Failure - Content Not Found',
@@ -284,9 +346,47 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
                 timestamp: new Date().toISOString()
             });
         }
+        // Pattern 8e: Network/API errors (fetch failed, network error, CORS, etc.)
+        else if (/(?:fetch failed|network error|network request failed|cors|failed to fetch|ERR_CONNECTION)/i.test(coreMessage)) {
+            issues.push({
+                type: 'Network/API Error',
+                category: 'Performance',
+                severity: 'high',
+                errorMessage: coreMessage,
+                recommendation: `Network or API request failed.\n\nPossible causes:\n  1. Backend service is down or unreachable\n  2. Network connectivity issues\n  3. CORS configuration problems\n  4. API endpoint changed or invalid\n  5. Request timeout\n\nRecommendations:\n  - Check if backend services are running\n  - Verify API endpoints are correct\n  - Review network logs in browser DevTools\n  - Check CORS configuration if cross-origin\n  - Increase timeout if request is slow`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 8f: File upload errors
+        else if (/(?:upload|file).*(?:failed|error|invalid)/i.test(coreMessage) || /invalid file type|file size|file format/i.test(coreMessage)) {
+            issues.push({
+                type: 'File Upload Error',
+                category: 'Data Validation',
+                severity: 'high',
+                errorMessage: coreMessage,
+                recommendation: `File upload operation failed.\n\nPossible causes:\n  1. File type not supported\n  2. File size exceeds limit\n  3. File path incorrect in test\n  4. Upload endpoint error\n  5. Missing file in fixtures\n\nRecommendations:\n  - Verify file exists in cypress/fixtures/\n  - Check file type is supported\n  - Review file size limits\n  - Check upload API endpoint\n  - Review backend logs for upload errors`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
+        // Pattern 8g: Authentication/Authorization errors
+        else if (/(?:401|403|unauthorized|forbidden|authentication|not authenticated|login required|permission denied|access denied)/i.test(coreMessage)) {
+            issues.push({
+                type: 'Authentication/Authorization Error',
+                category: 'Assertion Error',
+                severity: 'high',
+                errorMessage: coreMessage,
+                recommendation: `Authentication or authorization failed.\n\nPossible causes:\n  1. User not logged in or session expired\n  2. Invalid credentials in test data\n  3. Insufficient permissions for operation\n  4. Token expired or invalid\n  5. Auth state not properly set up\n\nRecommendations:\n  - Verify login is successful before this test\n  - Check credentials in fixtures/accounts.json\n  - Review user permissions/roles\n  - Check if auth token is being sent\n  - Ensure beforeEach login hook is working`,
+                test: testTitle,
+                suite: suiteName,
+                timestamp: new Date().toISOString()
+            });
+        }
         // Pattern 9: Boolean assertions (expected true/false to be true/false)
-        const booleanPattern = /expected\s+(true|false)\s+to\s+(?:be|equal)\s+(true|false)/i;
-        if ((match = booleanPattern.exec(coreMessage)) !== null) {
+        else if ((match = /expected\s+(true|false)\s+to\s+(?:be|equal)\s+(true|false)/i.exec(coreMessage)) !== null) {
             const actual = match[1];
             const expected = match[2];
             
@@ -438,6 +538,10 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         }
     }
     
+    console.log(`[Test Quality] Returning ${issues.length} issue(s) from analyzeTestFailure`);
+    if (issues.length > 0) {
+        console.log(`[Test Quality] Issue types:`, issues.map(i => i.type));
+    }
     return issues;
 }
 
