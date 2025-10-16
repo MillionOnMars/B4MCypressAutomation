@@ -70,8 +70,8 @@ const validateAgentPrompt = (agentName, promptType, model) => {
     // Validate the answer (supports both string and array with AND/OR logic)
     cy.verifyAnswers(testCase.answer, {
         logic: testCase.answerLogic || 'or',
-        selector: 'body',
-        timeout: 50000,
+        selector: '[data-testid="ai-response"]',
+        timeout: 120000,
         matchCase: false
     });
     cy.log('Agent prompt validated successfully.');

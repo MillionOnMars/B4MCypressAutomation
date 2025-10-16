@@ -138,11 +138,11 @@ jobs:
             ($high + $medium)[0:3] | 
             map(
               if .selector then
-                "• \(.test): \(.selector | split(".") | .[0:3] | join("."))...\n  Category: \(.category)\n  Fix: \(.recommendation | split("\n")[0])"
+                "• \(.test): \(.selector | split(".") | .[0:3] | join("."))...\n  Category: \(.category)\n  Fix: \(.recommendation)"
               elif .errorMessage then
-                "• \(.test): \(.type)\n  Category: \(.category)\n  Details: \(.errorMessage | split("\n")[0] | .[0:80])...\n  Fix: \(.recommendation | split("\n")[0])"
+                "• \(.test): \(.type)\n  Category: \(.category)\n  Details: \(.errorMessage | split("\n")[0] | .[0:80])...\n  Fix: \(.recommendation)"
               else
-                "• \(.test): \(.type)\n  Category: \(.category)\n  Fix: \(.recommendation | split("\n")[0])"
+                "• \(.test): \(.type)\n  Category: \(.category)\n  Fix: \(.recommendation)"
               end
             ) | 
             join("\n\n")

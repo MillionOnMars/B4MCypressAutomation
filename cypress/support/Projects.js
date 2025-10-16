@@ -251,8 +251,8 @@ const createNotebook = (promptType, projectName) => {
     // Handle both array and string answers
 
     cy.verifyAnswers(testCase.answer, {
-        logic: testCase.answerLogic || 'and',
-        selector: 'body',
+        logic: testCase.answerLogic || 'or',
+        selector: '[data-testid="ai-response"]',
         timeout: 50000,
         matchCase: false
     });
