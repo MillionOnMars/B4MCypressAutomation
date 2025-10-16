@@ -158,14 +158,7 @@ module.exports = defineConfig({
                 visibilityIssues: 0,
                 performance: 0,
                 assertionErrors: 0,
-                
-                // By Type (legacy support)
-                fragileSelectors: 0,
-                missingTestIds: 0,
-                missingAriaLabels: 0,
-                contentNotFound: 0,
-                elementNotFound: 0,
-                
+
                 // By Severity
                 high: 0,
                 medium: 0
@@ -217,8 +210,8 @@ module.exports = defineConfig({
           return null;
         },
         updateTestQualityLog({ filePath, newIssues }) {
-          let existingData = { 
-            issues: [], 
+          let existingData = {
+            issues: [],
             totalIssues: 0,
             summary: {
               // By Category
@@ -227,14 +220,7 @@ module.exports = defineConfig({
               visibilityIssues: 0,
               performance: 0,
               assertionErrors: 0,
-              
-              // By Type (legacy support)
-              fragileSelectors: 0,
-              missingTestIds: 0,
-              missingAriaLabels: 0,
-              contentNotFound: 0,
-              elementNotFound: 0,
-              
+
               // By Severity
               high: 0,
               medium: 0
@@ -281,19 +267,7 @@ module.exports = defineConfig({
             visibilityIssues: allIssues.filter(i => i && i.category === 'Visibility Issue').length,
             performance: allIssues.filter(i => i && i.category === 'Performance').length,
             assertionErrors: allIssues.filter(i => i && i.category === 'Assertion Error').length,
-            
-            // By Type (legacy support)
-            fragileSelectors: allIssues.filter(i => 
-              i && i.type && i.type.includes('Fragile')).length,
-            missingTestIds: allIssues.filter(i => 
-              i && i.type === 'Missing Test ID').length,
-            missingAriaLabels: allIssues.filter(i => 
-              i && i.type === 'Missing Aria Label').length,
-            contentNotFound: allIssues.filter(i => 
-              i && i.type === 'Content Not Found').length,
-            elementNotFound: allIssues.filter(i => 
-              i && i.type === 'Element Not Found').length,
-            
+
             // By Severity
             high: allIssues.filter(i => i && i.severity === 'high').length,
             medium: allIssues.filter(i => i && i.severity === 'medium').length
