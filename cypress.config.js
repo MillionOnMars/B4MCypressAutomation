@@ -122,6 +122,60 @@ module.exports = defineConfig({
           fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
           return null;
         },
+        initializeTestQualityLog({ filePath }) {
+          // Only initialize if file doesn't exist or is from a previous run (>5 minutes old)
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          
+          let shouldInitialize = false;
+          
+          if (fs.existsSync(filePath)) {
+            // Check if file is from a previous run (older than 5 minutes)
+            const stats = fs.statSync(filePath);
+            const ageMinutes = (Date.now() - stats.mtimeMs) / 1000 / 60;
+            shouldInitialize = ageMinutes > 5;
+            
+            if (shouldInitialize) {
+              console.log('[Test Quality] Resetting stale test quality file (age: ' + ageMinutes.toFixed(1) + ' minutes)');
+            } else {
+              console.log('[Test Quality] Preserving existing test quality file from current run');
+            }
+          } else {
+            shouldInitialize = true;
+            console.log('[Test Quality] Creating new test quality file');
+          }
+          
+          if (shouldInitialize) {
+            const initialData = {
+              issues: [], 
+              totalIssues: 0,
+              summary: {
+                // By Category
+                selectorIssues: 0,
+                dataValidation: 0,
+                visibilityIssues: 0,
+                performance: 0,
+                assertionErrors: 0,
+                
+                // By Type (legacy support)
+                fragileSelectors: 0,
+                missingTestIds: 0,
+                missingAriaLabels: 0,
+                contentNotFound: 0,
+                elementNotFound: 0,
+                
+                // By Severity
+                high: 0,
+                medium: 0
+              }
+            };
+            fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2));
+          }
+          
+          return null;
+        },
         updateErrorLog({ filePath, newErrors }) {
           let existingData = { errors: [], totalErrors: 0 };
           if (fs.existsSync(filePath)) {
