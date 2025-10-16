@@ -16,8 +16,7 @@
     },
     "sinigang": {
         "prompt": "What is the recipe for Sinigang?",
-        "answer": ["filipino", "pork"],
-        "answerLogic": "or",
+        "answer": "pork",
         "filepath": "cypress/fixtures/upload/sinigang.pdf"
     },
 
@@ -65,7 +64,8 @@
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer":  "cv"            }
+                "answer":  "cv"            
+            }
         ]
     }
 

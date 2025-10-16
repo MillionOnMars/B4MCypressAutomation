@@ -49,6 +49,7 @@ async function runTests() {
 
         // Run Cypress tests with updated Mochawesome configuration
         const results = await cypress.run({
+            spec: 'cypress/e2e/Projects.cy.js',
             config: {
                 video: true,
                 screenshotOnRunFailure: true
@@ -66,13 +67,28 @@ async function runTests() {
             }
         });
 
-        // Wait for JSON reports to be written
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait for JSON reports and test quality files to be written
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Additional wait to ensure testQuality.json is fully written
+        const maxWaitTime = 10000; // 10 seconds max
+        const startWait = Date.now();
+        const qualityPath = path.join(reportsDir, 'testQuality.json');
+        while (!await fs.access(qualityPath).then(() => true).catch(() => false)) {
+            if (Date.now() - startWait > maxWaitTime) {
+                console.log('[Quality] Warning: testQuality.json not found after 10 seconds');
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        if (await fs.access(qualityPath).then(() => true).catch(() => false)) {
+            console.log('[Quality] testQuality.json found and ready to read');
+        }
 
         // Merge JSON reports using mochawesome-merge
         const { merge } = require('mochawesome-merge');
         const mergedJson = await merge({
-            files: [`${reportsDir}/*.json`]
+            files: [`${reportsDir}/mochawesome*.json`]
         });
 
         // Generate HTML report from merged JSON
@@ -98,9 +114,11 @@ async function runTests() {
         let qualityReport = '';
         let qualityIssues = '';
         try {
-            const qualityPath = path.join(reportsDir, 'testQuality.json');
+            console.log(`[Quality] Reading from: ${qualityPath}`);
             const qualityData = await fs.readFile(qualityPath, 'utf8');
             const quality = JSON.parse(qualityData);
+            console.log(`[Quality] Found ${quality.totalIssues} total issues`);
+            console.log(`[Quality] Summary:`, JSON.stringify(quality.summary, null, 2));
             
             if (quality.totalIssues > 0) {
                 const summary = quality.summary;
@@ -128,6 +146,7 @@ async function runTests() {
                 qualityReport = `🔍 *Code Quality* ✅\n• No selector or performance issues detected!`;
             }
         } catch (error) {
+            console.error('[Quality] Error reading test quality file:', error.message);
             qualityReport = `🔍 *Code Quality*\n• No quality report available`;
         }
 

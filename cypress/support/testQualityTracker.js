@@ -37,32 +37,10 @@ export const setupTestQualityTracking = () => {
 };
 
 // Initialize the test quality file before all tests
+// Only resets on the very first spec, preserves data on subsequent specs
 before(function() {
-    cy.task('writeFile', {
-        filePath: issuesFilePath,
-        content: { 
-            issues: [], 
-            totalIssues: 0,
-            summary: {
-                // By Category
-                selectorIssues: 0,
-                dataValidation: 0,
-                visibilityIssues: 0,
-                performance: 0,
-                assertionErrors: 0,
-                
-                // By Type (legacy support)
-                fragileSelectors: 0,
-                missingTestIds: 0,
-                missingAriaLabels: 0,
-                contentNotFound: 0,
-                elementNotFound: 0,
-                
-                // By Severity
-                high: 0,
-                medium: 0
-            }
-        }
+    cy.task('initializeTestQualityLog', {
+        filePath: issuesFilePath
     });
 });
 
@@ -72,9 +50,21 @@ beforeEach(function() {
 });
 
 // Log issues after each test (runs even on failure)
+// Only logs when ALL retry attempts have been exhausted
 afterEach(function() {
-    console.log(`[Test Quality] afterEach: ${testIssues.size} issues collected`);
-    if (testIssues.size > 0) {
+    const currentTest = this.currentTest || Cypress.currentTest;
+    const state = currentTest.state;
+    const attempts = currentTest._currentRetry || 0;
+    const maxRetries = Cypress.config('retries');
+    
+    // Only log if:
+    // 1. Test failed (state === 'failed')
+    // 2. All retries exhausted (attempts >= maxRetries OR state === 'passed')
+    const shouldLog = (state === 'failed' && attempts >= maxRetries) || state === 'passed';
+    
+    console.log(`[Test Quality] afterEach: ${testIssues.size} issues collected, state: ${state}, attempt: ${attempts + 1}/${maxRetries + 1}, shouldLog: ${shouldLog}`);
+    
+    if (testIssues.size > 0 && shouldLog) {
         const uniqueIssues = Array.from(testIssues).map(issueKey => JSON.parse(issueKey));
         console.log(`[Test Quality] Logging ${uniqueIssues.length} issues:`, uniqueIssues.map(i => i.type));
         
@@ -85,6 +75,8 @@ afterEach(function() {
             cy.log(`✓ Logged ${uniqueIssues.length} test quality issue(s)`);
             console.log(`[Test Quality] Successfully logged ${uniqueIssues.length} issues`);
         });
+    } else if (testIssues.size > 0 && !shouldLog) {
+        console.log('[Test Quality] Issues detected but not logging yet (retry available)');
     } else {
         console.log('[Test Quality] No issues to log');
     }
