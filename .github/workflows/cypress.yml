@@ -225,32 +225,6 @@ jobs:
           echo "credits=No credits data available" >> $GITHUB_OUTPUT
         fi
 
-    - name: Build Slack message
-      id: slack-message
-      if: always() && !cancelled()
-      run: |
-        # Build quality issues section
-        QUALITY_SECTION=""
-        if [ "${{ steps.selector-quality.outputs.total }}" -gt 0 ]; then
-          QUALITY_SECTION="*🔍 Test Quality Issues*
-        • Total: ${{ steps.selector-quality.outputs.total }} issues
-        • 📍 Selector Issues: ${{ steps.selector-quality.outputs.selectorIssues }}
-        • 📊 Data Validation: ${{ steps.selector-quality.outputs.dataValidation }}
-        • 👁️ Visibility Issues: ${{ steps.selector-quality.outputs.visibilityIssues }}
-        • ⚡ Performance: ${{ steps.selector-quality.outputs.performance }}
-        • ❗ Assertion Errors: ${{ steps.selector-quality.outputs.assertionErrors }}
-        
-        *Top Issues:*
-        ${{ steps.selector-quality.outputs.examples }}"
-        else
-          QUALITY_SECTION="*🔍 Test Quality* ✅
-        • No test quality issues detected!"
-        fi
-        
-        # Escape for JSON
-        QUALITY_SECTION=$(echo "$QUALITY_SECTION" | jq -Rs .)
-        echo "quality=$QUALITY_SECTION" >> "$GITHUB_OUTPUT"
-
     - name: Send Slack notification
       if: always() && !cancelled()
       uses: slackapi/slack-github-action@v1.24.0
@@ -259,50 +233,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "${{ steps.test-results.outputs.failing > 0 && '*🔴 CYPRESS TESTS FAILED*' || '*✅ CYPRESS TESTS PASSED*' }}\n*Environment:* ${{ env.CYPRESS_APP_URL || 'Staging' }}\n*Branch:* `${{ github.ref_name }}`"
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*📊 Test Results*\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}"
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*💳 Model Credits*\n${{ steps.credits.outputs.credits }}"
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "${{ steps.console-errors.outputs.total > 0 && format('*⚠️ Console Errors*\n• {0} errors found', steps.console-errors.outputs.total) || '*✨ Console Errors*\n• No console errors detected' }}"
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": ${{ steps.slack-message.outputs.quality }}
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|📋 View Full Report>"
-                }
-              }
-            ]
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n  📍 Selector Issues: {1}\n  📊 Data Validation: {2}\n  👁️ Visibility Issues: {3}\n  ⚡ Performance: {4}\n  ❗ Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
