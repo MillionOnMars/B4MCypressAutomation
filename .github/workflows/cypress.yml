@@ -131,15 +131,7 @@ jobs:
             [.issues[] | select(.severity == "high")] as $high |
             [.issues[] | select(.severity == "medium")] as $medium |
             ($high + $medium)[0:3] |
-            map(
-              if .selector then
-                "❗ \(.test) ❗ \(.category) ❗ \(.selector | split(".") | .[0:3] | join("."))..."
-              elif .errorMessage then
-                "❗ \(.test) ❗ \(.category) ❗ \(.errorMessage | split("\n")[0] | .[0:80])..."
-              else
-                "❗ \(.test) ❗ \(.category) ❗ \(.type)"
-              end
-            ) |
+            map("⚠️ \(.test) -> \(.category)") |
             join("\n")
           ' cypress/reports/testQuality.json)
           
