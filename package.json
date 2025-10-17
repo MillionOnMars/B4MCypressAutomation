@@ -7,7 +7,8 @@
     "cypress:open": "npx cypress open --e2e --browser chrome",
     "clean:reports": "rm -rf cypress/reports/* || true",
     "cypress:run": "npm run clean:reports && cypress run",
-    "test:slack": "SLACK_WEBHOOK_URL='https://hooks.slack.com/services/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' node scripts/run-tests.js"
+    "test:slack": "SLACK_WEBHOOK_URL='https://hooks.slack.com/services/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' node scripts/run-tests.js",
+    "analyze:selectors": "node scripts/analyze-selector-quality.js"
   },
   "keywords": [],
   "author": "",

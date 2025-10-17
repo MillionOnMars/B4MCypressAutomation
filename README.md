@@ -36,6 +36,7 @@ This project provides automated testing for the Bike4Mind platform, covering cri
 - **Slack Integration**: Automated test result notifications
 - **Visual Reports**: Mochawesome HTML reports with charts and embedded screenshots
 - **Error Tracking**: Console error monitoring and reporting
+- **Test Quality Tracking**: Identifies selector issues, data validation errors, visibility problems, and performance issues
 - **CI/CD Ready**: GitHub Actions workflow included
 - **Credits Monitoring**: Track usage credits across different models
 - **Public Report Sharing**: Ngrok integration for temporary report hosting
@@ -102,6 +103,17 @@ This command will:
 3. Generate HTML reports
 4. Send results to Slack with public report link
 
+### Analyze Test Quality
+```bash
+npm run analyze:selectors
+```
+
+This command analyzes your test failures and generates a comprehensive report identifying:
+- **Selector Issues**: Fragile CSS selectors, missing `data-testid` attributes
+- **Data Validation**: Content not found, incorrect prompt expectations
+- **Visibility Issues**: Elements covered or hidden, display problems
+- **Performance**: Timeouts, slow operations
+
 ### Individual Test Files
 ```bash
 npx cypress run --spec "cypress/e2e/Auth.cy.js"
@@ -155,13 +167,42 @@ The test suite generates comprehensive reports using Mochawesome:
 - **Test Results**: Pass/fail statistics by spec file
 - **Credits Usage**: Model-specific credit consumption tracking
 - **Error Logs**: Console error tracking and deduplication
+- **Test Quality**: Identifies selector, validation, visibility, and performance issues
 - **Visual Evidence**: Screenshots and videos for failures
 - **Public Sharing**: 1-hour accessible reports via Ngrok
+
+### Test Quality Tracking 🔍
+
+The test suite automatically tracks various test quality issues when tests fail:
+
+**Tracked Issues by Category:**
+- 🔴 **Selector Issues**: Fragile CSS selectors, missing `data-testid`, element not found
+- 📊 **Data Validation**: Expected content not found, incorrect prompt responses
+- 👁️ **Visibility Issues**: Elements covered, hidden, or not visible
+- ⏱️ **Performance**: Timeouts, slow AI responses
+
+**Report Location:** `cypress/reports/testQuality.json`
+
+**View Detailed Report:**
+```bash
+npm run analyze:selectors
+```
+
+**Benefits:**
+- Improves test reliability and reduces flakiness
+- Identifies AI response validation issues
+- Enhances application accessibility
+- Makes tests easier to maintain and debug
+- Provides actionable recommendations for each failure type
+
+**Documentation:** See `cypress/reports/SELECTOR_QUALITY_GUIDE.md` for detailed guidance on fixing test quality issues.
 
 ### Slack Integration
 Automated Slack notifications include:
 - Test execution summary
 - Credits usage breakdown
+- Console error counts
+- Test quality issues summary (selectors, data validation, visibility, performance)
 - Direct links to full HTML reports
 - Real-time failure alerts
 

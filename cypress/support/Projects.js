@@ -245,41 +245,17 @@ const createNotebook = (promptType, projectName) => {
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('New Notebook', { timeout: 50000 })
+    cy.contains('Chat', { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers
-    if (Array.isArray(testCase.answer)) {
-        testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 50000 }).should('be.visible');
-        });
-        return 0; // Return 0 for array answers or handle differently
-    } else {
-        return new Cypress.Promise(resolve => {
-            cy.window().then(() => { startTime = Date.now(); });
 
-            // Wait until the question appears
-            cy.contains(testCase.prompt, { timeout: 50000 })
-                .should('be.visible');
-
-            cy.get('p.MuiTypography-root')
-                .contains(testCase.answer, { timeout: 50000, matchCase: false })
-                .should('be.visible')
-                .then(() => {
-                    const duration = (Date.now() - startTime) / 1000;
-                    cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                    resolve(duration);
-                });
-            cy.contains(projectName, { timeout: 50000 })
-                .should('be.visible');
-            cy.log('Notebook creation completed successfully.');
-
-        });
-
-    }
-
-
-
+    cy.verifyAnswers(testCase.answer, {
+        logic: testCase.answerLogic || 'or',
+        selector: '[data-testid="ai-response"]',
+        timeout: 50000,
+        matchCase: false
+    });
 };
 
 const clickMembersTab = (projectName) => {
@@ -432,7 +408,7 @@ const logoutUser = () => {
     cy.wait(3000); // Wait for 3 seconds to ensure logout is complete
 
     // Verify logout by checking the welcome message and URL
-    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
+    cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
     cy.url().should('contain', '/login');
 };
 

@@ -10,7 +10,7 @@ describe('Admin Tests', () => {
         });
     });
     // Search User
-    Admin.User('Automation', 'b4m-automation@milliononmars.com');
+    Admin.User('Automation', 'b4m-automationa@milliononmars.com');
     // Sort User by Name
     Admin.Sort('AAAutomation', 'Name');
     //Create User
