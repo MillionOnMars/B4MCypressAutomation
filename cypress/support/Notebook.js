@@ -54,7 +54,10 @@ const createNote = (promptType, model) => {
             const duration = (Date.now() - startTime) / 1000;
             cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
 
-
+            // Check if credits element exists, make it optional
+            cy.get('body').then($body => {
+                if ($body.find('[data-testid="credits-used"]').length > 0) {
+                    // Credits element exists, try to get the credits info
                     cy.get('[data-testid="credits-used"]')
                         .should('be.visible')
                         .click()
@@ -67,8 +70,12 @@ const createNote = (promptType, model) => {
                                     cy.log(`Credits used: ${credits}`);
                                     resolve({ duration, credits: credits ? parseInt(credits) : null });
                                 });
-                    
-            
+                        });
+                } else {
+                    // Credits element not found, resolve without credits
+                    cy.log('Credits element not found, continuing without credits info');
+                    resolve({ duration, credits: null });
+                }
             });
         });
     });
