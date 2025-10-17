@@ -135,7 +135,7 @@ module.exports = defineConfig({
             // Check if file is from a previous run (older than 5 minutes)
             const stats = fs.statSync(filePath);
             const ageMinutes = (Date.now() - stats.mtimeMs) / 1000 / 60;
-            shouldInitialize = ageMinutes > 5;
+            shouldInitialize = ageMinutes > 90;
             
             if (shouldInitialize) {
               console.log('[Test Quality] Resetting stale test quality file (age: ' + ageMinutes.toFixed(1) + ' minutes)');
