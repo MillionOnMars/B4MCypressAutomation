@@ -2,7 +2,8 @@ const TIMEOUT = 30000;
 
 // Navigate to the login page
 const navigateToLoginPage = () => {
-    cy.visit(Cypress.env('appUrl'))
+    cy.visit(Cypress.env('appUrl'));
+    cy.url({ timeout: TIMEOUT }).should('contain', '/login');
 };
 
 // Authenticate a user with provided credentials
