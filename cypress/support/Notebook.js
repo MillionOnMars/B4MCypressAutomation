@@ -40,12 +40,37 @@ const createNote = (promptType, model) => {
     cy.contains('Chat', { timeout: 50000 })
         .should('be.visible');
 
-    // Handle both array and string answers
-    cy.verifyAnswers(testCase.answer, {
-        logic: testCase.answerLogic || 'and',
-        selector: 'body',
-        timeout: 50000,
-        matchCase: false
+    // Start timing and verify answer with credits tracking
+    return new Cypress.Promise((resolve) => {
+        startTime = Date.now();
+
+        // Use verifyAnswers to check the response
+        cy.verifyAnswers(testCase.answer, {
+            logic: testCase.answerLogic || 'and',
+            selector: '[data-testid="ai-response"]',
+            timeout: 60000,
+            matchCase: false
+        }).then(() => {
+            const duration = (Date.now() - startTime) / 1000;
+            cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
+
+
+                    cy.get('[data-testid="credits-used"]')
+                        .should('be.visible')
+                        .click()
+                        .then(() => {
+                            cy.contains('Credits Used', { timeout: 10000 })
+                                .should('exist')
+                                .invoke('text')
+                                .then((creditsText) => {
+                                    const credits = creditsText?.match(/\d+/)?.[0] || null;
+                                    cy.log(`Credits used: ${credits}`);
+                                    resolve({ duration, credits: credits ? parseInt(credits) : null });
+                                });
+                    
+            
+            });
+        });
     });
 };
 
