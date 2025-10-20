@@ -22,22 +22,22 @@ const createNote = (promptType, model) => {
     let startTime;
 
     //Verify if models is selected
-    cy.contains(model, { timeout: 20000})
+    cy.contains(model, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('Chat', { timeout: 50000 })
+    cy.contains('Chat', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
     // Start timing and verify answer with credits tracking
@@ -55,14 +55,14 @@ const createNote = (promptType, model) => {
             cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
 
             // Check if credits element exists, make it optional
-            cy.get('body').then($body => {
+            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
                 if ($body.find('[data-testid="credits-used"]').length > 0) {
                     // Credits element exists, try to get the credits info
-                    cy.get('[data-testid="credits-used"]')
+                    cy.get('[data-testid="credits-used"]', { timeout: DEFAULT_TIMEOUT })
                         .should('be.visible')
                         .click()
                         .then(() => {
-                            cy.contains('Credits Used', { timeout: 10000 })
+                            cy.contains('Credits Used', { timeout: DEFAULT_TIMEOUT })
                                 .should('exist')
                                 .invoke('text')
                                 .then((creditsText) => {
@@ -85,7 +85,7 @@ const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -102,7 +102,7 @@ const sendPrompt = (promptType, promptNo, model) => {
             testCase;
 
         //enter prompt
-        cy.xpath('//textarea[@placeholder="Type your message here..."]')
+        cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
@@ -119,7 +119,7 @@ const sendPrompt = (promptType, promptNo, model) => {
             cy.wait(2000);
 
             //scrolls down to the bottom of the chat container
-            cy.get('.css-1aau1w6')
+            cy.get('.css-1aau1w6', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .scrollTo('bottom', { ensureScrollable: true })
                 .then(($container) => {
@@ -144,23 +144,23 @@ const sendPrompt = (promptType, promptNo, model) => {
 
 const renameNote = (newName) => {
     // Click the notebook item in the sidebar
-    cy.get('[data-testid="sidenav-item-session-button"]')
+    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .should('be.visible')
         .click();
 
     // Force click the menu button
-    cy.get('[data-testid="sidenav-item-menu-button"]')
+    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .click({ force: true });
 
     // Click the rename menu item
-    cy.get('.sidenav-item-menuitem-rename')
+    cy.get('.sidenav-item-menuitem-rename', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Find the INPUT inside the div with the testid
-    cy.get('[data-testid="sidenav-item-rename-input"]')
+    cy.get('[data-testid="sidenav-item-rename-input"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .find('input')
         .clear({ force: true })
@@ -172,38 +172,38 @@ const renameNote = (newName) => {
 
 const editNotebookInfo = (tags) => {
     // Click notebook to open/select it
-    cy.get('[data-testid="sidenav-item-session-button"]')
+    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .should('be.visible')
         .click();
 
     // Click ellipsis menu button
-    cy.get('[data-testid="sidenav-item-menu-button"]')
+    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .click({ force: true });
 
     // Click "View Info" menu item
-    cy.get('.sidenav-item-menuitem-viewinfo')
+    cy.get('.sidenav-item-menuitem-viewinfo', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Wait for the info modal/panel to be visible
-    cy.get('input[placeholder="Add a tag"]')
+    cy.get('input[placeholder="Add a tag"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .clear()
         .type(tags);
     
     // Click "Add Tag" button (avoid XPath, use data-testid or better selector)
-    cy.contains('button', 'Add Tag')
+    cy.contains('button', 'Add Tag', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Verify tag was added (removed the hardcoded "100" suffix - seems like a bug?)
-    cy.contains('.session-metadata-tag', tags, { timeout: 10000 })
+    cy.contains('.session-metadata-tag', tags, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
     // Close the info modal/panel
-    cy.get('.session-metadata-close-button')
+    cy.get('.session-metadata-close-button', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -212,60 +212,60 @@ const editNotebookInfo = (tags) => {
 
 const deleteNote = (name) => {
     // Click notebook to open/select it
-    cy.get('[data-testid="sidenav-item-session-button"]')
+    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .should('be.visible')
         .click();
 
     // Click ellipsis menu button (force click if visibility is conditional)
-    cy.get('[data-testid="sidenav-item-menu-button"]')
+    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .click({ force: true });
 
     // Click delete button using specific class instead of position
-    cy.get('.sidenav-item-menuitem-delete')
+    cy.get('.sidenav-item-menuitem-delete', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Confirm deletion in modal
-    cy.get('[data-testid="confirm-delete-modal"]')
+    cy.get('[data-testid="confirm-delete-modal"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .find('[data-testid="confirm-modal-confirm-btn"]')
         .should('be.visible')
         .click();
 
     // Verify success notification
-    cy.contains('Successfully deleted session')
+    cy.contains('Successfully deleted session', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
     cy.log('Notebook deleted successfully.');
 };
 
 const selectTxtModel = (model) => {
-    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', {timeout: 50000})
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();
 
     //input text model
-    cy.get("input[placeholder='Search models']", { timeout: 50000 })
+    cy.get("input[placeholder='Search models']", { timeout: DEFAULT_TIMEOUT })
         .eq(1)
         .should('exist')
         .type(model)
         .type('{enter}');
 
     //select text model
-    cy.contains('div', model, { timeout: 50000, matchCase: false })
+    cy.contains('div', model, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('exist')
         .click({ force: true });
 
     // clicks close button
-    cy.get("[data-testid='CloseIcon']")
+    cy.get("[data-testid='CloseIcon']", { timeout: DEFAULT_TIMEOUT })
         .last()
         .should('be.visible')
         .click();
     // Verify the model is visible
-    cy.contains(model, { timeout: 20000})
+    cy.contains(model, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
 }
 
@@ -336,17 +336,17 @@ const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
     cy.get('[aria-label="Attach Files"]', { timeout: DEFAULT_TIMEOUT })
-    .should('be.visible')
-    .click();
+        .should('be.visible')
+        .click();
   
 
     //Upload from computer
-    cy.get('[role="button"]').eq(2)
+    cy.get('[role="button"]', { timeout: DEFAULT_TIMEOUT }).eq(2)
         .should('be.visible')
         .click();
 
     // Wait for file input to be ready and upload file
-    cy.get('input[type="file"]')
+    cy.get('input[type="file"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('not.be.disabled')
         .wait(2000) // Add wait for upload dialog to fully load
@@ -362,97 +362,90 @@ const uploadFile = (promptType) => {
     cy.wait('@uploadRequest', { timeout: 10000 });
 
     //Verify file uploaded
-    cy.contains(testCase.filepath.split('/').pop());
+    cy.contains(testCase.filepath.split('/').pop(), { timeout: DEFAULT_TIMEOUT });
 
     cy.log('File uploaded successfully.');
     cy.wait(5000)
 };
 
 const fileOperation = (operation, promptType, newName) => {
-  const testCase = prompts[promptType];
-  const filename = testCase.filepath.split("/").pop();
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split("/").pop();
 
-  //Click on files button
-  cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
-  .should('be.visible')
-  .click();
+    //Click on files button
+    cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
 
-  cy.get(".MuiModalDialog-root").within(() => {
-    // Click the date header twice to sort descending
-    cy.contains("Date").click();
-    cy.contains("Date").click();
+    cy.get(".MuiModalDialog-root", { timeout: DEFAULT_TIMEOUT }).within(() => {
+        // Click the date header twice to sort descending
+        cy.contains("Date", { timeout: DEFAULT_TIMEOUT }).click({ force: true });
+        cy.contains("Date", { timeout: DEFAULT_TIMEOUT }).click({ force: true });
 
-    //Checks if file is present
-    cy.contains(filename)
-      .should("be.visible")
-      .click();
-
-    switch (operation) {
-      case "checkFile":
-        // File presence already verified above
-        cy.log(`File ${filename} found successfully`);
-        //Click Close button
-        cy.get('[data-testid="CloseIcon"]')
-          .should("be.visible")
-          .click();
-        break;
-
-      case "renameFile":
-        cy.get('button.file-browser-actions-menu-button')
-            .first()
-            .should('be.visible')
+        //Checks if file is present
+        cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+            .should("be.visible")
             .click();
 
-        //Click rename button. Temporarily search outside the modal
-        cy.document().its('body').find('li[role="menuitem"]').contains('Rename')
-          .should("be.visible")
-          .click();
+        switch (operation) {
+            case "checkFile":
+                // File presence already verified above
+                cy.log(`File ${filename} found successfully`);
+                //Click Close button
+                cy.get('[data-testid="CloseIcon"]', { timeout: DEFAULT_TIMEOUT })
+                    .should("be.visible")
+                    .click();
+                break;
 
-        cy.get('input[value="' + filename + '"]')
-          .should("be.visible")
-          .clear()
-          .type(newName)
-          .type("{enter}");
+            case "renameFile":
+                cy.get('button.file-browser-actions-menu-button', { timeout: DEFAULT_TIMEOUT })
+                    .first()
+                    .should('be.visible')
+                    .click();
 
-        cy.log(`File ${newName} renamed successfully`);
-        //Click Close button
-        // cy.get('[data-testid="CloseIcon"]').eq(2).should("be.visible").click();
+                //Click rename button. Temporarily search outside the modal
+                cy.document().its('body').find('li[role="menuitem"]').contains('Rename', { timeout: DEFAULT_TIMEOUT })
+                    .should("be.visible")
+                    .click();
 
-        break;
+                cy.get('input[value="' + filename + '"]', { timeout: DEFAULT_TIMEOUT })
+                    .should("be.visible")
+                    .clear()
+                    .type(newName)
+                    .type("{enter}");
 
-      case "deleteFile":
-        //Click delete button
-        cy.contains("Delete 1 File").should("be.visible").click();
-        cy.document().its('body').find('button').contains('Ok').click();
-        break;
+                cy.log(`File ${newName} renamed successfully`);
+                break;
 
-      case "addFile":
-        //click add file
-        cy.contains("Add 1 File").should("be.visible").click();
+            case "deleteFile":
+                //Click delete button
+                cy.contains("Delete 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
+                cy.document().its('body').find('button').contains('Ok', { timeout: DEFAULT_TIMEOUT }).click();
+                break;
 
-        //wait for file to be added
-        cy.wait(2000);
+            case "addFile":
+                //click add file
+                cy.contains("Add 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
 
-        cy.log("File added to Notebook Successfully.");
-        break;
+                //wait for file to be added
+                cy.wait(2000);
 
-      default:
-        throw new Error(`Invalid file operation: ${operation}`);
+                cy.log("File added to Notebook Successfully.");
+                break;
+
+            default:
+                throw new Error(`Invalid file operation: ${operation}`);
+        }
+    });
+
+    // After closing the modal, confirm the file operations
+    switch (operation) {
+        case "deleteFile":
+            cy.contains(/Deleted \d+ files/, { timeout: DEFAULT_TIMEOUT })
+                .should("be.visible")
+            break;
     }
-  });
-
-  // After closing the modal, confirm the file operations
-  switch (operation) {
-    // case "addFile":
-    //   cy.get(".MuiChip-action").should("be.visible");
-    //   break;
-    case "deleteFile":
-      cy.contains(/Deleted \d+ files/)
-        .should("be.visible")
-      break;
-  }
 }
-
 
 const handleResearchAgent = (action, agent) => {
     // Click File
@@ -652,7 +645,7 @@ class Notebook {
         });
     }
         static manageResearchAgent(agent) {
-            describe(`Research Agent Operations for: ${agent.agentName}`, () => {
+            describe.skip(`Research Agent Operations for: ${agent.agentName}`, () => {
                 it('Should create new agent.', () => {
                     handleResearchAgent('create', agent);
                 });

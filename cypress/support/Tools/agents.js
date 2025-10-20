@@ -40,12 +40,13 @@ const validateAgentPrompt = (agentName, promptType, model) => {
         .should('be.visible');
 
     // Click the "Agents" button
-    cy.contains('Agents', { timeout: 50000 })
+    cy.get('[data-testid="SmartToyIcon"]', { timeout: 50000 })
+        .first()
         .should('be.visible')
         .click();
 
     // Enable the agent by clicking on the agent name from the menu
-    cy.contains('ul[role="menu"].MuiMenu-root',agentName, { timeout: DEFAULT_TIMEOUT })
+    cy.contains('ul[role="menu"].MuiMenu-root', agentName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .parent() // Go to parent container
         .trigger('mouseover')
@@ -121,10 +122,6 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         case 'rename':     
-            // Click settings button
-            // cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
-            //     .should('exist')
-            //     .click({force: true});
 
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
@@ -154,10 +151,6 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         case 'delete':
-            // Click settings button
-            // cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
-            //     .should('exist')
-            //     .click();
 
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
