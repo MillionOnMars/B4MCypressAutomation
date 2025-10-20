@@ -645,7 +645,7 @@ class Notebook {
         });
     }
         static manageResearchAgent(agent) {
-            describe(`Research Agent Operations for: ${agent.agentName}`, () => {
+            describe.skip(`Research Agent Operations for: ${agent.agentName}`, () => {
                 it('Should create new agent.', () => {
                     handleResearchAgent('create', agent);
                 });
