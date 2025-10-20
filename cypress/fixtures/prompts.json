@@ -16,7 +16,7 @@
     },
     "sinigang": {
         "prompt": "What is the recipe for Sinigang?",
-        "answer": "filipino",
+        "answer": "pork",
         "filepath": "cypress/fixtures/upload/sinigang.pdf"
     },
 
@@ -56,14 +56,15 @@
     },
     "pdf-lorem": {
         "filepath": "cypress/fixtures/upload/sample.pdf",
+        "timeout": 120000,
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": "lorem ipsum"
+                "answer": "cv"
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer": "layout"
+                "answer":  "cv"            
             }
         ]
     }

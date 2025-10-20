@@ -30,6 +30,30 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       on('after:run', (results) => {
         if (results) {
+          // Extract detailed failure information
+          const failures = [];
+          results.runs.forEach(run => {
+            if (run.tests) {
+              run.tests.forEach(test => {
+                if (test.state === 'failed') {
+                  const attempts = test.attempts || [];
+                  const lastAttempt = attempts[attempts.length - 1];
+                  if (lastAttempt && lastAttempt.error) {
+                    failures.push({
+                      specName: run.spec.name,
+                      suite: test.title.join(' > ').split(' > ').slice(0, -1).join(' > '),
+                      testName: test.title[test.title.length - 1],
+                      fullTitle: test.title.join(' > '),
+                      error: lastAttempt.error.message,
+                      stack: lastAttempt.error.stack,
+                      attempt: attempts.length
+                    });
+                  }
+                }
+              });
+            }
+          });
+
           // Create a comprehensive test summary
           const summary = {
             totalTests: results.totalTests || 0,
@@ -50,7 +74,8 @@ module.exports = defineConfig({
               failures: run.stats.failures,
               pending: run.stats.pending,
               skipped: run.stats.skipped
-            }))
+            })),
+            failures: failures
           };
 
           // Ensure directory exists
@@ -66,14 +91,25 @@ module.exports = defineConfig({
           );
 
           // Log summary to console for debugging
-          console.log('Test Results Summary:');
-          console.log('=====================');
-          console.log(`Total: ${summary.totalTests}`);
-          console.log(`Passed: ${summary.totalPassed}`);
-          console.log(`Failed: ${summary.totalFailed}`);
-          console.log(`Pending: ${summary.totalPending}`);
-          console.log(`Skipped: ${summary.totalSkipped}`);
-          console.log('=====================');
+          console.log('\n' + '='.repeat(60));
+          console.log('  TEST RESULTS SUMMARY');
+          console.log('='.repeat(60));
+          console.log(`  Total:   ${summary.totalTests}`);
+          console.log(`  Passed:  ${summary.totalPassed} ✅`);
+          console.log(`  Failed:  ${summary.totalFailed} ${summary.totalFailed > 0 ? '❌' : ''}`);
+          console.log(`  Pending: ${summary.totalPending}`);
+          console.log(`  Skipped: ${summary.totalSkipped}`);
+          
+          if (failures.length > 0) {
+            console.log('\n' + '-'.repeat(60));
+            console.log('  FAILED TESTS:');
+            console.log('-'.repeat(60));
+            failures.forEach((failure, index) => {
+              console.log(`\n  ${index + 1}. ${failure.fullTitle}`);
+              console.log(`     Error: ${failure.error.split('\n')[0]}`);
+            });
+          }
+          console.log('\n' + '='.repeat(60) + '\n');
         }
       });
 
@@ -84,6 +120,53 @@ module.exports = defineConfig({
             fs.mkdirSync(dir, { recursive: true });
           }
           fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+          return null;
+        },
+        initializeTestQualityLog({ filePath }) {
+          // Only initialize if file doesn't exist or is from a previous run (>5 minutes old)
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          
+          let shouldInitialize = false;
+          
+          if (fs.existsSync(filePath)) {
+            // Check if file is from a previous run (older than 5 minutes)
+            const stats = fs.statSync(filePath);
+            const ageMinutes = (Date.now() - stats.mtimeMs) / 1000 / 60;
+            shouldInitialize = ageMinutes > 90;
+            
+            if (shouldInitialize) {
+              console.log('[Test Quality] Resetting stale test quality file (age: ' + ageMinutes.toFixed(1) + ' minutes)');
+            } else {
+              console.log('[Test Quality] Preserving existing test quality file from current run');
+            }
+          } else {
+            shouldInitialize = true;
+            console.log('[Test Quality] Creating new test quality file');
+          }
+          
+          if (shouldInitialize) {
+            const initialData = {
+              issues: [], 
+              totalIssues: 0,
+              summary: {
+                // By Category
+                selectorIssues: 0,
+                dataValidation: 0,
+                visibilityIssues: 0,
+                performance: 0,
+                assertionErrors: 0,
+
+                // By Severity
+                high: 0,
+                medium: 0
+              }
+            };
+            fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2));
+          }
+          
           return null;
         },
         updateErrorLog({ filePath, newErrors }) {
@@ -124,6 +207,103 @@ module.exports = defineConfig({
           };
 
           fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
+          return null;
+        },
+        updateTestQualityLog({ filePath, newIssues }) {
+          let existingData = {
+            issues: [],
+            totalIssues: 0,
+            summary: {
+              // By Category
+              selectorIssues: 0,
+              dataValidation: 0,
+              visibilityIssues: 0,
+              performance: 0,
+              assertionErrors: 0,
+
+              // By Severity
+              high: 0,
+              medium: 0
+            }
+          };
+          
+          if (fs.existsSync(filePath)) {
+            try {
+              const fileContent = fs.readFileSync(filePath, 'utf8');
+              existingData = JSON.parse(fileContent);
+            } catch (error) {
+              console.error('[Test Quality] Error reading file, resetting:', error.message);
+              // If file is corrupted, reset to default structure
+            }
+          }
+
+          // Deduplicate issues based on type, suite, test, AND timestamp
+          // This allows tracking multiple instances across different test runs
+          const existingMap = new Map();
+          
+          // Preserve existing issues
+          if (existingData.issues && Array.isArray(existingData.issues)) {
+            existingData.issues.forEach(issue => {
+              const key = `${issue.type}|${issue.category}|${issue.suite}|${issue.test}|${issue.timestamp}`;
+              existingMap.set(key, issue);
+            });
+          }
+
+          // Add new issues (each with unique timestamp is kept)
+          for (const issue of newIssues) {
+            const key = `${issue.type}|${issue.category}|${issue.suite}|${issue.test}|${issue.timestamp}`;
+            if (!existingMap.has(key)) {
+              existingMap.set(key, issue);
+            }
+          }
+
+          const allIssues = Array.from(existingMap.values());
+
+          // Calculate summary statistics by category and type
+          const summary = {
+            // By Category
+            selectorIssues: allIssues.filter(i => i && i.category === 'Selector Issue').length,
+            dataValidation: allIssues.filter(i => i && i.category === 'Data Validation').length,
+            visibilityIssues: allIssues.filter(i => i && i.category === 'Visibility Issue').length,
+            performance: allIssues.filter(i => i && i.category === 'Performance').length,
+            assertionErrors: allIssues.filter(i => i && i.category === 'Assertion Error').length,
+
+            // By Severity
+            high: allIssues.filter(i => i && i.severity === 'high').length,
+            medium: allIssues.filter(i => i && i.severity === 'medium').length
+          };
+
+          // Write deduplicated issues with validation
+          const updatedData = {
+            lastUpdate: new Date().toISOString(),
+            totalIssues: allIssues.length,
+            summary,
+            issues: allIssues
+          };
+
+          try {
+            // Ensure directory exists
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            
+            // Write with validation
+            const jsonString = JSON.stringify(updatedData, null, 2);
+            
+            // Validate JSON is parseable before writing
+            JSON.parse(jsonString);
+            
+            // Write atomically (write to temp file then rename)
+            const tempFile = filePath + '.tmp';
+            fs.writeFileSync(tempFile, jsonString, 'utf8');
+            fs.renameSync(tempFile, filePath);
+            
+            console.log(`[Test Quality] Successfully logged ${newIssues.length} new issue(s), total: ${allIssues.length}`);
+          } catch (error) {
+            console.error('[Test Quality] Error writing file:', error.message);
+          }
+          
           return null;
         }
       });

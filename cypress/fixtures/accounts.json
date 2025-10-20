@@ -32,7 +32,7 @@
     "existingUsers": {
         "admin": {
             "username": "b4m-autoa",
-            "email": "b4m-automation@milliononmars.com",
+            "email": "b4m-automationa@milliononmars.com",
             "password": "Password12345!",
             "fullname": "Test User",
             "code": "ADMINCODE"
