@@ -19,6 +19,11 @@
         "answer": "pork",
         "filepath": "cypress/fixtures/upload/sinigang.pdf"
     },
+    "dog-image": {
+        "prompt": "Give me an image of a dog?",
+        "answer": "dog",
+        "filepath": "cypress/fixtures/upload/dog.png"
+    },
 
     "txt-recipe": {
         "filepath": "cypress/fixtures/upload/recipe.txt",
