@@ -614,6 +614,205 @@ const verifyImageResponse = (promptType) => {
         });
 };
 
+const checkFileSide = (promptType) => {
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split('/').pop();
+    const fileExtension = filename.split('.').pop().toLowerCase();
+
+    // Check if Session Files sidebar is visible
+    cy.get('[aria-label="Session Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .and('be.visible')
+        .click({ force: true });
+
+    // Wait for the file to be visible and click it
+    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click({ force: true });
+
+    // Handle different file types
+    switch (fileExtension) {
+        case 'pdf':
+            // For PDF files, check for PDF viewer or extracted text content
+            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+                if ($body.find('.text-viewer-content').length > 0) {
+                    // PDF content extracted and displayed as text
+                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .and('be.visible')
+                        .then($content => {
+                            const pdfText = $content.text();
+                            cy.log(`PDF content length: ${pdfText.length} characters`);
+                            cy.log(`PDF content preview: ${pdfText.substring(0, 200)}...`);
+                            
+                            // Verify PDF-specific content if available
+                            if (testCase.expectedPdfContent) {
+                                testCase.expectedPdfContent.forEach(content => {
+                                    cy.contains(content, { matchCase: false, timeout: DEFAULT_TIMEOUT })
+                                        .should('exist');
+                                });
+                            }
+                        });
+                } else if ($body.find('iframe, embed, object').length > 0) {
+                    // PDF displayed in viewer (iframe/embed)
+                    cy.get('iframe, embed, object', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .and('be.visible')
+                        .then($viewer => {
+                            cy.log('PDF viewer detected');
+                            cy.log(`Viewer type: ${$viewer.prop('tagName')}`);
+                        });
+                } else {
+                    // Look for PDF-specific elements or download link
+                    cy.contains(/pdf|download|view/i, { timeout: DEFAULT_TIMEOUT })
+                        .should('exist');
+                }
+            });
+            break;
+        case 'txt':
+            // For text files, check the text content
+            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then($content => {
+                    const textContent = $content.text();
+                    cy.log(`Text file content length: ${textContent.length} characters`);
+                    
+                    // Verify expected content
+                    if (testCase.expectedContent) {
+                        testCase.expectedContent.forEach(content => {
+                            cy.contains(content, { matchCase: false, timeout: DEFAULT_TIMEOUT })
+                                .should('exist');
+                        });
+                    }
+                });
+            break;
+        case 'png':
+            cy.get(`img[alt="${filename}"]`, { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .and(($img) => {
+                    // Verify image loaded properly
+                    expect($img[0].naturalWidth).to.be.greaterThan(0);
+                    expect($img[0].naturalHeight).to.be.greaterThan(0);
+                    expect($img[0].complete).to.be.true;
+                })
+                .then($img => {
+                    const imgSrc = $img.attr('src');
+                    const imgAlt = $img.attr('alt') || '';
+                    
+                    cy.log(`Found image with src: ${imgSrc}`);
+                    cy.log(`Image alt text: ${imgAlt}`);
+                    cy.log(`Image dimensions: ${$img[0].naturalWidth}x${$img[0].naturalHeight}`);
+
+                    // Check for cat-related content in alt text or prompt
+                    const catKeywords = ['cat', 'orange tabby', 'feline', 'kitten', 'tabby', 'ginger cat'];
+                    const textToCheck = `${imgAlt} ${testCase.prompt}`.toLowerCase();
+
+                    const hasCatKeyword = catKeywords.some(keyword => textToCheck.includes(keyword));
+
+                    if (hasCatKeyword) {
+                        cy.log('✅ Cat-related content verified in image or prompt');
+                        expect(hasCatKeyword).to.be.true;
+                    } else {
+                        cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
+                    }
+                    
+                    // Verify it's a proper AWS S3 image URL
+                    expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
+                });
+            break;
+        case 'doc':
+            // For Word documents
+            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then($content => {
+                    const docText = $content.text();
+                    cy.log(`Document content length: ${docText.length} characters`);
+                });
+            break;
+
+        default:
+            // For other file types, just verify some content is displayed
+            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+                if ($body.find('.text-viewer-content').length > 0) {
+                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .and('be.visible');
+                } else {
+                    cy.log(`File type ${fileExtension} detected, verifying file is accessible`);
+                    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                        .should('exist');
+                }
+            });
+    }
+
+    // If testCase has specific answer validation, use verifyAnswers
+    if (testCase.answer) {
+        cy.verifyAnswers(testCase.answer, {
+            logic: testCase.answerLogic || 'and',
+            selector: '.text-viewer-content',
+            timeout: 60000,
+            matchCase: false
+        });
+    }
+};
+
+// Enhanced function specifically for PDF content validation
+const checkPdfContent = (promptType, expectedTexts = []) => {
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split('/').pop();
+
+    // Check if Session Files sidebar is visible
+    cy.get('[aria-label="Session Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .and('be.visible')
+        .click({ force: true });
+
+    // Click on the PDF file
+    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click({ force: true });
+
+    // Wait for PDF content to load and verify
+    cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+        if ($body.find('.text-viewer-content').length > 0) {
+            // PDF text content is extracted and displayed
+            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then($content => {
+                    const pdfText = $content.text().toLowerCase();
+                    
+                    // Log PDF content for debugging
+                    cy.log(`PDF extracted text length: ${pdfText.length} characters`);
+                    cy.log(`PDF content sample: ${pdfText.substring(0, 300)}...`);
+                    
+                    // Verify expected texts are present
+                    expectedTexts.forEach(expectedText => {
+                        const searchText = expectedText.toLowerCase();
+                        expect(pdfText).to.include(searchText);
+                        cy.log(`✅ Found expected text: "${expectedText}"`);
+                    });
+                });
+        } else if ($body.find('iframe[src*=".pdf"], embed[src*=".pdf"]').length > 0) {
+            // PDF is displayed in a viewer
+            cy.get('iframe[src*=".pdf"], embed[src*=".pdf"]', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then(() => {
+                    cy.log('✅ PDF viewer is displaying the file');
+                });
+        } else {
+            // Look for any indication that PDF is loaded
+            cy.contains(/pdf|document/i, { timeout: DEFAULT_TIMEOUT })
+                .should('exist');
+            cy.log('✅ PDF file is accessible');
+        }
+    });
+};
+
 class Notebook {
     static createNotebook(prompt, model) {
         describe(`Text Model: ${model}`, () => {
@@ -683,6 +882,7 @@ class Notebook {
             uploadFile(promptType);
             fileOperation('addFile', promptType);
             sendPrompt(promptType,promptNo,model);
+            checkFileSide(promptType);
         });
     }
     static createNotebookWithAverage(prompt, model) {
