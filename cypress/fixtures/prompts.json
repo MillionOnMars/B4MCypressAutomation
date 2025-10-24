@@ -10,8 +10,8 @@
         "filepath": "cypress/fixtures/upload/cat.png"
     },
         "movie": {
-        "prompt": "Could you list the top movie apps?",
-        "answer": "Netflix",
+        "prompt": "Who wrote the play Romeo and Juliet?",
+        "answer": "Shakespeare",
         "filepath": "cypress/fixtures/upload/cat.png"
     },
     "sinigang": {
@@ -65,11 +65,11 @@
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": "cv"
+                "answer": "resume"
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer":  "cv"            
+                "answer":  "resume"            
             }
         ]
     }

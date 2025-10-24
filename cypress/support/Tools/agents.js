@@ -89,7 +89,7 @@ const handleAgentOperations = (action, agentName, newName) => {
     switch(action) {
         case 'create':
             // Click New Agent button
-            cy.contains('button', 'Create Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('button', 'New Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({force: true});
 
