@@ -100,28 +100,66 @@ const deleteProject = (projectName) => {
     // Checks if the project created exists
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        // .parent() // Go to parent container
-        // .trigger('mouseover')
-        // .find('.project-card-menu-button')
     cy.get('.project-card-menu-button').eq(0)
         .should('exist')
         .click({ force: true }); // Force click even if not visible
 
     //Clicks Delete button
-    cy.get('.MuiMenuItem-variantPlain', { timeout: DEFAULT_TIMEOUT })
-        .eq(1)
+    cy.contains('.MuiMenuItem-variantPlain','delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible')
         .click();
 
     // Confirm the deletion in the confirmation dialog
-    cy.get('.MuiButton-sizeMd.css-25d5g8', { timeout: DEFAULT_TIMEOUT })
-        .contains('Delete')
+    cy.contains('button', 'delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible')
         .click();
 
     // Verify the project is deleted
     cy.contains('Project deleted successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('not.exist');
+};
+
+const checkAndDeleteProjectIfExists = (projectName) => {
+    // Click the "Project" button to open projects list
+    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Verify the project list is visible
+    cy.contains('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible');
+
+    // Check if the project exists
+    cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+        if ($body.find(`*:contains("${projectName}")`).length > 0) {
+            cy.log(`Project "${projectName}" found, proceeding to delete it`);
+            
+            // Project exists, delete it
+            cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .then(() => {
+                    // Click the menu button for this project
+                    cy.get('.project-card-menu-button').eq(0)
+                        .should('exist')
+                        .click({ force: true });
+
+                    // Click Delete button
+                    cy.contains('.MuiMenuItem-variantPlain','delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+                        .should('be.visible')
+                        .click();
+
+                    // Confirm the deletion in the confirmation dialog
+                    cy.contains('button', 'delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+                        .should('be.visible')
+                        .click();
+
+                    // Verify the project is deleted
+                    cy.contains('Project deleted successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
+                    cy.log(`Project "${projectName}" successfully deleted`);
+                });
+        } else {
+            cy.log(`Project "${projectName}" not found, continuing with test execution`);
+        }
+    });
 };
 
 const addNotebook = (notebookName, projectName) => {
@@ -551,6 +589,7 @@ class Projects {
 
     static createProject(projectName) {
         it('Should create a new project', () => {
+            checkAndDeleteProjectIfExists('Renamed Test Project')
             createProject(projectName);
         });
     }
