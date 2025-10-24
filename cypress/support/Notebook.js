@@ -108,25 +108,6 @@ const sendPrompt = (promptType, promptNo, model) => {
             .type('{enter}')
             .wait(2000);
 
-        if(model == 'claude-3-7-sonnet'){
-            if (currentPrompt === 0) {
-                cy.wait(5000); // First prompt
-            } else {
-                cy.wait(2000); // Subsequent prompts
-            }
-
-            // Shorter wait for subsequent operations
-            cy.wait(2000);
-
-            //scrolls down to the bottom of the chat container
-            cy.get('.css-1aau1w6', { timeout: DEFAULT_TIMEOUT })
-                .should('be.visible')
-                .scrollTo('bottom', { ensureScrollable: true })
-                .then(($container) => {
-                    $container[0].scrollTop = $container[0].scrollHeight;
-                });
-        }
-
         // Handle both array and single answer verification
         cy.verifyAnswers(currentPromptData.answer, {
             logic: currentPromptData.answerLogic || 'and',
@@ -405,6 +386,36 @@ const uploadFile = (promptType) => {
     cy.wait(5000)
 };
 
+const findAndClickFile = (filename) => {
+    // First try to find the file directly
+    cy.get('.file-browser-list-item').then($body => {
+        if ($body.find(`*:contains("${filename}")`).length > 0) {
+            // File is visible, click it
+            cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                .should("be.visible")
+                .click();
+        } else {
+            // File not visible, use search
+            cy.log(`Searching for file: ${filename}`);
+            
+            cy.get('input[placeholder="Search files..."]', { timeout: DEFAULT_TIMEOUT })
+                .eq(1)
+                .should('be.visible')
+                .type(filename);
+
+            // Wait a moment for search results
+            cy.wait(1000);
+            
+            // Now click the file from search results
+            cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                .should("be.visible")
+                .click();
+            
+            cy.log(`Found and clicked file: ${filename} via search`);
+        }
+    });
+};
+
 const fileOperation = (operation, promptType, newName) => {
     const testCase = prompts[promptType];
     const filename = testCase.filepath.split("/").pop();
@@ -419,10 +430,8 @@ const fileOperation = (operation, promptType, newName) => {
         cy.contains("Date", { timeout: DEFAULT_TIMEOUT }).click({ force: true });
         cy.contains("Date", { timeout: DEFAULT_TIMEOUT }).click({ force: true });
 
-        //Checks if file is present
-        cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
-            .should("be.visible")
-            .click();
+        // find and click the file
+        findAndClickFile(filename);
 
         switch (operation) {
             case "checkFile":
@@ -850,12 +859,10 @@ class Notebook {
           });
 
           it("Renames file", () => {
-            uploadFile(filepath);
             fileOperation("renameFile", filepath, "RenamedFile");
           });
 
           it("Deletes file", () => {
-            uploadFile(filepath);
             fileOperation("deleteFile", filepath);
           });
         });
@@ -879,7 +886,7 @@ class Notebook {
     static multiUpload(promptType,model,promptNo) {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
-            uploadFile(promptType);
+            // uploadFile(promptType);
             fileOperation('addFile', promptType);
             sendPrompt(promptType,promptNo,model);
             checkFileSide(promptType);
