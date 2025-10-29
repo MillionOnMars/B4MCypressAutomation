@@ -189,7 +189,7 @@ jobs:
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
           # Format credits data including RepRate using jq
-          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime), success rate: \(.RepRate)") | join("\n")' cypress/fixtures/credits.json)
+          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime), runs: \(.RepRate)") | join("\n")' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
@@ -200,16 +200,55 @@ jobs:
           echo "credits=No credits data available" >> $GITHUB_OUTPUT
         fi
 
+    - name: Prepare Slack message
+      id: slack-message
+      if: always() && !cancelled()
+      run: |
+        # Determine test status
+        if [ "${{ steps.test-results.outputs.failing }}" -gt 0 ]; then
+          STATUS="🔴 CYPRESS TESTS FAILED"
+        else
+          STATUS="✅ CYPRESS TESTS PASSED"
+        fi
+
+        # Console errors message
+        if [ "${{ steps.console-errors.outputs.total }}" -gt 0 ]; then
+          CONSOLE_MSG="⚠️ Console Errors: ${{ steps.console-errors.outputs.total }} found"
+        else
+          CONSOLE_MSG="✨ No console errors detected"
+        fi
+
+        # Quality issues message
+        if [ "${{ steps.selector-quality.outputs.total }}" -gt 0 ]; then
+          QUALITY_MSG="🔍 Test Quality Issues: ${{ steps.selector-quality.outputs.total }} found\n\n*For Dev Investigation*\n• Selector Issues: ${{ steps.selector-quality.outputs.selectorIssues }}\n• Performance: ${{ steps.selector-quality.outputs.performance }}\n\n*For QA Validation*\n• Data Validation: ${{ steps.selector-quality.outputs.dataValidation }}\n• Visibility Issues: ${{ steps.selector-quality.outputs.visibilityIssues }}\n• Assertion Errors: ${{ steps.selector-quality.outputs.assertionErrors }}\n\nTop Issues:\n${{ steps.selector-quality.outputs.examples }}"
+        else
+          QUALITY_MSG="✨ No test quality issues"
+        fi
+
+        # Build the message
+        MESSAGE="${STATUS}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: ${{ github.ref_name }}\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${CONSOLE_MSG}\n\n${QUALITY_MSG}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+
+        # Create properly escaped JSON payload
+        cat > /tmp/slack_payload.json <<'EOF'
+        {
+          "username": "GitHub Actions",
+          "icon_emoji": ":github:",
+          "text": ""
+        }
+        EOF
+
+        # Use jq to properly insert the message with JSON escaping
+        jq --arg msg "$MESSAGE" '.text = $msg' /tmp/slack_payload.json > /tmp/slack_payload_final.json
+
+        # Output for debugging
+        echo "Slack payload:"
+        cat /tmp/slack_payload_final.json
+
     - name: Send Slack notification
       if: always() && !cancelled()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        payload: |
-          {
-            "username": "GitHub Actions",
-            "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: ${{ github.ref_name }}\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n\n*For Dev Investigation*\n• Selector Issues: {1}\n• Performance: {2}\n\n*For QA Validation*\n• Data Validation: {3}\n• Visibility Issues: {4}\n• Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
-          }
+        payload-file-path: /tmp/slack_payload_final.json
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
@@ -241,7 +280,7 @@ jobs:
       with:
         payload: |
           {
-            "text": "⚠️ One or more text model responses took more than 15 seconds! Please investigate.<#C08QZ42L9KM|b4m-automation-results>."
+            "text": "⚠️ One or more text model responses took more than 15 seconds! Please investigate. <#C08QZ42L9KM|b4m-automation-results>"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES}}
