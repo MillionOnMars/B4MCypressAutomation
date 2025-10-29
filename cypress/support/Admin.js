@@ -54,8 +54,7 @@ const sortname = (username, sortBy) => {
         .click();
     
     // Verify that username is visible in the results
-    cy.get('.MuiGrid-spacing-xs-2').eq(2)
-        .contains(username, { timeout: DEFAULT_TIMEOUT })
+    cy.get(`[aria-label="${username}"]`)
         .should('be.visible');
 
 }
