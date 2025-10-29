@@ -9,6 +9,9 @@ describe('Profile Tests', () => {
             login(username, password);
         });
     });
+
+    // Clear username or email if it exists
+    Profile.ClearUsernameOrEmail();
     // Update User Settings
     Profile.UpdateUserSettings();
     // Revert User Settings

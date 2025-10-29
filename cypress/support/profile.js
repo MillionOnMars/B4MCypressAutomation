@@ -51,12 +51,14 @@ const UpdateUserSettings = (user) => {
         .clear()
         .type(user.phone);
     //Select Preferred Contact Method
-    cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains('None')
-        .should('be.visible')
+    cy.get('.profile-data-form-label')
+        .contains('Preferred Contact:')
+        .parent()
+        .find('[role="combobox"]')
         .click();
-    cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains(user["preferredContactMethod"])
+
+    cy.get('[role="listbox"]')
+        .contains(user["preferredContact"])
         .should('be.visible')
         .click();
     //Click Save Changes
@@ -94,13 +96,16 @@ const RevertUserSettings = (user) => {
     cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
     //Select Preferred Contact Method
-    cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains(user["preferredContactMethod"])
-        .should('be.visible')
+    cy.get('.profile-data-form-label')
+        .contains('Preferred Contact:')
+        .parent()
+        .find('[role="combobox"]')
         .click();
-    cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains('None')
-        .should('be.visible')
+
+     // Select the option (with fallback to 'Email' if preferredContact is missing)
+    const preferredContact = user.preferredContact || 'Email';
+        cy.get('[role="option"]')
+        .contains(preferredContact)
         .click();
     //Click Save Changes
     cy.contains('button', 'Save Changes', { timeout: DEFAULT_TIMEOUT })
@@ -130,7 +135,63 @@ const verifyProfileElements = () => {
         .should('be.visible');
 };
 
+const navigateToAdminDashboard = () => {
+    // Wait for user menu button and force click
+    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click();
+    // Click admin option
+    cy.contains('Admin', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+    // Ensure the admin dashboard is loaded
+    cy.url()
+        .should('include', '/admin', { timeout: DEFAULT_TIMEOUT });
+}
+
+const initialCleanup = (user) => {
+    const username = user.newName;
+
+    // go to admin
+    navigateToAdminDashboard();
+
+    cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
+    .should('be.visible')
+    .type(username);
+
+    // Check for user in results wait for 10 seconds
+    cy.wait(10000);
+
+    // Check for user in results
+    cy.get('body').then($body => {
+        if ($body.find(`[aria-label="${username}"]`).length > 0) {
+            // close admin dashboard
+            cy.get('[data-testid="close-admin-page-banner-btn"]')
+                .should('be.visible')
+                .click();
+
+            // navigate to profile
+            navigateToProfileSettings();
+
+            // revert
+            RevertUserSettings(user);
+        }
+    });
+}
+
+
 class Profile {
+    static ClearUsernameOrEmail() {
+        describe('Cleanup / Revert Username if previous revert failed', () => {
+            it('Clear username or email', () => {
+                cy.fixture('edit-user.json').then((editUserData) => {
+                    editUserData.forEach((user) => {
+                        initialCleanup(user);
+                    });
+                });
+            });
+        });
+    }
     static openProfileTab(tabName) {
         it(`Should open the ${tabName} tab in profile`, () => {
             openProfileTabs(tabName);
