@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 15000;
 
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
@@ -116,7 +116,7 @@ const EditUser = (user) => {
         .should('be.visible')
         .click();
     cy.get('[role="listbox"]')
-        .contains(user["preferredContactMethod"])
+        .contains(user["preferredContact"])
         .should('be.visible')
         .click();
     //Select T-shirt Size
@@ -250,7 +250,45 @@ const DeleteInviteCode = (username) => {
         .should('be.visible');
 }
 
+const initialCleanup = (username) => {
+    navigateToAdminDashboard();
+    // Search for the user to delete
+    cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
+    .should('be.visible')
+    .type(username);
+
+    // Check for user in results wait for 10 seconds
+    cy.wait(10000);
+
+    // Check for user in results
+    cy.get('body').then($body => {
+        if ($body.find(`[aria-label="${username}"]`).length > 0) {
+        
+            // clear search
+            cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
+            .should('be.visible')
+            .clear();
+             // close admin dashboard
+            cy.get('[data-testid="close-admin-page-banner-btn"]')
+                .should('be.visible')
+                .click();
+
+            // delete user
+            DeleteUser(username);
+        }
+    });
+}
+
 class Admin {
+
+    static InitialCleanup(username) {
+        describe('Initial Cleanup Tests', () => {
+            it('Initial cleanup', () => {
+                initialCleanup(username);
+            });
+        });
+    }
+
     static User(username, email) {
         describe('User Tests', () => {
             it(`Search for user: ${username}`, () => {

@@ -9,12 +9,14 @@ describe('Admin Tests', () => {
             login(username, password);
         });
     });
+    // Initial Cleanup
+    Admin.InitialCleanup('Create Admin');
     // Search User
     Admin.User('Automation', 'b4m-automationa@milliononmars.com');
     // Sort User by Name
     Admin.Sort('AAAutomation', 'Name');
     //Create User
-    Admin.CreateUser('b4m-automation+11@milliononmars.com,Create,Admin,100,10');
+    Admin.CreateUser('b4m-automationa+11@milliononmars.com,Create,Admin,100,10');
     //Edit User
     Admin.EditUser();
     //Delete User
