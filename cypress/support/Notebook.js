@@ -886,7 +886,7 @@ class Notebook {
     static multiUpload(promptType,model,promptNo) {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
-            // uploadFile(promptType);
+            uploadFile(promptType);
             fileOperation('addFile', promptType);
             sendPrompt(promptType,promptNo,model);
             checkFileSide(promptType);
