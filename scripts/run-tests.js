@@ -109,48 +109,26 @@ async function runTests() {
             `• Model: ${credit.textModel}\n  ↳ Credits: ${credit.Credits}`
         ).join('\n');
 
-        // Read test quality report (separate from test failures)
+        // Read test quality report (simplified 2-category format)
         let qualityReport = '';
-        let qualityIssues = '';
         try {
             console.log(`[Quality] Reading from: ${qualityPath}`);
             const qualityData = await fs.readFile(qualityPath, 'utf8');
             const quality = JSON.parse(qualityData);
             console.log(`[Quality] Found ${quality.totalIssues} total issues`);
             console.log(`[Quality] Summary:`, JSON.stringify(quality.summary, null, 2));
-            
+
             if (quality.totalIssues > 0) {
                 const summary = quality.summary;
-                qualityReport = `🔍 *Code Quality Issues* (Selector/Performance)\n` +
-                    `• Total: ${quality.totalIssues} issues (🔴 ${summary.high || 0} High, 🟡 ${summary.medium || 0} Medium)\n` +
-                    `• Selector Issues: ${summary.selectorIssues || 0}\n` +
-                    `• Data Validation: ${summary.dataValidation || 0}\n` +
-                    `• Visibility Issues: ${summary.visibilityIssues || 0}\n` +
-                    `• Performance: ${summary.performance || 0}`;
-                
-                // Get top 3 high severity issues
-                const topIssues = quality.issues
-                    .filter(i => i.severity === 'high')
-                    .slice(0, 3)
-                    .map(issue => {
-                        // Format multiline recommendation with proper indentation
-                        const recLines = issue.recommendation.split('\n');
-                        const formattedRec = recLines.map((line, idx) => 
-                            idx === 0 ? line : `       ${line}`
-                        ).join('\n');
-                        return `  • *${issue.test}* [${issue.category}]\n    ${formattedRec}`;
-                    })
-                    .join('\n\n');
-                
-                if (topIssues) {
-                    qualityIssues = `\n\n*Top Quality Issues:*\n${topIssues}`;
-                }
+                qualityReport = `📊 *Test Categorization*\n` +
+                    `• Failed - Likely Bug: ${summary.likelyBug || 0}\n` +
+                    `• Selector Issue: ${summary.selectorIssue || 0}`;
             } else {
-                qualityReport = `🔍 *Code Quality* ✅\n• No selector or performance issues detected!`;
+                qualityReport = `📊 *Test Categorization* ✅\n• No issues detected`;
             }
         } catch (error) {
             console.error('[Quality] Error reading test quality file:', error.message);
-            qualityReport = `🔍 *Code Quality*\n• No quality report available`;
+            qualityReport = `📊 *Test Categorization*\n• No categorization available`;
         }
 
         // Read console errors
@@ -241,21 +219,22 @@ async function runTests() {
 
         // Build Slack message with clear sections
         const slackMessage = [
-            `*🧪 Test Run Summary*`,
-            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-            `*Overall*: ${results.totalPassed}/${results.totalTests} passed ${results.totalFailed > 0 ? '❌' : '✅'}`,
-            `\n*Spec Files*`,
-            specResults,
+            `*🧪 CYPRESS TESTS ${results.totalFailed > 0 ? 'FAILED' : 'PASSED'}*`,
+            `Environment: ${process.env.CYPRESS_APP_URL || 'Staging'}`,
+            `Branch: ${process.env.GITHUB_REF_NAME || process.env.BRANCH || 'local'}`,
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `\n📊 *Test Results*`,
+            `✅ Passed: ${results.totalPassed}`,
+            qualityReport.includes('Likely Bug') ? `❌ ${qualityReport}` : qualityReport,
+            `⏭️  Skipped: ${results.totalSkipped}`,
+            `📝 Total: ${results.totalTests}`,
             failureDetails,
+            consoleErrorsReport,
             `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
             `\n💳 *Credits Usage*`,
             creditsResults,
-            consoleErrorsReport,
             `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-            `\n${qualityReport}`,
-            qualityIssues,
-            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-            `\n📊 *Full Report*`,
+            `\n📄 *Full Report*`,
             `<${reportUrl}|View Detailed HTML Report> _(Available for 1 hour)_`
         ].filter(Boolean).join('\n');
 
