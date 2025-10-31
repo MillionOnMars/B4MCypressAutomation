@@ -55,9 +55,7 @@ const createNote = (promptType, model) => {
             cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
 
             // Check if credits element exists, make it optional
-            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
-                if ($body.find('[data-testid="credits-used"]').length > 0) {
-                    // Credits element exists, try to get the credits info
+
                     cy.get('[data-testid="credits-used"]', { timeout: DEFAULT_TIMEOUT })
                         .should('be.visible')
                         .click()
@@ -71,12 +69,8 @@ const createNote = (promptType, model) => {
                                     resolve({ duration, credits: credits ? parseInt(credits) : null });
                                 });
                         });
-                } else {
-                    // Credits element not found, resolve without credits
-                    cy.log('Credits element not found, continuing without credits info');
-                    resolve({ duration, credits: null });
-                }
-            });
+
+
         });
     });
 };
@@ -825,7 +819,7 @@ const checkPdfContent = (promptType, expectedTexts = []) => {
 class Notebook {
     static createNotebook(prompt, model) {
         describe(`Text Model: ${model}`, () => {
-            it.only(`Should select Text model. Creates notebook`, () => {
+            it(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
                 createNote(prompt, model);
             });
