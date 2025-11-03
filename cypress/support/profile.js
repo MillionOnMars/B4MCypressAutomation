@@ -15,7 +15,7 @@ Cypress.Commands.add('setProfileSettings', openProfileTabs);
 
 const navigateToProfileSettings = () => {
     // Navigate to Profile Settings
-    cy.get('[aria-label="Profile"]')
+    cy.get('[aria-label="Profile"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     // Ensure the profile page is loaded
@@ -26,36 +26,36 @@ const navigateToProfileSettings = () => {
 const UpdateUserSettings = (user) => {
     navigateToProfileSettings();
     // Click on Edit Profile button
-    cy.contains('Edit Profile')
+    cy.contains('Edit Profile', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Update User Settings
     // Edit name
-    cy.get('input[name="name"]')
+    cy.get('input[name="name"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.newName);
     //Edit email
-    cy.get('input[name="email"]')
+    cy.get('input[name="email"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.newEmail);
     //Edit team
-    cy.get('input[name="team"]')
+    cy.get('input[name="team"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.newTeam);
     //Edit role
-    cy.get('input[name="role"]')
+    cy.get('input[name="role"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.newRole);
     //Edit phone
-    cy.get('input[name="phone"]')
+    cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.phone);
     //Select Preferred Contact Method
-    cy.get('button[role="combobox"]')
+    cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
         .contains('None')
         .should('be.visible')
         .click();
-    cy.get('[role="listbox"]')
+    cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
         .contains(user["preferredContactMethod"])
         .should('be.visible')
         .click();
@@ -72,38 +72,38 @@ const UpdateUserSettings = (user) => {
 const RevertUserSettings = (user) => {
     navigateToProfileSettings();
     // Click on Edit Profile button
-    cy.contains('Edit Profile')
+    cy.contains('Edit Profile', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Revert User Settings
     // Edit name
-    cy.get('input[name="name"]')
+    cy.get('input[name="name"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.originalName);
     //Edit email
-    cy.get('input[name="email"]')
+    cy.get('input[name="email"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.originalEmail);
     //Edit team
-    cy.get('input[name="team"]')
+    cy.get('input[name="team"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
     //Edit role
-    cy.get('input[name="role"]')
+    cy.get('input[name="role"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
     //Edit phone
-    cy.get('input[name="phone"]')
+    cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
     //Select Preferred Contact Method
-    cy.get('button[role="combobox"]')
+    cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
         .contains(user["preferredContactMethod"])
         .should('be.visible')
         .click();
-    cy.get('[role="listbox"]')
+    cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
         .contains('None')
         .should('be.visible')
         .click();
     //Click Save Changes
-    cy.contains('button', 'Save Changes')
+    cy.contains('button', 'Save Changes', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Verify success message
@@ -114,19 +114,19 @@ const RevertUserSettings = (user) => {
 const verifyProfileElements = () => {
     navigateToProfileSettings();
     // Verify presence of Credits
-    cy.contains('Credits')
+    cy.contains('Credits', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
-    cy.get('.profile-detail-tab-value')
+    cy.get('.profile-detail-tab-value', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     // Verify presence of Storage Used
-    cy.contains('Storage Used')
+    cy.contains('Storage Used', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
-    cy.get('.profile-detail-tab-storage-value')
+    cy.get('.profile-detail-tab-storage-value', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     // Verify the presence of the Collections element
-    cy.contains('Collection')
+    cy.contains('Collection', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
-    cy.get('.profile-collection-section-item')
+    cy.get('.profile-collection-section-item', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 };
 
