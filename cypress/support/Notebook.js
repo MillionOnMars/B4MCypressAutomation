@@ -31,7 +31,7 @@ const createNote = (promptType, model) => {
         .click();
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
@@ -96,7 +96,7 @@ const sendPrompt = (promptType, promptNo, model) => {
             testCase;
 
         //enter prompt
-        cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
+        cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
@@ -575,7 +575,7 @@ const verifyImageResponse = (promptType) => {
     const testCase = prompts[promptType];
 
     //send prompt that generates image
-    cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}')

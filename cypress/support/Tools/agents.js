@@ -58,7 +58,7 @@ const validateAgentPrompt = (agentName, promptType, model) => {
         });
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
