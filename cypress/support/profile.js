@@ -34,10 +34,6 @@ const UpdateUserSettings = (user) => {
     cy.get('input[name="name"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.newName);
-    //Edit email
-    cy.get('input[name="email"]', { timeout: DEFAULT_TIMEOUT })
-        .clear()
-        .type(user.newEmail);
     //Edit team
     cy.get('input[name="team"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
@@ -80,10 +76,6 @@ const RevertUserSettings = (user) => {
     cy.get('input[name="name"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.originalName);
-    //Edit email
-    cy.get('input[name="email"]', { timeout: DEFAULT_TIMEOUT })
-        .clear()
-        .type(user.originalEmail);
     //Edit team
     cy.get('input[name="team"]', { timeout: DEFAULT_TIMEOUT })
         .clear()

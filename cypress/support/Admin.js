@@ -93,10 +93,6 @@ const EditUser = (user) => {
     cy.get('input[name="name"]')
         .clear()
         .type(user.newName);
-    //Edit email
-    cy.get('input[name="email"]')
-        .clear()
-        .type(user.newEmail);
     //Edit team
     cy.get('input[name="team"]')
         .clear()
