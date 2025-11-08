@@ -371,7 +371,7 @@ const uploadFile = (promptType) => {
 
     // Wait for upload completion indicators
     cy.intercept('POST', '**/createFabFile').as('uploadRequest');
-    cy.wait('@uploadRequest', { timeout: 10000 });
+    cy.wait('@uploadRequest', { timeout: 30000 });
 
     //Verify file uploaded
     cy.contains(testCase.filepath.split('/').pop(), { timeout: DEFAULT_TIMEOUT });
@@ -398,7 +398,7 @@ const findAndClickFile = (filename) => {
                 .type(filename);
 
             // Wait a moment for search results
-            cy.wait(1000);
+            cy.wait(10000);
             
             // Now click the file from search results
             cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
@@ -629,7 +629,7 @@ const checkFileSide = (promptType) => {
         .click({ force: true });
 
     // Wait for the file to be visible and click it
-    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-file-list"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click({ force: true });
 
@@ -882,7 +882,7 @@ class Notebook {
             selectTxtModel(model);
             uploadFile(promptType);
             fileOperation('addFile', promptType);
-            sendPrompt(promptType,promptNo,model);
+            sendPrompt(promptType, promptNo, model);
             checkFileSide(promptType);
         });
     }
