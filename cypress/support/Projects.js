@@ -51,7 +51,7 @@ const createProject = (projectName) => {
 
     // Verify the project is created
     cy.contains('Project created successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
-    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('exist');
+    cy.finalCheck().contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('exist');
 };
 
 const renameProject = (oldName, newName) => {
@@ -88,7 +88,7 @@ const renameProject = (oldName, newName) => {
 
     // Verify the project is updated
     cy.contains('Project updated successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
-    cy.contains(newName, { timeout: DEFAULT_TIMEOUT }).should('exist');
+    cy.finalCheck().contains(newName, { timeout: DEFAULT_TIMEOUT }).should('exist');
 };
 
 const deleteProject = (projectName) => {
@@ -116,7 +116,7 @@ const deleteProject = (projectName) => {
 
     // Verify the project is deleted
     cy.contains('Project deleted successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
-    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('not.exist');
+    cy.finalCheck().contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('not.exist');
 };
 
 const checkAndDeleteProjectIfExists = (projectName) => {
@@ -187,7 +187,7 @@ const addNotebook = (notebookName, projectName) => {
         .click();
 
     // Verify sessions added message
-    cy.contains('Sessions added to project successfully', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+    cy.finalCheck().contains('Sessions added to project successfully', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
 
 };
@@ -257,7 +257,7 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
         ? 'Files added to project successfully'
         : 'System Prompts added successfully';
 
-    cy.contains(successMessage, { timeout: DEFAULT_TIMEOUT, matchCase: false })
+    cy.finalCheck().contains(successMessage, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
 };
 
@@ -288,7 +288,7 @@ const createNotebook = (promptType, projectName) => {
 
     // Handle both array and string answers
 
-    cy.verifyAnswers(testCase.answer, {
+    cy.finalCheck().verifyAnswers(testCase.answer, {
         logic: testCase.answerLogic || 'or',
         selector: '[data-testid="ai-response"]',
         timeout: 50000,
@@ -331,7 +331,7 @@ const addMembers = (memberEmail) => {
         .click();
 
     // Verify member added message
-    cy.contains('Sent an invite to the selected users', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+    cy.finalCheck().contains('Sent an invite to the selected users', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
 };
 
@@ -366,7 +366,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
                 .click();
 
             // verify file name is visible
-            cy.contains(promptName, { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains(promptName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
 
             // click Close button
@@ -393,7 +393,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
                 .click();
 
             // Verify deletion message
-            cy.contains('System prompt removed successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('System prompt removed successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
@@ -408,7 +408,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
                 .should('be.visible');
 
             // Close view modal
-            cy.get('[data-testid="CloseIcon"]')
+            cy.finalCheck().get('[data-testid="CloseIcon"]')
                 .should('be.visible')
                 .click();
             break;
@@ -543,7 +543,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
         .click()
 
     // Verify system prompt is present
-    cy.contains('System Prompts (1)', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+    cy.finalCheck().contains('System Prompts (1)', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
 
 };
