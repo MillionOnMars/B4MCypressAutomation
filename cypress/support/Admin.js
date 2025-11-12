@@ -24,7 +24,7 @@ const searchUser = (username, email) => {
     // Verify the user appears in the search results
     cy.contains(username, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
-    cy.contains(email, { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains(email, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
 
@@ -54,7 +54,7 @@ const sortname = (username, sortBy) => {
         .click();
     
     // Verify that username is visible in the results
-    cy.get(`[aria-label="${username}"]`)
+    cy.finalCheck().get(`[aria-label="${username}"]`)
         .should('be.visible');
 
 }
@@ -73,7 +73,7 @@ const CreateUser = (userDetails) => {
         .should('be.visible')
         .click();
     //Verify success message
-    cy.contains('User created successfully', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('User created successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
 const EditUser = (user) => {
@@ -128,7 +128,7 @@ const EditUser = (user) => {
         .should('be.visible')
         .click();
     // Verify success message
-    cy.contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
 const DeleteUser = (username) => {
@@ -159,7 +159,7 @@ const DeleteUser = (username) => {
         .should('be.visible')
         .click();
     //Verify success message
-    cy.contains('User deleted successfully', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('User deleted successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
 let inviteCode;
@@ -185,7 +185,7 @@ const CreateInviteCode = (createdby) => {
     cy.contains(createdby, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     //Copy invite code
-    cy.get('div[aria-label="Click to Copy"]')
+    cy.finalCheck().get('div[aria-label="Click to Copy"]')
         .eq(0) // Get the first invite code in the list
         .invoke('text')
         .then((text) => {
@@ -224,7 +224,7 @@ const UseInviteCode = (username, email, password, fullname) => {
     cy.get('#confirmPassword').should('be.visible').type(password);
     cy.get('.MuiInput-root > #fullName').should('be.visible').type(fullname);
     // Submit the form
-    cy.get('	.MuiButton-fullWidth').should('be.visible').click();
+    cy.finalCheck().get('	.MuiButton-fullWidth').should('be.visible').click();
 }
 const DeleteInviteCode = (username) => {
     //Delete user created with invite code 
@@ -241,7 +241,7 @@ const DeleteInviteCode = (username) => {
         .should('be.visible')
         .click();
     //Verify success message
-    cy.contains('Registration invite(s) deleted', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('Registration invite(s) deleted', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
 

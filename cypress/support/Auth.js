@@ -17,13 +17,13 @@ const authenticateUser = (username, password) => {
 // Verify successful login by checking username and URL
 const verifySuccessfulLogin = (username) => {
     cy.contains(username, { timeout: TIMEOUT }).should('exist');
-    cy.url().should('contain', '/new');
+    cy.finalCheck().url().should('contain', '/new');
 };
 
 // Verify logout by checking the welcome message and URL
 const verifyLogout = () => {
     cy.contains('Bike4Mind', { timeout: TIMEOUT }).should('exist');
-    cy.url().should('contain', '/login');
+    cy.finalCheck().url().should('contain', '/login');
 };
 
 // Log out the user by interacting with the menu
@@ -56,7 +56,7 @@ class Auth {
             navigateToLoginPage();
             authenticateUser('Test', 'IncorrectPassword.');
             cy.contains('Invalid username or password', { timeout: TIMEOUT }).should('exist');
-            cy.url().should('contain', '/login');
+            cy.finalCheck().url().should('contain', '/login');
         });
     }
 
