@@ -582,7 +582,7 @@ const verifyImageResponse = (promptType) => {
         .wait(2000);
 
     // Verify an image is present and validate it's a dog image
-    cy.get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .and(($img) => {
@@ -640,7 +640,7 @@ const checkFileSide = (promptType) => {
             cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
                 if ($body.find('.text-viewer-content').length > 0) {
                     // PDF content extracted and displayed as text
-                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                         .should('exist')
                         .and('be.visible')
                         .then($content => {
@@ -658,7 +658,7 @@ const checkFileSide = (promptType) => {
                         });
                 } else if ($body.find('iframe, embed, object').length > 0) {
                     // PDF displayed in viewer (iframe/embed)
-                    cy.get('iframe, embed, object', { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().get('iframe, embed, object', { timeout: DEFAULT_TIMEOUT })
                         .should('exist')
                         .and('be.visible')
                         .then($viewer => {
@@ -667,14 +667,14 @@ const checkFileSide = (promptType) => {
                         });
                 } else {
                     // Look for PDF-specific elements or download link
-                    cy.contains(/pdf|download|view/i, { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().contains(/pdf|download|view/i, { timeout: DEFAULT_TIMEOUT })
                         .should('exist');
                 }
             });
             break;
         case 'txt':
             // For text files, check the text content
-            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
                 .and('be.visible')
                 .then($content => {
@@ -691,7 +691,7 @@ const checkFileSide = (promptType) => {
                 });
             break;
         case 'png':
-            cy.get(`img[alt="${filename}"]`, { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().get(`img[alt="${filename}"]`, { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
                 .and('be.visible')
                 .and(($img) => {
@@ -727,7 +727,7 @@ const checkFileSide = (promptType) => {
             break;
         case 'doc':
             // For Word documents
-            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
                 .and('be.visible')
                 .then($content => {
@@ -740,12 +740,12 @@ const checkFileSide = (promptType) => {
             // For other file types, just verify some content is displayed
             cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
                 if ($body.find('.text-viewer-content').length > 0) {
-                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                         .should('exist')
                         .and('be.visible');
                 } else {
                     cy.log(`File type ${fileExtension} detected, verifying file is accessible`);
-                    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().contains(filename, { timeout: DEFAULT_TIMEOUT })
                         .should('exist');
                 }
             });
@@ -753,7 +753,7 @@ const checkFileSide = (promptType) => {
 
     // If testCase has specific answer validation, use verifyAnswers
     if (testCase.answer) {
-        cy.verifyAnswers(testCase.answer, {
+        cy.finalCheck().verifyAnswers(testCase.answer, {
             logic: testCase.answerLogic || 'and',
             selector: '.text-viewer-content',
             timeout: 60000,
