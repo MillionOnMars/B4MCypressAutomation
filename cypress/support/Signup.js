@@ -56,7 +56,7 @@ const signUpUser = () => {
 
     // Verify successful signup
     cy.contains(account.fullname+' (Personal)').should('be.visible');
-    cy.contains('How to work with Bike4Mind?').should('be.visible');
+    cy.finalCheck().contains('How to work with Bike4Mind?').should('be.visible');
 };
 
 const signUpWithInvalidEmail = () => {
@@ -79,7 +79,7 @@ const signUpWithInvalidEmail = () => {
     cy.get('.MuiInput-root > #email').should('be.visible').type(invalidEmail);
 
     // Verify error message
-    cy.contains('Invalid email format').should('be.visible');
+    cy.finalCheck().contains('Invalid email format').should('be.visible');
 };
 
 const signUpWithMismatchedPasswords = () => {
@@ -102,7 +102,7 @@ const signUpWithMismatchedPasswords = () => {
     cy.get('#confirmPassword').should('be.visible').type(mismatchedPassword);
 
     // Verify error message
-    cy.contains("Passwords don't match").should('be.visible');
+    cy.finalCheck().contains("Passwords don't match").should('be.visible');
 };
 
 const signUpWithLess8CharPass = () => {
@@ -124,7 +124,7 @@ const signUpWithLess8CharPass = () => {
     cy.get('#password').should('be.visible').type(less8Char);
 
     // Verify error message
-    cy.contains("Password must be at least 8 characters").should('be.visible');
+    cy.finalCheck().contains("Password must be at least 8 characters").should('be.visible');
 };
 
 class Signup {

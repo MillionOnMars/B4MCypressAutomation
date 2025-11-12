@@ -45,7 +45,7 @@ const createNote = (promptType, model) => {
         startTime = Date.now();
 
         // Use verifyAnswers to check the response
-        cy.verifyAnswers(testCase.answer, {
+        cy.finalCheck().verifyAnswers(testCase.answer, {
             logic: testCase.answerLogic || 'and',
             selector: '[data-testid="ai-response"]',
             timeout: 60000,
@@ -103,7 +103,7 @@ const sendPrompt = (promptType, promptNo, model) => {
             .wait(2000);
 
         // Handle both array and single answer verification
-        cy.verifyAnswers(currentPromptData.answer, {
+        cy.finalCheck().verifyAnswers(currentPromptData.answer, {
             logic: currentPromptData.answerLogic || 'and',
             selector: '[data-testid="ai-response"]',
             timeout: currentPromptData.timeout || 60000,
@@ -135,7 +135,7 @@ const renameNote = (newName) => {
         .click();
 
     // Find the INPUT inside the div with the testid
-    cy.get('[data-testid="sidenav-item-rename-input"]', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().get('[data-testid="sidenav-item-rename-input"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .find('input')
         .clear({ force: true })
@@ -178,7 +178,7 @@ const editNotebookInfo = (tags) => {
         .should('be.visible');
 
     // Close the info modal/panel
-    cy.get('.session-metadata-close-button', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().get('.session-metadata-close-button', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -210,7 +210,7 @@ const deleteNote = (name) => {
         .click();
 
     // Verify success notification
-    cy.contains('Successfully deleted session', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('Successfully deleted session', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
     cy.log('Notebook deleted successfully.');
@@ -374,7 +374,7 @@ const uploadFile = (promptType) => {
     cy.wait('@uploadRequest', { timeout: 30000 });
 
     //Verify file uploaded
-    cy.contains(testCase.filepath.split('/').pop(), { timeout: DEFAULT_TIMEOUT });
+    cy.finalCheck().contains(testCase.filepath.split('/').pop(), { timeout: DEFAULT_TIMEOUT });
 
     cy.log('File uploaded successfully.');
     cy.wait(5000)
@@ -432,7 +432,7 @@ const fileOperation = (operation, promptType, newName) => {
                 // File presence already verified above
                 cy.log(`File ${filename} found successfully`);
                 //Click Close button
-                cy.get('[data-testid="CloseIcon"]', { timeout: DEFAULT_TIMEOUT })
+                cy.finalCheck().get('[data-testid="CloseIcon"]', { timeout: DEFAULT_TIMEOUT })
                     .should("be.visible")
                     .click();
                 break;
@@ -448,7 +448,7 @@ const fileOperation = (operation, promptType, newName) => {
                     .should("be.visible")
                     .click();
 
-                cy.get('input[value="' + filename + '"]', { timeout: DEFAULT_TIMEOUT })
+                cy.finalCheck().get('input[value="' + filename + '"]', { timeout: DEFAULT_TIMEOUT })
                     .should("be.visible")
                     .clear()
                     .type(newName)
@@ -460,12 +460,12 @@ const fileOperation = (operation, promptType, newName) => {
             case "deleteFile":
                 //Click delete button
                 cy.contains("Delete 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
-                cy.document().its('body').find('button').contains('Ok', { timeout: DEFAULT_TIMEOUT }).click();
+                cy.finalCheck().document().its('body').find('button').contains('Ok', { timeout: DEFAULT_TIMEOUT }).click();
                 break;
 
             case "addFile":
                 //click add file
-                cy.contains("Add 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
+                cy.finalCheck().contains("Add 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
 
                 //wait for file to be added
                 cy.wait(2000);
@@ -516,7 +516,7 @@ const handleResearchAgent = (action, agent) => {
                 .should('be.visible')
                 .click();
 
-            cy.contains('Research agent created successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('Research agent created successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
@@ -545,7 +545,7 @@ const handleResearchAgent = (action, agent) => {
                 .should('be.visible')
                 .click();
 
-            cy.contains('Research agent updated successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('Research agent updated successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
@@ -562,7 +562,7 @@ const handleResearchAgent = (action, agent) => {
                 .should('be.visible')
                 .click();
 
-            cy.contains('Research agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('Research agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
@@ -582,7 +582,7 @@ const verifyImageResponse = (promptType) => {
         .wait(2000);
 
     // Verify an image is present and validate it's a dog image
-    cy.get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .and(($img) => {
@@ -640,7 +640,7 @@ const checkFileSide = (promptType) => {
             cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
                 if ($body.find('.text-viewer-content').length > 0) {
                     // PDF content extracted and displayed as text
-                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                         .should('exist')
                         .and('be.visible')
                         .then($content => {
@@ -658,7 +658,7 @@ const checkFileSide = (promptType) => {
                         });
                 } else if ($body.find('iframe, embed, object').length > 0) {
                     // PDF displayed in viewer (iframe/embed)
-                    cy.get('iframe, embed, object', { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().get('iframe, embed, object', { timeout: DEFAULT_TIMEOUT })
                         .should('exist')
                         .and('be.visible')
                         .then($viewer => {
@@ -667,14 +667,14 @@ const checkFileSide = (promptType) => {
                         });
                 } else {
                     // Look for PDF-specific elements or download link
-                    cy.contains(/pdf|download|view/i, { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().contains(/pdf|download|view/i, { timeout: DEFAULT_TIMEOUT })
                         .should('exist');
                 }
             });
             break;
         case 'txt':
             // For text files, check the text content
-            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
                 .and('be.visible')
                 .then($content => {
@@ -691,7 +691,7 @@ const checkFileSide = (promptType) => {
                 });
             break;
         case 'png':
-            cy.get(`img[alt="${filename}"]`, { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().get(`img[alt="${filename}"]`, { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
                 .and('be.visible')
                 .and(($img) => {
@@ -727,7 +727,7 @@ const checkFileSide = (promptType) => {
             break;
         case 'doc':
             // For Word documents
-            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                 .should('exist')
                 .and('be.visible')
                 .then($content => {
@@ -740,12 +740,12 @@ const checkFileSide = (promptType) => {
             // For other file types, just verify some content is displayed
             cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
                 if ($body.find('.text-viewer-content').length > 0) {
-                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
                         .should('exist')
                         .and('be.visible');
                 } else {
                     cy.log(`File type ${fileExtension} detected, verifying file is accessible`);
-                    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                    cy.finalCheck().contains(filename, { timeout: DEFAULT_TIMEOUT })
                         .should('exist');
                 }
             });
@@ -753,7 +753,7 @@ const checkFileSide = (promptType) => {
 
     // If testCase has specific answer validation, use verifyAnswers
     if (testCase.answer) {
-        cy.verifyAnswers(testCase.answer, {
+        cy.finalCheck().verifyAnswers(testCase.answer, {
             logic: testCase.answerLogic || 'and',
             selector: '.text-viewer-content',
             timeout: 60000,

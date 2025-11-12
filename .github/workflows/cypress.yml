@@ -118,51 +118,23 @@ jobs:
       run: |
         if [ -f "cypress/reports/testQuality.json" ]; then
           TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/testQuality.json)
-          
-          # By Category
+
+          # By Category (only Likely Bug and Selector Issue)
+          LIKELY_BUG=$(jq -r '.summary.likelyBug' cypress/reports/testQuality.json)
           SELECTOR_ISSUES=$(jq -r '.summary.selectorIssues' cypress/reports/testQuality.json)
-          DATA_VALIDATION=$(jq -r '.summary.dataValidation' cypress/reports/testQuality.json)
-          VISIBILITY_ISSUES=$(jq -r '.summary.visibilityIssues' cypress/reports/testQuality.json)
-          PERFORMANCE=$(jq -r '.summary.performance' cypress/reports/testQuality.json)
-          ASSERTION_ERRORS=$(jq -r '.summary.assertionErrors' cypress/reports/testQuality.json)
-          
-          # Extract top 3 specific issues for Slack (prioritize high severity)
-          SPECIFIC_ISSUES=$(jq -r '
-            [.issues[] | select(.severity == "high")] as $high |
-            [.issues[] | select(.severity == "medium")] as $medium |
-            ($high + $medium)[0:3] |
-            map("⚠️ \(.test) -> \(.category)") |
-            join("\n")
-          ' cypress/reports/testQuality.json)
-          
-          # Escape newlines for GitHub Actions output
-          SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
-          
+
           echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
-          
-          # By Category
+          echo "likelyBug=$LIKELY_BUG" >> "$GITHUB_OUTPUT"
           echo "selectorIssues=$SELECTOR_ISSUES" >> "$GITHUB_OUTPUT"
-          echo "dataValidation=$DATA_VALIDATION" >> "$GITHUB_OUTPUT"
-          echo "visibilityIssues=$VISIBILITY_ISSUES" >> "$GITHUB_OUTPUT"
-          echo "performance=$PERFORMANCE" >> "$GITHUB_OUTPUT"
-          echo "assertionErrors=$ASSERTION_ERRORS" >> "$GITHUB_OUTPUT"
-          echo "examples=$SPECIFIC_ISSUES" >> "$GITHUB_OUTPUT"
 
           echo "Found $TOTAL_ISSUES test quality issues"
           echo "  By Category:"
+          echo "    - Likely Bug: $LIKELY_BUG"
           echo "    - Selector Issues: $SELECTOR_ISSUES"
-          echo "    - Data Validation: $DATA_VALIDATION"
-          echo "    - Visibility Issues: $VISIBILITY_ISSUES"
-          echo "    - Performance: $PERFORMANCE"
-          echo "    - Assertion Errors: $ASSERTION_ERRORS"
         else
           echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "likelyBug=0" >> "$GITHUB_OUTPUT"
           echo "selectorIssues=0" >> "$GITHUB_OUTPUT"
-          echo "dataValidation=0" >> "$GITHUB_OUTPUT"
-          echo "visibilityIssues=0" >> "$GITHUB_OUTPUT"
-          echo "performance=0" >> "$GITHUB_OUTPUT"
-          echo "assertionErrors=0" >> "$GITHUB_OUTPUT"
-          echo "examples=" >> "$GITHUB_OUTPUT"
           echo "No testQuality.json found"
         fi
 
@@ -208,7 +180,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n  📍 Selector Issues: {1}\n  📊 Data Validation: {2}\n  👁️ Visibility Issues: {3}\n  ⚡ Performance: {4}\n  ❗ Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && ':red_circle: CYPRESS TESTS FAILED' || ':white_check_mark: CYPRESS TESTS PASSED' }}\n  Environment: ${{ env.CYPRESS_APP_URL || 'https://staging.milliononmars.com' }}\n  Branch: `${{ github.ref_name }}`\n  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  :bar_chart: Test Results\n  :white_check_mark: Passed: ${{ steps.test-results.outputs.passing }}\n  :x: Likely Bug: ${{ steps.selector-quality.outputs.likelyBug }}\n  :warning: Selector Issue: ${{ steps.selector-quality.outputs.selectorIssues }}\n  :black_right_pointing_double_triangle_with_vertical_bar: Skipped: ${{ steps.test-results.outputs.skipped }}\n  :memo: Total: ${{ steps.test-results.outputs.total }}\n  ${{ steps.credits.outputs.credits }}\n  ${{ steps.console-errors.outputs.total > 0 && format(':warning: Console Errors: {0} found', steps.console-errors.outputs.total) || '' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> :clipboard:"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

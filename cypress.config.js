@@ -149,19 +149,11 @@ module.exports = defineConfig({
           
           if (shouldInitialize) {
             const initialData = {
-              issues: [], 
+              issues: [],
               totalIssues: 0,
               summary: {
-                // By Category
-                selectorIssues: 0,
-                dataValidation: 0,
-                visibilityIssues: 0,
-                performance: 0,
-                assertionErrors: 0,
-
-                // By Severity
-                high: 0,
-                medium: 0
+                likelyBug: 0,
+                selectorIssues: 0
               }
             };
             fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2));
@@ -214,16 +206,8 @@ module.exports = defineConfig({
             issues: [],
             totalIssues: 0,
             summary: {
-              // By Category
-              selectorIssues: 0,
-              dataValidation: 0,
-              visibilityIssues: 0,
-              performance: 0,
-              assertionErrors: 0,
-
-              // By Severity
-              high: 0,
-              medium: 0
+              likelyBug: 0,
+              selectorIssues: 0
             }
           };
           
@@ -259,18 +243,10 @@ module.exports = defineConfig({
 
           const allIssues = Array.from(existingMap.values());
 
-          // Calculate summary statistics by category and type
+          // Calculate summary statistics by category
           const summary = {
-            // By Category
-            selectorIssues: allIssues.filter(i => i && i.category === 'Selector Issue').length,
-            dataValidation: allIssues.filter(i => i && i.category === 'Data Validation').length,
-            visibilityIssues: allIssues.filter(i => i && i.category === 'Visibility Issue').length,
-            performance: allIssues.filter(i => i && i.category === 'Performance').length,
-            assertionErrors: allIssues.filter(i => i && i.category === 'Assertion Error').length,
-
-            // By Severity
-            high: allIssues.filter(i => i && i.severity === 'high').length,
-            medium: allIssues.filter(i => i && i.severity === 'medium').length
+            likelyBug: allIssues.filter(i => i && i.category === 'Likely Bug').length,
+            selectorIssues: allIssues.filter(i => i && i.category === 'Selector Issue').length
           };
 
           // Write deduplicated issues with validation
