@@ -60,7 +60,7 @@ const UpdateUserSettings = (user) => {
         .should('be.visible')
         .click();
     //Verify success message
-    cy.contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
 };
@@ -99,13 +99,14 @@ const RevertUserSettings = (user) => {
         .should('be.visible')
         .click();
     //Verify success message
-    cy.contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
+    cy.finalCheck().contains('Profile updated successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
 }
 const verifyProfileElements = () => {
     navigateToProfileSettings();
     // Verify presence of Credits
+    // no finalCheck since these are all selector checking
     cy.contains('Credits', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     cy.get('.profile-detail-tab-value', { timeout: DEFAULT_TIMEOUT })

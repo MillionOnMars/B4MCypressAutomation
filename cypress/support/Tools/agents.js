@@ -69,7 +69,7 @@ const validateAgentPrompt = (agentName, promptType, model) => {
     //contains the agent name
     cy.contains(agentName, { timeout: 50000 }).should('be.visible');
     // Validate the answer (supports both string and array with AND/OR logic)
-    cy.verifyAnswers(testCase.answer, {
+    cy.finalCheck().verifyAnswers(testCase.answer, {
         logic: testCase.answerLogic || 'or',
         selector: '[data-testid="ai-response"]',
         timeout: 120000,
@@ -117,7 +117,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click({ force: true });
 
             // Verify success message
-            cy.contains('Agent created successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('Agent created successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
@@ -146,7 +146,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             // Verify success message
-            cy.contains('Agent updated successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('Agent updated successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
@@ -182,7 +182,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 });
 
             // Verify success message
-            cy.contains('Agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
+            cy.finalCheck().contains('Agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible');
             break;
 
