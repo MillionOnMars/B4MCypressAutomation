@@ -47,6 +47,8 @@ before(function() {
 // Clear issues before each test
 beforeEach(function() {
     testIssues.clear();
+    // Reset the finalCheck flag at the start of each test
+    Cypress.env('inFinalCheck', false);
 });
 
 // Log issues after each test (runs even on failure)
@@ -84,12 +86,20 @@ afterEach(function() {
 
 /**
  * Analyzes error messages to detect various test failure types
- * Categories: Selector Issues, Data Validation, Visibility Issues, Performance, Assertion Errors
+ * Categories: Only "Likely Bug" (when in finalCheck) or "Selector Issue" (before finalCheck)
  */
 function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     const issues = [];
     let match;
-    
+
+    // Check if we're in the final check phase
+    const inFinalCheck = Cypress.env('inFinalCheck') === true;
+    console.log(`[Test Quality] inFinalCheck: ${inFinalCheck}`);
+
+    // Determine category based on finalCheck status
+    const category = inFinalCheck ? 'Likely Bug' : 'Selector Issue';
+    console.log(`[Test Quality] Category will be: ${category}`);
+
     // Check if this is an AssertionError
     const isAssertionError = errorMessage.includes('AssertionError');
     console.log(`[Test Quality] isAssertionError: ${isAssertionError}`);
@@ -106,7 +116,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const withinElement = match[2];
             issues.push({
                 type: 'Content Not Found',
-                category: 'Data Validation',
+                category: category,
                 severity: 'high',
                 expectedContent: expectedContent,
                 context: `within ${withinElement}`,
@@ -120,7 +130,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const expectedContent = match[1];
             issues.push({
                 type: 'Content Not Found',
-                category: 'Data Validation',
+                category: category,
                 severity: 'high',
                 expectedContent: expectedContent,
                 recommendation: `Expected content "${expectedContent}" was not found. Check if:\n  1. The element exists with correct content\n  2. The content is dynamically loaded and needs more wait time\n  3. The expected text in fixtures is correct`,
@@ -136,15 +146,13 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     if ((match = elementNotFoundPattern.exec(errorMessage)) !== null) {
         const selector = match[1];
         const isClassSelector = selector.startsWith('.');
-        const isDataTestId = selector.includes('[data-testid');
-        const isAriaLabel = selector.includes('[aria-');
-        
+
         issues.push({
             type: 'Element Not Found',
-            category: 'Selector Issue',
+            category: category,
             severity: isClassSelector ? 'high' : 'medium',
             selector: selector,
-            recommendation: isClassSelector 
+            recommendation: isClassSelector
                 ? `Fragile CSS class selector "${selector}" not found. Consider:\n  1. Add data-testid attribute for stability\n  2. Check if UI has changed\n  3. Verify element is actually rendered\n  4. Check if feature is behind a feature flag`
                 : `Element "${selector}" not found. Check if:\n  1. Element exists in current UI state\n  2. Navigation is complete before searching\n  3. Element requires specific user permissions`,
             test: testTitle,
@@ -155,19 +163,19 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     
     // Pattern 3: Complex MUI class chains (fragile selectors in error details)
     const muiClassPattern = /<([a-z]+)\.([^>]*MuiButton[^>]*|[^>]*MuiTypography[^>]*|[^>]*MuiSheet[^>]*|[^>]*MuiDrawer[^>]*|[^>]*css-[a-z0-9]+[^>]*)>/gi;
-    
+
     while ((match = muiClassPattern.exec(errorMessage)) !== null) {
         const fullElement = match[0];
         const elementTag = match[1];
         const classString = match[2];
-        
+
         // Check if element has many classes (indicating fragile selector)
         const classCount = (classString.match(/\./g) || []).length;
-        
+
         if (classCount >= 3) {
             issues.push({
                 type: 'Fragile CSS Selector',
-                category: 'Selector Issue',
+                category: category,
                 severity: 'high',
                 selector: fullElement,
                 recommendation: `Complex MUI selector detected for <${elementTag}>. Recommend:\n  1. Add data-testid="${elementTag.toLowerCase()}-[purpose]"\n  2. Use semantic HTML with aria-label\n  3. Target by role and accessible name`,
@@ -183,9 +191,10 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     const coveredPattern = /is not visible because it's being covered by another element:\s*`<([^>]+)>`/i;
     if ((match = coveredPattern.exec(errorMessage)) !== null) {
         const coveringElement = match[1];
+
         issues.push({
             type: 'Element Covered',
-            category: 'Visibility Issue',
+            category: category,
             severity: 'medium',
             coveringElement: coveringElement,
             recommendation: `Element is covered by ${coveringElement}. Solutions:\n  1. Close overlays/modals before clicking\n  2. Use {force: true} if intentional (not recommended)\n  3. Wait for animations to complete\n  4. Check z-index layering issues`,
@@ -198,13 +207,13 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     // Pattern 5: Elements with display:none or visibility issues
     const displayNonePattern = /has CSS property:\s*`display: none`/i;
     const positionFixedPattern = /has CSS property:\s*`position: fixed`.*being covered/i;
-    
+
     if (displayNonePattern.test(errorMessage)) {
         const elementMatch = /<([a-z]+)[^>]*>/i.exec(errorMessage);
         if (elementMatch) {
             issues.push({
                 type: 'Element Hidden',
-                category: 'Visibility Issue',
+                category: category,
                 severity: 'high',
                 selector: elementMatch[0],
                 recommendation: `Element is hidden (display: none). Check:\n  1. Ensure parent containers are expanded/visible\n  2. Wait for conditional rendering\n  3. Verify feature flags or permissions\n  4. Check if element is in collapsed accordion/drawer`,
@@ -217,7 +226,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     } else if (positionFixedPattern.test(errorMessage)) {
         issues.push({
             type: 'Fixed Position Element Covered',
-            category: 'Visibility Issue',
+            category: category,
             severity: 'medium',
             recommendation: `Fixed position element is covered. Likely causes:\n  1. Modal backdrop is still visible\n  2. Drawer/sidebar not fully closed\n  3. Need to dismiss overlay before proceeding`,
             test: testTitle,
@@ -225,13 +234,13 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             timestamp: new Date().toISOString()
         });
     }
-    
+
     // Pattern 6: Expected element to be visible but it's not
     const expectedVisiblePattern = /expected.*to be 'visible'/i;
     if (expectedVisiblePattern.test(errorMessage) && issues.length === 0) {
         issues.push({
             type: 'Element Not Visible',
-            category: 'Visibility Issue',
+            category: category,
             severity: 'medium',
             recommendation: `Element exists but is not visible. Check:\n  1. CSS visibility/opacity properties\n  2. Element is within viewport\n  3. Parent containers are expanded\n  4. Animations have completed`,
             test: testTitle,
@@ -246,7 +255,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         const timeout = match[1];
         issues.push({
             type: 'Timeout',
-            category: 'Performance',
+            category: category,
             severity: 'medium',
             timeout: timeout,
             recommendation: `Operation timed out after ${timeout}ms. Consider:\n  1. Increase timeout for slow operations (AI responses)\n  2. Check network connectivity\n  3. Verify backend service is responding\n  4. Check if element selector changed`,
@@ -268,7 +277,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         if (streamingPattern.test(coreMessage)) {
             issues.push({
                 type: 'AI Response - Streaming Timeout',
-                category: 'Performance',
+                category: category,
                 severity: 'high',
                 errorMessage: coreMessage,
                 recommendation: `AI response streaming did not complete in time.\n\nPossible causes:\n  1. Response is taking too long to generate\n  2. Streaming may have stalled or stopped\n  3. Network connectivity issues\n  4. Backend service timeout\n  5. Text stability check is too strict\n\nRecommendations:\n  - Increase timeout in verifyAnswers options\n  - Check backend logs for AI service errors\n  - Verify network stability\n  - Review text stability logic (may need adjustment)\n  - Check if this is a consistently slow prompt`,
@@ -286,15 +295,15 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             console.log(`[Test Quality] Expected answers: ${expectedAnswers}`);
             console.log(`[Test Quality] Selector: ${selector}`);
             console.log(`[Test Quality] Is AI Response: ${isAIResponse}`);
-            
+
             issues.push({
                 type: isAIResponse ? 'AI Response Validation - Streaming Issue' : 'Content Validation Failed',
-                category: 'Data Validation',
+                category: category,
                 severity: 'high',
                 expectedAnswers: expectedAnswers.split(',').map(a => a.trim()),
                 selector: selector,
                 errorMessage: coreMessage,
-                recommendation: isAIResponse 
+                recommendation: isAIResponse
                     ? `AI response validation failed. None of the expected answers [${expectedAnswers}] were found in ${selector}.\n\nPossible causes:\n  1. Streaming not complete - Response still generating (most common)\n  2. AI model didn't include expected keywords in response\n  3. Prompt in fixtures/prompts.json needs adjustment\n  4. Model doesn't support this type of query\n  5. File upload (if applicable) wasn't processed correctly\n\nRecommendations:\n  - Verify streaming completion logic in verifyAnswers\n  - Check if AI response contains ANY relevant content\n  - Review prompt quality and expected answers\n  - Try with a more deterministic prompt`
                     : `Content validation failed. None of [${expectedAnswers}] found in ${selector}. Check:\n  1. Verify content is rendered\n  2. Ensure sufficient wait time\n  3. Check if selector is correct\n  4. Review expected values in test data`,
                 test: testTitle,
@@ -307,10 +316,10 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const expectedContent = match[1];
             const withinElement = match[2];
             const isAIResponse = coreMessage.includes('ai-response') || withinElement.includes('ai-response');
-            
+
             issues.push({
                 type: isAIResponse ? 'AI Response Validation - Content Missing' : 'Assertion Failure - Content Not Found',
-                category: isAIResponse ? 'Data Validation' : 'Assertion Error',
+                category: category,
                 severity: 'high',
                 expectedContent: expectedContent,
                 selector: withinElement,
@@ -328,7 +337,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const expectedContent = match[1];
             issues.push({
                 type: 'Assertion Failure - Content Not Found',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'high',
                 expectedContent: expectedContent,
                 errorMessage: coreMessage,
@@ -342,7 +351,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if (/(?:fetch failed|network error|network request failed|cors|failed to fetch|ERR_CONNECTION)/i.test(coreMessage)) {
             issues.push({
                 type: 'Network/API Error',
-                category: 'Performance',
+                category: category,
                 severity: 'high',
                 errorMessage: coreMessage,
                 recommendation: `Network or API request failed.\n\nPossible causes:\n  1. Backend service is down or unreachable\n  2. Network connectivity issues\n  3. CORS configuration problems\n  4. API endpoint changed or invalid\n  5. Request timeout\n\nRecommendations:\n  - Check if backend services are running\n  - Verify API endpoints are correct\n  - Review network logs in browser DevTools\n  - Check CORS configuration if cross-origin\n  - Increase timeout if request is slow`,
@@ -355,7 +364,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if (/(?:upload|file).*(?:failed|error|invalid)/i.test(coreMessage) || /invalid file type|file size|file format/i.test(coreMessage)) {
             issues.push({
                 type: 'File Upload Error',
-                category: 'Data Validation',
+                category: category,
                 severity: 'high',
                 errorMessage: coreMessage,
                 recommendation: `File upload operation failed.\n\nPossible causes:\n  1. File type not supported\n  2. File size exceeds limit\n  3. File path incorrect in test\n  4. Upload endpoint error\n  5. Missing file in fixtures\n\nRecommendations:\n  - Verify file exists in cypress/fixtures/\n  - Check file type is supported\n  - Review file size limits\n  - Check upload API endpoint\n  - Review backend logs for upload errors`,
@@ -368,7 +377,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if (/(?:401|403|unauthorized|forbidden|authentication|not authenticated|login required|permission denied|access denied)/i.test(coreMessage)) {
             issues.push({
                 type: 'Authentication/Authorization Error',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'high',
                 errorMessage: coreMessage,
                 recommendation: `Authentication or authorization failed.\n\nPossible causes:\n  1. User not logged in or session expired\n  2. Invalid credentials in test data\n  3. Insufficient permissions for operation\n  4. Token expired or invalid\n  5. Auth state not properly set up\n\nRecommendations:\n  - Verify login is successful before this test\n  - Check credentials in fixtures/accounts.json\n  - Review user permissions/roles\n  - Check if auth token is being sent\n  - Ensure beforeEach login hook is working`,
@@ -388,7 +397,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: 'Assertion Failure - Boolean',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'high',
                 expected: expected,
                 actual: actual,
@@ -407,7 +416,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: 'Assertion Failure - State',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'medium',
                 subject: subject,
                 expectedState: expectedState,
@@ -426,7 +435,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: 'Assertion Failure - Equality',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'high',
                 expected: expected,
                 actual: actual,
@@ -446,7 +455,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: 'Assertion Failure - Collection',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'medium',
                 subject: subject,
                 assertionType: assertion,
@@ -466,7 +475,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: `Assertion Failure - ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-                category: 'Assertion Error',
+                category: category,
                 severity: 'medium',
                 subject: subject,
                 expected: expected,
@@ -484,7 +493,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: 'Assertion Failure - Existence',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'high',
                 subject: subject,
                 shouldNotExist: shouldNotExist,
@@ -504,7 +513,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             
             issues.push({
                 type: 'Assertion Failure - General',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'medium',
                 subject: subject,
                 expectation: expectation,
@@ -519,7 +528,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else {
             issues.push({
                 type: 'Assertion Failure - Unknown',
-                category: 'Assertion Error',
+                category: category,
                 severity: 'medium',
                 errorMessage: coreMessage,
                 recommendation: `Assertion failed. Review the error message:\n"${coreMessage.substring(0, 200)}..."\n\nCheck:\n  1. Review the custom assertion message for clues\n  2. Verify test expectations\n  3. Check if this is a custom chai assertion\n  4. Ensure test setup is correct`,

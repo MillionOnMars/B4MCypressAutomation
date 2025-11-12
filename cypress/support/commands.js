@@ -79,3 +79,30 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
             .should('be.visible');
     }
 });
+
+/**
+ * Mark the beginning of final assertions/checks in a test
+ * Any failures that occur after cy.finalCheck() will be categorized as "Likely Bug"
+ * Any failures before cy.finalCheck() will be categorized as "Selector Issue"
+ *
+ * @example
+ * // Example usage:
+ * cy.get('[data-testid="login"]').click(); // If this fails = Selector Issue
+ * cy.finalCheck().contains("Welcome").should('be.visible'); // If this fails = Likely Bug
+ *
+ * @example
+ * // Chain multiple assertions:
+ * cy.finalCheck()
+ *   .get('[data-testid="result"]')
+ *   .should('contain', 'Success')
+ *   .and('be.visible');
+ */
+Cypress.Commands.add('finalCheck', () => {
+    // Set a flag indicating we're in the final check phase
+    // Set it synchronously before returning
+    Cypress.env('inFinalCheck', true);
+    cy.log('🎯 Final Check Phase - failures marked as Likely Bug');
+
+    // Return cy to allow chaining
+    return cy;
+});
