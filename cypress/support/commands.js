@@ -98,11 +98,9 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
  *   .and('be.visible');
  */
 Cypress.Commands.add('finalCheck', () => {
-    // Set a flag indicating we're in the final check phase
-    // Set it synchronously before returning
+    // Set a flag indicating we're in the final check phase synchronously
     Cypress.env('inFinalCheck', true);
-    cy.log('🎯 Final Check Phase - failures marked as Likely Bug');
 
-    // Return cy to allow chaining
-    return cy;
+    // Log and return document to allow chaining
+    return cy.log('🎯 Final Check Phase - failures marked as Likely Bug').document();
 });
