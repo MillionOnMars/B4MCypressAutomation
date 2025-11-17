@@ -881,9 +881,8 @@ class Notebook {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
             uploadFile(promptType);
-            fileOperation('addFile', promptType);
-            sendPrompt(promptType, promptNo, model);
             checkFileSide(promptType);
+            sendPrompt(promptType, promptNo, model);
         });
     }
     static createNotebookWithAverage(prompt, model) {

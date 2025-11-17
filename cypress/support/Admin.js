@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 20000;
 
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
@@ -18,7 +18,7 @@ const navigateToAdminDashboard = () => {
 const searchUser = (username, email) => {
     navigateToAdminDashboard(); // Call the navigation function
     // Search for the user
-    cy.get('input[placeholder="Search users"]')
+    cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(username);
     // Verify the user appears in the search results

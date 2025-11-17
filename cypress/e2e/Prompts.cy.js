@@ -10,6 +10,10 @@ describe("Prompts", () => {
       cy.fixture("accounts.json").then((accounts) => {
       const { username, password } = accounts.existingUsers.admin;
       login(username, password);
+        // create a new notebook
+        cy.xpath("//button[normalize-space()='Chat']", { timeout: 60000 })
+          .should('be.visible')
+          .click();
     });
   });
 
