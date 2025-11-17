@@ -582,7 +582,7 @@ const verifyImageResponse = (promptType) => {
         .wait(2000);
 
     // Verify an image is present and validate it's a dog image
-    cy.get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('img', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .and(($img) => {

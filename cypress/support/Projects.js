@@ -589,7 +589,7 @@ class Projects {
 
     static createProject(projectName) {
         it('Should create a new project', () => {
-            checkAndDeleteProjectIfExists('Renamed Test Project')
+            // checkAndDeleteProjectIfExists('Renamed Test Project')
             createProject(projectName);
         });
     }
