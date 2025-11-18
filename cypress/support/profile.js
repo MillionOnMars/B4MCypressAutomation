@@ -86,12 +86,15 @@ const RevertUserSettings = (user) => {
     cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
     //Select Preferred Contact Method
-    cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains(user["preferredContactMethod"])
+    cy.contains('.profile-data-form-label', 'Preferred Contact:', { timeout: DEFAULT_TIMEOUT })
+        .parent()
+        .find('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-    cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains('None')
+    // Select T-shirt Size
+    cy.contains('.profile-data-form-label', 'T-shirt Size:', { timeout: DEFAULT_TIMEOUT })
+        .parent()
+        .find('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click Save Changes

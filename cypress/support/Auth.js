@@ -3,7 +3,18 @@ const TIMEOUT = 30000;
 // Navigate to the login page
 const navigateToLoginPage = () => {
     cy.visit(Cypress.env('appUrl'));
-    cy.url({ timeout: TIMEOUT }).should('contain', '/login');
+    // check the url
+    // if the url is not /login, then logout the user
+    cy.url({ timeout: TIMEOUT }).then((url) => {
+        if (!url.includes('/login')) {
+            // User is logged in, need to logout first
+            logoutUser();
+            cy.url({ timeout: TIMEOUT }).should('contain', '/login');
+        } else {
+            // Already on login page, just verify
+            cy.url({ timeout: TIMEOUT }).should('contain', '/login');
+        }
+    });
 };
 
 // Authenticate a user with provided credentials
@@ -70,8 +81,8 @@ class Auth {
     static userLogout() {
         it('Should log out a user successfully', () => {
             cy.fixture('accounts.json').then((accounts) => {
-                const shareUser = accounts.existingUsers['auto-share'];
                 navigateToLoginPage();
+                const shareUser = accounts.existingUsers['auto-share'];
                 authenticateUser(shareUser.username, shareUser.password);
                 verifySuccessfulLogin(shareUser.username);
                 logoutUser();

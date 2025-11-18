@@ -188,8 +188,15 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data including RepRate using jq
-          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime), success rate: \(.RepRate)") | join("\n")' cypress/fixtures/credits.json)
+          # Format credits data including RepRate using jq (objects only, skip malformed entries)
+          CREDITS=$(jq -r '
+            [.[]?
+             | select(type == "object")
+             | "\(.textModel // "Unknown model"), credits: \(.Credits // "n/a"), avgtime: \(.ResponseTime // "n/a"), success rate: \(.RepRate // "n/a")"
+            ]
+            | del(.[] | select(. == null))
+            | join("\n")
+          ' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
@@ -219,8 +226,17 @@ jobs:
       run: |
         SLOW=false
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Extract and check if any ResponseTime > 15, handling null values
-          SLOW_COUNT=$(jq '[.[] | select(.ResponseTime != null) | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 15)] | length' cypress/fixtures/credits.json)
+          # Extract and check if any ResponseTime > 15, handling null values and malformed entries
+          SLOW_COUNT=$(
+            jq '[.[]?
+                 | select(type == "object" and .ResponseTime != null)
+                 | .ResponseTime
+                 | sub(" secs.";"")
+                 | select(test("^[0-9]+(\\.[0-9]+)?$"))
+                 | tonumber
+                 | select(. > 15)
+                ] | length' cypress/fixtures/credits.json
+          )
           
           echo "Found $SLOW_COUNT slow responses (>15 sec)"
           
@@ -251,7 +267,16 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          HIGH=$(jq '[.[] | select(.Credits|tonumber == 0 or .Credits|tonumber >= 20)] | length' cypress/fixtures/credits.json)
+          HIGH=$(
+            jq '[.[]?
+                 | select(type == "object" and (.Credits != null))
+                 | .Credits
+                 | tostring
+                 | select(test("^-?[0-9]+(\\.[0-9]+)?$"))
+                 | tonumber
+                 | select(. == 0 or . >= 20)
+                ] | length' cypress/fixtures/credits.json
+          )
           if [ "$HIGH" -gt 0 ]; then
             echo "high=true" >> $GITHUB_OUTPUT
             echo "$HIGH entries used 0 credits or 20+ credits."

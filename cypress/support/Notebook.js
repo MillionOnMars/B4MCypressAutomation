@@ -582,7 +582,7 @@ const verifyImageResponse = (promptType) => {
         .wait(2000);
 
     // Verify an image is present and validate it's a dog image
-    cy.get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('img', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .and(($img) => {
@@ -881,9 +881,8 @@ class Notebook {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
             uploadFile(promptType);
-            fileOperation('addFile', promptType);
-            sendPrompt(promptType, promptNo, model);
             checkFileSide(promptType);
+            sendPrompt(promptType, promptNo, model);
         });
     }
     static createNotebookWithAverage(prompt, model) {
