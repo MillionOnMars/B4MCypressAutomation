@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 20000;
 
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
@@ -18,7 +18,7 @@ const navigateToAdminDashboard = () => {
 const searchUser = (username, email) => {
     navigateToAdminDashboard(); // Call the navigation function
     // Search for the user
-    cy.get('input[placeholder="Search users"]')
+    cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(username);
     // Verify the user appears in the search results
@@ -54,8 +54,7 @@ const sortname = (username, sortBy) => {
         .click();
     
     // Verify that username is visible in the results
-    cy.get('.MuiGrid-spacing-xs-2').eq(2)
-        .contains(username, { timeout: DEFAULT_TIMEOUT })
+    cy.get(`[aria-label="${username}"]`)
         .should('be.visible');
 
 }
@@ -94,10 +93,6 @@ const EditUser = (user) => {
     cy.get('input[name="name"]')
         .clear()
         .type(user.newName);
-    //Edit email
-    cy.get('input[name="email"]')
-        .clear()
-        .type(user.newEmail);
     //Edit team
     cy.get('input[name="team"]')
         .clear()

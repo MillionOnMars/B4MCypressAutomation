@@ -58,7 +58,7 @@ const validateAgentPrompt = (agentName, promptType, model) => {
         });
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
@@ -105,7 +105,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .click();
 
             //click generate button to auto fill
-            cy.contains('Generate Being with Purpose', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('Auto Fill', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click();
 
@@ -140,7 +140,7 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .type(newName);
 
             // Click update agent button
-            cy.contains('.MuiButton-sizeMd', 'Update Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('.MuiButton-sizeMd', 'Save Changes', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should('be.visible')
                 .click();
@@ -157,10 +157,29 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .should('be.visible')
                 .click({ force: true });
 
-            // Click delete button
-            cy.contains('Delete', { timeout: DEFAULT_TIMEOUT })
+            // Find the Edit button and click the three-dot menu closest to it
+            cy.contains('button', 'Edit', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .click();
+                .parent() // Get the container with both Edit and menu button
+                .find('[data-testid="MoreVertIcon"]')
+                .first()
+                .click({ force: true });
+
+            // Click Delete from the dropdown menu
+            cy.get('ul[role="menu"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .contains('li', 'Delete')
+                .should('be.visible')
+                .click({ force: true });
+
+            // Confirm deletion in modal
+            cy.get('[role="alertdialog"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .within(() => {
+                    cy.contains('button', /Delete|Confirm/i)
+                        .should('be.visible')
+                        .click();
+                });
 
             // Verify success message
             cy.contains('Agent deleted successfully', { timeout: DEFAULT_TIMEOUT })

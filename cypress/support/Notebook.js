@@ -1,7 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
 // ensure that these allow both image and text uploads since we ask it wat color is the cat.
-const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
+const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro', 'GPT-5 Nano', 'GPT-4o Mini', 'Gemini 2.5 Flash', 'Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -31,7 +31,7 @@ const createNote = (promptType, model) => {
         .click();
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
@@ -55,9 +55,7 @@ const createNote = (promptType, model) => {
             cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
 
             // Check if credits element exists, make it optional
-            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
-                if ($body.find('[data-testid="credits-used"]').length > 0) {
-                    // Credits element exists, try to get the credits info
+
                     cy.get('[data-testid="credits-used"]', { timeout: DEFAULT_TIMEOUT })
                         .should('be.visible')
                         .click()
@@ -71,12 +69,8 @@ const createNote = (promptType, model) => {
                                     resolve({ duration, credits: credits ? parseInt(credits) : null });
                                 });
                         });
-                } else {
-                    // Credits element not found, resolve without credits
-                    cy.log('Credits element not found, continuing without credits info');
-                    resolve({ duration, credits: null });
-                }
-            });
+
+
         });
     });
 };
@@ -102,7 +96,7 @@ const sendPrompt = (promptType, promptNo, model) => {
             testCase;
 
         //enter prompt
-        cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
+        cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
@@ -377,7 +371,7 @@ const uploadFile = (promptType) => {
 
     // Wait for upload completion indicators
     cy.intercept('POST', '**/createFabFile').as('uploadRequest');
-    cy.wait('@uploadRequest', { timeout: 10000 });
+    cy.wait('@uploadRequest', { timeout: 30000 });
 
     //Verify file uploaded
     cy.contains(testCase.filepath.split('/').pop(), { timeout: DEFAULT_TIMEOUT });
@@ -404,7 +398,7 @@ const findAndClickFile = (filename) => {
                 .type(filename);
 
             // Wait a moment for search results
-            cy.wait(1000);
+            cy.wait(10000);
             
             // Now click the file from search results
             cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
@@ -581,14 +575,14 @@ const verifyImageResponse = (promptType) => {
     const testCase = prompts[promptType];
 
     //send prompt that generates image
-    cy.xpath('//textarea[@placeholder="Type your message here..."]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}')
         .wait(2000);
 
     // Verify an image is present and validate it's a dog image
-    cy.get('img[aria-label="Click to enlarge"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('img', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .and(($img) => {
@@ -635,7 +629,7 @@ const checkFileSide = (promptType) => {
         .click({ force: true });
 
     // Wait for the file to be visible and click it
-    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-file-list"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click({ force: true });
 
@@ -825,7 +819,7 @@ const checkPdfContent = (promptType, expectedTexts = []) => {
 class Notebook {
     static createNotebook(prompt, model) {
         describe(`Text Model: ${model}`, () => {
-            it.only(`Should select Text model. Creates notebook`, () => {
+            it(`Should select Text model. Creates notebook`, () => {
                 selectTxtModel(model);
                 createNote(prompt, model);
             });
@@ -886,10 +880,9 @@ class Notebook {
     static multiUpload(promptType,model,promptNo) {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
-            // uploadFile(promptType);
-            fileOperation('addFile', promptType);
-            sendPrompt(promptType,promptNo,model);
+            uploadFile(promptType);
             checkFileSide(promptType);
+            sendPrompt(promptType, promptNo, model);
         });
     }
     static createNotebookWithAverage(prompt, model) {

@@ -36,7 +36,7 @@ const signUpUser = () => {
     cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
-    cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
+    cy.get('[data-testid="signup-text"]', { timeout: 10000 }).should('be.visible').click();
 
     cy.wait(2000); // Wait for 2 seconds to ensure the page loads
 
@@ -67,7 +67,7 @@ const signUpWithInvalidEmail = () => {
     cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
-    cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
+    cy.get('[data-testid="signup-text"]', { timeout: 10000 }).should('be.visible').click();
 
     cy.wait(2000); // Wait for 2 seconds to ensure the page loads
 
@@ -90,7 +90,7 @@ const signUpWithMismatchedPasswords = () => {
     cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
-    cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
+    cy.get('[data-testid="signup-text"]', { timeout: 10000 }).should('be.visible').click();
 
     // Verify we're on the signup page
     verifyPage('register'); 
@@ -113,7 +113,7 @@ const signUpWithLess8CharPass = () => {
     cy.visit(Cypress.env('appUrl'))
 
     // Click on the signup button
-    cy.get('.css-1uc3zfw', { timeout: 10000 }).should('be.visible').click();
+    cy.get('[data-testid="signup-text"]', { timeout: 10000 }).should('be.visible').click();
 
     // Verify we're on the signup page
     verifyPage('register'); 

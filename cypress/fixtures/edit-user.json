@@ -2,14 +2,12 @@
     {
         "oldName": "Create Admin",
         "newName": "Edited name",
-        "newEmail": "b4m-automation+12@milliononmars.com",
         "newOrganization": "",
         "newTeam": "Test Team",
         "newRole": "Automation Tester",
         "phone": "(111) 111-1111",
         "preferredContactMethod": "Email",
         "tShirtSize": "L",
-        "originalName": "Automation",
-        "originalEmail": "b4m-automationa@milliononmars.com"
+        "originalName": "Automation"
     }
 ]

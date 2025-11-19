@@ -277,7 +277,7 @@ const createNotebook = (promptType, projectName) => {
         .click();
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
@@ -589,7 +589,7 @@ class Projects {
 
     static createProject(projectName) {
         it('Should create a new project', () => {
-            checkAndDeleteProjectIfExists('Renamed Test Project')
+            // checkAndDeleteProjectIfExists('Renamed Test Project')
             createProject(projectName);
         });
     }
