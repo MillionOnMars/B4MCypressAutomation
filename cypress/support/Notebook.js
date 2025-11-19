@@ -118,11 +118,28 @@ const sendPrompt = (promptType, promptNo, model) => {
 };
 
 const renameNote = (newName) => {
-    // Click the notebook item in the sidebar
+    // Check if any notebook is currently selected/active
     cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
         .first()
-        .should('be.visible')
-        .click();
+        .then($button => {
+            // Check for active/selected state using various possible class names or attributes
+            const isSelected = $button.hasClass('Mui-selected') || 
+                             $button.attr('aria-selected') === 'true' ||
+                             $button.hasClass('active');
+            
+            if (!isSelected) {
+                // Click the notebook if not already selected
+                cy.log('Notebook not selected, clicking to select');
+                // Use scrollIntoView and force click to handle visibility issues
+                cy.get('[data-testid="sidenav-item-session-button"]')
+                    .first()
+                    .scrollIntoView()
+                    .click({ force: true });
+                cy.wait(500); // Wait for selection to take effect
+            } else {
+                cy.log('Notebook already selected');
+            }
+        });
 
     // Force click the menu button
     cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
@@ -146,11 +163,22 @@ const renameNote = (newName) => {
 };
 
 const editNotebookInfo = (tags) => {
-    // Click notebook to open/select it
-    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
-        .first()
-        .should('be.visible')
-        .click();
+    // Check if the menu button is already visible (indicates notebook is selected)
+    cy.get('body').then($body => {
+        const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
+        
+        if ($menuButton.length === 0) {
+            // Menu button not visible, need to select notebook first
+            cy.log('Menu button not visible, selecting notebook');
+            cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+                .first()
+                .scrollIntoView()
+                .click({ force: true });
+            cy.wait(500); // Wait for menu button to appear
+        } else {
+            cy.log('Notebook already selected (menu button visible)');
+        }
+    });
 
     // Click ellipsis menu button
     cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
@@ -168,13 +196,14 @@ const editNotebookInfo = (tags) => {
         .clear()
         .type(tags);
     
-    // Click "Add Tag" button (avoid XPath, use data-testid or better selector)
+    // Click "Add Tag" button
     cy.contains('button', 'Add Tag', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
-    // Verify tag was added (removed the hardcoded "100" suffix - seems like a bug?)
+    // Verify tag was added
     cy.contains('.session-metadata-tag', tags, { timeout: DEFAULT_TIMEOUT })
+        .scrollIntoView({ easing: 'linear', duration: 500 })
         .should('be.visible');
 
     // Close the info modal/panel
@@ -186,11 +215,22 @@ const editNotebookInfo = (tags) => {
 };
 
 const deleteNote = (name) => {
-    // Click notebook to open/select it
-    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
-        .first()
-        .should('be.visible')
-        .click();
+    // Check if the menu button is already visible (indicates notebook is selected)
+    cy.get('body').then($body => {
+        const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
+        
+        if ($menuButton.length === 0) {
+            // Menu button not visible, need to select notebook first
+            cy.log('Menu button not visible, selecting notebook');
+            cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+                .first()
+                .scrollIntoView()
+                .click({ force: true });
+            cy.wait(500); // Wait for menu button to appear
+        } else {
+            cy.log('Notebook already selected (menu button visible)');
+        }
+    });
 
     // Click ellipsis menu button (force click if visibility is conditional)
     cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
