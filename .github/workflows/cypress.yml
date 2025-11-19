@@ -112,6 +112,60 @@ jobs:
           echo "No consoleErrors.json found"
         fi
 
+    - name: Get quality issues
+      id: selector-quality
+      if: always()
+      run: |
+        if [ -f "cypress/reports/testQuality.json" ]; then
+          TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/testQuality.json)
+          
+          # By Category
+          SELECTOR_ISSUES=$(jq -r '.summary.selectorIssues' cypress/reports/testQuality.json)
+          DATA_VALIDATION=$(jq -r '.summary.dataValidation' cypress/reports/testQuality.json)
+          VISIBILITY_ISSUES=$(jq -r '.summary.visibilityIssues' cypress/reports/testQuality.json)
+          PERFORMANCE=$(jq -r '.summary.performance' cypress/reports/testQuality.json)
+          ASSERTION_ERRORS=$(jq -r '.summary.assertionErrors' cypress/reports/testQuality.json)
+          
+          # Extract top 3 specific issues for Slack (prioritize high severity)
+          SPECIFIC_ISSUES=$(jq -r '
+            [.issues[] | select(.severity == "high")] as $high |
+            [.issues[] | select(.severity == "medium")] as $medium |
+            ($high + $medium)[0:3] |
+            map("⚠️ \(.test) -> \(.category)") |
+            join("\n")
+          ' cypress/reports/testQuality.json)
+          
+          # Escape newlines for GitHub Actions output
+          SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
+          
+          echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
+          
+          # By Category
+          echo "selectorIssues=$SELECTOR_ISSUES" >> "$GITHUB_OUTPUT"
+          echo "dataValidation=$DATA_VALIDATION" >> "$GITHUB_OUTPUT"
+          echo "visibilityIssues=$VISIBILITY_ISSUES" >> "$GITHUB_OUTPUT"
+          echo "performance=$PERFORMANCE" >> "$GITHUB_OUTPUT"
+          echo "assertionErrors=$ASSERTION_ERRORS" >> "$GITHUB_OUTPUT"
+          echo "examples=$SPECIFIC_ISSUES" >> "$GITHUB_OUTPUT"
+
+          echo "Found $TOTAL_ISSUES test quality issues"
+          echo "  By Category:"
+          echo "    - Selector Issues: $SELECTOR_ISSUES"
+          echo "    - Data Validation: $DATA_VALIDATION"
+          echo "    - Visibility Issues: $VISIBILITY_ISSUES"
+          echo "    - Performance: $PERFORMANCE"
+          echo "    - Assertion Errors: $ASSERTION_ERRORS"
+        else
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          echo "selectorIssues=0" >> "$GITHUB_OUTPUT"
+          echo "dataValidation=0" >> "$GITHUB_OUTPUT"
+          echo "visibilityIssues=0" >> "$GITHUB_OUTPUT"
+          echo "performance=0" >> "$GITHUB_OUTPUT"
+          echo "assertionErrors=0" >> "$GITHUB_OUTPUT"
+          echo "examples=" >> "$GITHUB_OUTPUT"
+          echo "No testQuality.json found"
+        fi
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
@@ -124,6 +178,7 @@ jobs:
           cypress/videos/**/*.mp4
           cypress/fixtures/credits.json
           cypress/reports/consoleErrors.json
+          cypress/reports/testQuality.json
           cypress/reports/results.json
         if-no-files-found: warn
         retention-days: 14
@@ -133,8 +188,15 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data including RepRate using jq
-          CREDITS=$(jq -r 'map("\(.textModel), credits: \(.Credits), avgtime: \(.ResponseTime), success rate: \(.RepRate)") | join("\n")' cypress/fixtures/credits.json)
+          # Format credits data including RepRate using jq (objects only, skip malformed entries)
+          CREDITS=$(jq -r '
+            [.[]?
+             | select(type == "object")
+             | "\(.textModel // "Unknown model"), credits: \(.Credits // "n/a"), avgtime: \(.ResponseTime // "n/a"), success rate: \(.RepRate // "n/a")"
+            ]
+            | del(.[] | select(. == null))
+            | join("\n")
+          ' cypress/fixtures/credits.json)
           # Escape newlines for GitHub Actions output
           CREDITS="${CREDITS//$'\n'/'\n'}"
           echo "credits=$CREDITS" >> $GITHUB_OUTPUT
@@ -153,7 +215,7 @@ jobs:
           {
             "username": "GitHub Actions",
             "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n  📍 Selector Issues: {1}\n  📊 Data Validation: {2}\n  👁️ Visibility Issues: {3}\n  ⚡ Performance: {4}\n  ❗ Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -164,8 +226,17 @@ jobs:
       run: |
         SLOW=false
         if [ -f "cypress/fixtures/credits.json" ]; then
-          # Extract and check if any ResponseTime > 15, handling null values
-          SLOW_COUNT=$(jq '[.[] | select(.ResponseTime != null) | .ResponseTime | sub(" secs.";"") | tonumber | select(. > 15)] | length' cypress/fixtures/credits.json)
+          # Extract and check if any ResponseTime > 15, handling null values and malformed entries
+          SLOW_COUNT=$(
+            jq '[.[]?
+                 | select(type == "object" and .ResponseTime != null)
+                 | .ResponseTime
+                 | sub(" secs.";"")
+                 | select(test("^[0-9]+(\\.[0-9]+)?$"))
+                 | tonumber
+                 | select(. > 15)
+                ] | length' cypress/fixtures/credits.json
+          )
           
           echo "Found $SLOW_COUNT slow responses (>15 sec)"
           
@@ -196,7 +267,16 @@ jobs:
       if: always()
       run: |
         if [ -f "cypress/fixtures/credits.json" ]; then
-          HIGH=$(jq '[.[] | select(.Credits|tonumber == 0 or .Credits|tonumber >= 20)] | length' cypress/fixtures/credits.json)
+          HIGH=$(
+            jq '[.[]?
+                 | select(type == "object" and (.Credits != null))
+                 | .Credits
+                 | tostring
+                 | select(test("^-?[0-9]+(\\.[0-9]+)?$"))
+                 | tonumber
+                 | select(. == 0 or . >= 20)
+                ] | length' cypress/fixtures/credits.json
+          )
           if [ "$HIGH" -gt 0 ]; then
             echo "high=true" >> $GITHUB_OUTPUT
             echo "$HIGH entries used 0 credits or 20+ credits."

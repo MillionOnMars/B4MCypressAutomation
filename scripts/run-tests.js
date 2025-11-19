@@ -66,13 +66,28 @@ async function runTests() {
             }
         });
 
-        // Wait for JSON reports to be written
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait for JSON reports and test quality files to be written
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Additional wait to ensure testQuality.json is fully written
+        const maxWaitTime = 10000; // 10 seconds max
+        const startWait = Date.now();
+        const qualityPath = path.join(reportsDir, 'testQuality.json');
+        while (!await fs.access(qualityPath).then(() => true).catch(() => false)) {
+            if (Date.now() - startWait > maxWaitTime) {
+                console.log('[Quality] Warning: testQuality.json not found after 10 seconds');
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        if (await fs.access(qualityPath).then(() => true).catch(() => false)) {
+            console.log('[Quality] testQuality.json found and ready to read');
+        }
 
         // Merge JSON reports using mochawesome-merge
         const { merge } = require('mochawesome-merge');
         const mergedJson = await merge({
-            files: [`${reportsDir}/*.json`]
+            files: [`${reportsDir}/mochawesome*.json`]
         });
 
         // Generate HTML report from merged JSON
@@ -94,10 +109,103 @@ async function runTests() {
             `• Model: ${credit.textModel}\n  ↳ Credits: ${credit.Credits}`
         ).join('\n');
 
+        // Read test quality report (separate from test failures)
+        let qualityReport = '';
+        let qualityIssues = '';
+        try {
+            console.log(`[Quality] Reading from: ${qualityPath}`);
+            const qualityData = await fs.readFile(qualityPath, 'utf8');
+            const quality = JSON.parse(qualityData);
+            console.log(`[Quality] Found ${quality.totalIssues} total issues`);
+            console.log(`[Quality] Summary:`, JSON.stringify(quality.summary, null, 2));
+            
+            if (quality.totalIssues > 0) {
+                const summary = quality.summary;
+                qualityReport = `🔍 *Code Quality Issues* (Selector/Performance)\n` +
+                    `• Total: ${quality.totalIssues} issues (🔴 ${summary.high || 0} High, 🟡 ${summary.medium || 0} Medium)\n` +
+                    `• Selector Issues: ${summary.selectorIssues || 0}\n` +
+                    `• Data Validation: ${summary.dataValidation || 0}\n` +
+                    `• Visibility Issues: ${summary.visibilityIssues || 0}\n` +
+                    `• Performance: ${summary.performance || 0}`;
+                
+                // Get top 3 high severity issues
+                const topIssues = quality.issues
+                    .filter(i => i.severity === 'high')
+                    .slice(0, 3)
+                    .map(issue => {
+                        // Format multiline recommendation with proper indentation
+                        const recLines = issue.recommendation.split('\n');
+                        const formattedRec = recLines.map((line, idx) => 
+                            idx === 0 ? line : `       ${line}`
+                        ).join('\n');
+                        return `  • *${issue.test}* [${issue.category}]\n    ${formattedRec}`;
+                    })
+                    .join('\n\n');
+                
+                if (topIssues) {
+                    qualityIssues = `\n\n*Top Quality Issues:*\n${topIssues}`;
+                }
+            } else {
+                qualityReport = `🔍 *Code Quality* ✅\n• No selector or performance issues detected!`;
+            }
+        } catch (error) {
+            console.error('[Quality] Error reading test quality file:', error.message);
+            qualityReport = `🔍 *Code Quality*\n• No quality report available`;
+        }
+
+        // Read console errors
+        let consoleErrorsReport = '';
+        try {
+            const errorsPath = path.join(reportsDir, 'consoleErrors.json');
+            const errorsData = await fs.readFile(errorsPath, 'utf8');
+            const errors = JSON.parse(errorsData);
+            
+            if (errors.totalErrors > 0) {
+                consoleErrorsReport = `\n\n*Console Errors* ⚠️\n• Total: ${errors.totalErrors}`;
+            }
+        } catch (error) {
+            // Console errors file might not exist
+        }
+
+        // Read saved results to get failure details
+        let failureDetails = '';
+        try {
+            const resultsPath = path.join(reportsDir, 'results.json');
+            const resultsData = await fs.readFile(resultsPath, 'utf8');
+            const savedResults = JSON.parse(resultsData);
+            
+            if (savedResults.failures && savedResults.failures.length > 0) {
+                // Group failures by spec
+                const failuresBySpec = {};
+                savedResults.failures.forEach(failure => {
+                    if (!failuresBySpec[failure.specName]) {
+                        failuresBySpec[failure.specName] = [];
+                    }
+                    failuresBySpec[failure.specName].push(failure);
+                });
+
+                // Format failures for Slack
+                const failureMessages = Object.keys(failuresBySpec).map(specName => {
+                    const specFailures = failuresBySpec[specName];
+                    const failureList = specFailures.map(f => {
+                        // Truncate error message to first line only
+                        const errorFirstLine = f.error.split('\n')[0].substring(0, 150);
+                        return `    ❌ ${f.testName}\n       ${errorFirstLine}`;
+                    }).join('\n');
+                    return `  📄 *${specName}*\n${failureList}`;
+                }).join('\n\n');
+
+                failureDetails = `\n\n*Failed Tests* ❌\n${failureMessages}`;
+            }
+        } catch (error) {
+            console.error('Error reading failure details:', error);
+        }
+
         // Format test results for each spec file
         const specResults = results.runs.map(run => {
-            return `• File: ${run.spec.name}\n  ↳ Total: ${run.stats.tests}\n  ↳ Passing: ${run.stats.passes}\n  ↳ Failing: ${run.stats.failures}`;
-        }).join('\n\n');
+            const status = run.stats.failures > 0 ? '❌' : '✅';
+            return `${status} *${run.spec.name}*\n  • Total: ${run.stats.tests} | Passed: ${run.stats.passes} | Failed: ${run.stats.failures}`;
+        }).join('\n');
 
         // Find available port
         const port = await findAvailablePort(8080);
@@ -131,6 +239,26 @@ async function runTests() {
         const reportUrl = `${publicUrl}/mochawesome.html`;
         console.log(`Public report URL: ${reportUrl}`);
 
+        // Build Slack message with clear sections
+        const slackMessage = [
+            `*🧪 Test Run Summary*`,
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `*Overall*: ${results.totalPassed}/${results.totalTests} passed ${results.totalFailed > 0 ? '❌' : '✅'}`,
+            `\n*Spec Files*`,
+            specResults,
+            failureDetails,
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `\n💳 *Credits Usage*`,
+            creditsResults,
+            consoleErrorsReport,
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `\n${qualityReport}`,
+            qualityIssues,
+            `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `\n📊 *Full Report*`,
+            `<${reportUrl}|View Detailed HTML Report> _(Available for 1 hour)_`
+        ].filter(Boolean).join('\n');
+
         // Send results to Slack with public URL
         await webhook.send({
             channel: '#b4m-automation-results',
@@ -141,7 +269,7 @@ async function runTests() {
                     type: "section",
                     text: {
                         type: "mrkdwn",
-                        text: `*Test Run Summary*\n${specResults}\n\n*Credits Usage*\n${creditsResults}\n\n*Overall Results*\n• Total: ${results.totalTests}\n• Passing: ${results.totalPassed}\n• Failing: ${results.totalFailed}\n\n*Full Report*\n<${reportUrl}|View Full Report> _(Report will be available for 1 hour)_`
+                        text: slackMessage
                     }
                 }
             ]

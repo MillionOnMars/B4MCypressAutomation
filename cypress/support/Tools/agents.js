@@ -26,7 +26,7 @@ const setAgentSettings = (settings, enable) => {
         .click({ force: true });
 };
 
-const validateAgentPrompt = (agentName, promptType, model) => {
+const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
@@ -40,12 +40,13 @@ const validateAgentPrompt = (agentName, promptType, model) => {
         .should('be.visible');
 
     // Click the "Agents" button
-    cy.contains('Agents', { timeout: 50000 })
+    cy.get('[data-testid="SmartToyIcon"]', { timeout: 50000 })
+        .first()
         .should('be.visible')
         .click();
 
     // Enable the agent by clicking on the agent name from the menu
-    cy.contains('ul[role="menu"].MuiMenu-root',agentName, { timeout: DEFAULT_TIMEOUT })
+    cy.contains('ul[role="menu"].MuiMenu-root', agentName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .parent() // Go to parent container
         .trigger('mouseover')
@@ -56,36 +57,48 @@ const validateAgentPrompt = (agentName, promptType, model) => {
                 .click();
         });
 
-    // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    // Verify the agent is enabled by checking the count badge
+    cy.get('.count-badge.MuiBox-root.css-s8b056', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .type(testCase.prompt)
+        .and('contain', '+1');
+
+    // Wait for the agent badge to stabilize
+    cy.wait(1000);
+
+    // Type the question in the textarea with optional trigger word
+    const messageToSend = triggerWord ? `${triggerWord} ${testCase.prompt}` : testCase.prompt;
+    cy.get('[data-testid="lexical-chat-input-container"]')
+        .should('be.visible')
+        .type(messageToSend)
         .type('{enter}');
     
     // Check if agent response is visible
-    cy.contains('Agent Response:', { timeout: 50000 })
+    cy.contains('Response:', { timeout: 50000 })
         .should('be.visible');
     //contains the agent name
     cy.contains(agentName, { timeout: 50000 }).should('be.visible');
-    // Validate the answer
-    cy.contains(testCase.answer, { timeout: 50000 }).should('be.visible');
+    // Validate the answer (supports both string and array with AND/OR logic)
+    cy.verifyAnswers(testCase.answer, {
+        logic: testCase.answerLogic || 'or',
+        selector: '[data-testid="ai-response"]',
+        timeout: 120000,
+        matchCase: false
+    });
     cy.log('Agent prompt validated successfully.');
 }
 
-
-
-const handleAgentOperations = (action, agentName, newName) => {
+const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto') => {
     // Click Agents tab
-    cy.get('[aria-label="Agents"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-agents-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .click();
+        .click({force: true});
 
     switch(action) {
         case 'create':
             // Click New Agent button
             cy.contains('button', 'New Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .click();
+                .click({force: true});
 
             // Input agent name
             cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
@@ -98,8 +111,20 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .type(agentName)
                 .click();
 
-            //click generate button to auto fill
-            cy.contains('Generate Being with Purpose', { timeout: DEFAULT_TIMEOUT })
+            // Input trigger word if provided
+            if (triggerWord) {
+                cy.get('input[placeholder="Add trigger word"]', { timeout: DEFAULT_TIMEOUT })
+                    .should('be.visible')
+                    .type(triggerWord);
+
+                //click add trigger word button
+                cy.contains('button', 'Add', { timeout: DEFAULT_TIMEOUT })
+                    .should('be.visible')
+                    .click();
+            }
+
+            // Click generate button to auto fill
+            cy.contains('Auto Fill', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click();
 
@@ -116,29 +141,25 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         case 'rename':     
-            // Click settings button
-            cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
-                .should('exist')
-                .click();
-
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
 
             // Click edit button
-            cy.contains('Edit', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('Edit Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .click();
+                .click({force: true});
 
             // Input new agent name
             cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
+                .scrollIntoView({ easing: 'linear', duration: 500 })
                 .clear()
                 .type(newName);
 
             // Click update agent button
-            cy.contains('.MuiButton-sizeMd', 'Update Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('.MuiButton-sizeMd', 'Save Changes', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should('be.visible')
                 .click();
@@ -149,20 +170,38 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         case 'delete':
-            // Click settings button
-            cy.get('.notebook-sidenav-agents-manage-button', { timeout: DEFAULT_TIMEOUT })
-                .should('exist')
-                .click();
-
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
 
-            // Click delete button
-            cy.contains('Delete', { timeout: DEFAULT_TIMEOUT })
+            // Wait for the agent details to load
+            cy.wait(500);
+
+            // Find the Edit Agent button and get its parent container
+            cy.contains('button', 'Edit Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .click();
+                .parent()
+                .parent() // Navigate up to find the container with both buttons
+                .find('button')
+                .last() // Get the last button (three-dot menu)
+                .click({ force: true });
+
+            // Click Delete from the dropdown menu
+            cy.get('ul[role="menu"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .contains('li', 'Delete')
+                .should('be.visible')
+                .click({ force: true });
+
+            // Confirm deletion in modal
+            cy.get('[role="alertdialog"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .within(() => {
+                    cy.contains('button', /Delete|Confirm/i)
+                        .should('be.visible')
+                        .click();
+                });
 
             // Verify success message
             cy.contains('Agent deleted successfully', { timeout: DEFAULT_TIMEOUT })
@@ -174,14 +213,12 @@ const handleAgentOperations = (action, agentName, newName) => {
     }
 };
 
-
-
 class Agents {
-    static manageAgent(agentName, newName = 'Renamed Agent') {
+    static manageAgent(agentName, newName = 'Renamed Agent', triggerWord = '@auto') {
         describe(`Agent Operations for: ${agentName}`, () => {
             it('Should create new agent.', () => {
                 setAgentSettings('Settings', true);
-                handleAgentOperations('create', agentName);
+                handleAgentOperations('create', agentName, null, triggerWord);
             });
             it(`Should rename it to ${newName}.`, () => {
                 setAgentSettings('Settings', true);
@@ -189,11 +226,12 @@ class Agents {
             });
         });
     }
-        static validateAgentPrompt(agentName, promptType, model) {
+    
+    static validateAgentPrompt(agentName, promptType, model, triggerWord = '@auto') {
         describe(`Agent Prompt Validation for: ${agentName}`, () => {
             it(`${model}: Should validate agent prompt content.`, () => {
                 setAgentSettings('Settings', true);
-                validateAgentPrompt(agentName, promptType, model);
+                validateAgentPrompt(agentName, promptType, model, triggerWord);
             });
             it(`Should delete ${agentName}.`, () => {
                 setAgentSettings('Settings', true);

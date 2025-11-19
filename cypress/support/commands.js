@@ -35,3 +35,47 @@ Cypress.Commands.add('verifyPageLoad', (url) => {
         .its('response.statusCode')
         .should('be.oneOf', [200, 401]); // Accept both authenticated and non-authenticated responses
 });
+
+/**
+ * Verify answer(s) in the UI with AND/OR logic support
+ * @param {string|Array} answers - Single answer string or array of answers
+ * @param {Object} options - Configuration options
+ * @param {string} options.logic - 'and' (default) or 'or' - how to match array answers
+ * @param {string} options.selector - CSS selector to search within (default: 'body')
+ * @param {number} options.timeout - Timeout in milliseconds (default: 50000)
+ * @param {boolean} options.matchCase - Case sensitive matching (default: false)
+ */
+Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
+    const {
+        logic = 'and',
+        selector = 'body',
+        timeout = 50000,
+        matchCase = false
+    } = options;
+
+    if (Array.isArray(answers)) {
+        if (logic === 'or') {
+            // OR logic: at least one answer should be visible
+            cy.get(selector, { timeout }).then(($element) => {
+                const elementText = matchCase ? $element.text() : $element.text().toLowerCase();
+                const found = answers.some((answer) => {
+                    const searchText = matchCase ? answer : answer.toLowerCase();
+                    return elementText.includes(searchText);
+                });
+                expect(found, `At least one of [${answers.join(', ')}] should be visible in ${selector}`).to.be.true;
+            });
+        } else {
+            // AND logic: all answers should be visible
+            answers.forEach((answer) => {
+                cy.get(selector, { timeout })
+                    .contains(answer, { timeout, matchCase })
+                    .should('be.visible');
+            });
+        }
+    } else {
+        // Single answer
+        cy.get(selector, { timeout })
+            .contains(answers, { timeout, matchCase })
+            .should('be.visible');
+    }
+});

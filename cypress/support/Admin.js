@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 20000;
 
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
@@ -18,7 +18,7 @@ const navigateToAdminDashboard = () => {
 const searchUser = (username, email) => {
     navigateToAdminDashboard(); // Call the navigation function
     // Search for the user
-    cy.get('input[placeholder="Search users"]')
+    cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(username);
     // Verify the user appears in the search results
@@ -31,23 +31,30 @@ const searchUser = (username, email) => {
 const sortname = (username, sortBy) => {
     navigateToAdminDashboard(); // Call the navigation function
     cy.log("Sorting by:", sortBy);
+    
+    // Map sortBy value to the correct data-testid
+    const sortTestIdMap = {
+        'Name': 'sort-option-name',
+        'Created At': 'sort-option-created-at'
+    };
+    
     // Click Sort Combobox
-    cy.get('button[role="combobox"]')
-        .contains('Created At')
+    cy.get('[data-testid="admin-sort-by-select"]')
         .should('be.visible')
         .click();
-    // Click the "Name" option in the dropdown, scoped to the open listbox
-    cy.get('[role="listbox"]')
-        .contains(String(sortBy)) // Convert sortBy to a string
-        .should('be.visible')
-        .click();
+    
+    // Wait for the dropdown to open and click the sort option using data-testid
+    cy.get(`[data-testid="${sortTestIdMap[sortBy]}"]`, { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click({ force: true });
+    
     //Click order to change to A-Z
-    cy.contains('button', 'Z → A')
+    cy.get('[data-testid="admin-sort-order-button"]')
         .should('be.visible')
         .click();
+    
     // Verify that username is visible in the results
-    cy.get('.MuiGrid-spacing-xs-2').eq(2)
-        .contains(username, { timeout: DEFAULT_TIMEOUT })
+    cy.get(`[aria-label="${username}"]`)
         .should('be.visible');
 
 }
@@ -86,10 +93,6 @@ const EditUser = (user) => {
     cy.get('input[name="name"]')
         .clear()
         .type(user.newName);
-    //Edit email
-    cy.get('input[name="email"]')
-        .clear()
-        .type(user.newEmail);
     //Edit team
     cy.get('input[name="team"]')
         .clear()
@@ -182,7 +185,7 @@ const CreateInviteCode = (createdby) => {
     cy.contains(createdby, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     //Copy invite code
-    cy.get('span[aria-label="Click to Copy"]')
+    cy.get('div[aria-label="Click to Copy"]')
         .eq(0) // Get the first invite code in the list
         .invoke('text')
         .then((text) => {
@@ -200,7 +203,7 @@ const UseInviteCode = (username, email, password, fullname) => {
         .should('exist')
         .click({ force: true });
     // Ensure logout is successful 
-    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT })
+    cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT })
         .should('exist');
     cy.url().should('contain', '/login');
     // Navigate to the signup page

@@ -10,11 +10,11 @@ describe('Project Operations', () => {
         });
     });
         // Create a new project
-        Projects.createProject('My New Project');
+        Projects.createProject('My New Test Project');
         // Rename the project
-        Projects.renameProject('My New Project', 'Renamed Project');
+        Projects.renameProject('My New Test Project', 'Renamed Test Project');
         // Manage project content and members
-        Projects.manageProjectContent('Renamed Project', {
+        Projects.manageProjectContent('Renamed Test Project', {
             notebook: 'France',
             uploadFile: 'prime',
             memberEmail: 'auto-share',
@@ -22,9 +22,9 @@ describe('Project Operations', () => {
             createNotebook: 'sinigang'
         });
         //validate sharing the project
-        Projects.shareProject('Renamed Project','France','auto-share');
+        Projects.shareProject('Renamed Test Project','France','auto-share');
         // Handle system prompt operations
-        Projects.systemPromptOperations('Renamed Project', 'sinigang');
+        Projects.systemPromptOperations('Renamed Test Project', 'sinigang');
         // Deletes the project
-        Projects.deleteProject('Renamed Project');
+        Projects.deleteProject('Renamed Test Project');
 });

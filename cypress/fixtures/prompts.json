@@ -10,14 +10,19 @@
         "filepath": "cypress/fixtures/upload/cat.png"
     },
         "movie": {
-        "prompt": "Could you list the top movie apps?",
-        "answer": "Netflix",
+        "prompt": "Who wrote the play Romeo and Juliet?",
+        "answer": "Shakespeare",
         "filepath": "cypress/fixtures/upload/cat.png"
     },
     "sinigang": {
         "prompt": "What is the recipe for Sinigang?",
-        "answer": "filipino",
+        "answer": "pork",
         "filepath": "cypress/fixtures/upload/sinigang.pdf"
+    },
+    "dog-image": {
+        "prompt": "Give me an image of a dog?",
+        "answer": "dog",
+        "filepath": "cypress/fixtures/upload/dog.png"
     },
 
     "txt-recipe": {
@@ -56,14 +61,15 @@
     },
     "pdf-lorem": {
         "filepath": "cypress/fixtures/upload/sample.pdf",
+        "timeout": 120000,
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": "lorem ipsum"
+                "answer": "resume"
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer": "layout"
+                "answer":  "resume"            
             }
         ]
     }

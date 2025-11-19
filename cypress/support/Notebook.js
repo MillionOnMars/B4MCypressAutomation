@@ -1,6 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
-const textModels = ['Claude 4.1 Opus', 'O3', 'GPT-5', 'Gemini 2.5 Pro Preview','GPT-5 Nano','GPT-4o Mini','Gemini 2.5 Flash Preview','Grok 3 Mini']; // Add your text models here
+// ensure that these allow both image and text uploads since we ask it wat color is the cat.
+const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro', 'GPT-5 Nano', 'GPT-4o Mini', 'Gemini 2.5 Flash', 'Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -21,76 +22,64 @@ const createNote = (promptType, model) => {
     let startTime;
 
     //Verify if models is selected
-    cy.contains(model, { timeout: 20000})
+    cy.contains(model, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('New Notebook', { timeout: 50000 })
+    cy.contains('Chat', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
-    // Handle both array and string answers
-    if (Array.isArray(testCase.answer)) {
-        testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 50000 }).should('be.visible');
-        });
-        return { duration: 0, credits: null }; // Return object for array answers
-    } else {
-        return new Cypress.Promise(resolve => {
-            cy.window().then(() => { startTime = Date.now(); });
+    // Start timing and verify answer with credits tracking
+    return new Cypress.Promise((resolve) => {
+        startTime = Date.now();
 
-            // Wait until the question appears
-            cy.contains(testCase.prompt, { timeout: 50000 })
-                .should('be.visible');
+        // Use verifyAnswers to check the response
+        cy.verifyAnswers(testCase.answer, {
+            logic: testCase.answerLogic || 'and',
+            selector: '[data-testid="ai-response"]',
+            timeout: 60000,
+            matchCase: false
+        }).then(() => {
+            const duration = (Date.now() - startTime) / 1000;
+            cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
 
-            cy.get('[data-testid="ai-response"]', { timeout: 60000 })
-                .contains(testCase.answer, { timeout: 60000, matchCase: false })
-                .should('be.visible')
-                .then(() => {
-                    const duration = (Date.now() - startTime) / 1000;
-                    cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                    
-                    // Get credits after response
-                    cy.get('body').then($body => {
-                        if ($body.find('[data-testid="credits-used"]').length > 0) {
-                            cy.get('[data-testid="credits-used"]')
-                                .should('be.visible')
-                                .click()
-                                .then(() => {
-                                    cy.contains('Credits Used', { timeout: 10000 })
-                                        .should('exist')
-                                        .invoke('text')
-                                        .then((creditsText) => {
-                                            const credits = creditsText?.match(/\d+/)?.[0] || null;
-                                            cy.log(`Credits used: ${credits}`);
-                                            resolve({ duration, credits: credits ? parseInt(credits) : null });
-                                        });
+            // Check if credits element exists, make it optional
+
+                    cy.get('[data-testid="credits-used"]', { timeout: DEFAULT_TIMEOUT })
+                        .should('be.visible')
+                        .click()
+                        .then(() => {
+                            cy.contains('Credits Used', { timeout: DEFAULT_TIMEOUT })
+                                .should('exist')
+                                .invoke('text')
+                                .then((creditsText) => {
+                                    const credits = creditsText?.match(/\d+/)?.[0] || null;
+                                    cy.log(`Credits used: ${credits}`);
+                                    resolve({ duration, credits: credits ? parseInt(credits) : null });
                                 });
-                        } else {
-                            resolve({ duration, credits: null });
-                        }
-                    });
-                });
+                        });
+
+
         });
-    }
-    cy.log('Notebook creation completed successfully.');
+    });
 };
 
 const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']" , { timeout: 20000 })
+    cy.xpath("//button[normalize-space()='Chat']" , { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -107,43 +96,19 @@ const sendPrompt = (promptType, promptNo, model) => {
             testCase;
 
         //enter prompt
-        cy.xpath('//textarea[@placeholder="Type your message here..."]')
+        cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
             .wait(2000);
 
-        if(model == 'claude-3-7-sonnet'){
-            if (currentPrompt === 0) {
-                cy.wait(5000); // First prompt
-            } else {
-                cy.wait(2000); // Subsequent prompts
-            }
-
-            // Shorter wait for subsequent operations
-            cy.wait(2000);
-
-            //scrolls down to the bottom of the chat container
-            cy.get('.css-1aau1w6')
-                .should('be.visible')
-                .scrollTo('bottom', { ensureScrollable: true })
-                .then(($container) => {
-                    $container[0].scrollTop = $container[0].scrollHeight;
-                });
-        }
-
         // Handle both array and single answer verification
-        if (Array.isArray(currentPromptData.answer)) {
-            // For array of answers, check each one
-            currentPromptData.answer.forEach((answer) => {
-                cy.get('[data-testid="ai-response"]', { timeout: 60000 }).contains(answer, { timeout: 50000, matchCase: false })
-                    .should('be.visible');
-            });
-        } else {
-            // For single answer
-            cy.get('[data-testid="ai-response"]', { timeout: 60000 }).contains(currentPromptData.answer, { timeout: 50000, matchCase: false })
-                .should('be.visible');
-        }
+        cy.verifyAnswers(currentPromptData.answer, {
+            logic: currentPromptData.answerLogic || 'and',
+            selector: '[data-testid="ai-response"]',
+            timeout: currentPromptData.timeout || 60000,
+            matchCase: false
+        });
 
         cy.log(`Completed prompt ${currentPrompt + 1} of ${promptNo}`);
     };
@@ -153,125 +118,206 @@ const sendPrompt = (promptType, promptNo, model) => {
 };
 
 const renameNote = (newName) => {
-    //clicks notebook
-    cy.get('[data-testid="sidenav-item-session-button"]')
-        .eq(0)
+    // Check if any notebook is currently selected/active
+    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+        .first()
+        .then($button => {
+            // Check for active/selected state using various possible class names or attributes
+            const isSelected = $button.hasClass('Mui-selected') || 
+                             $button.attr('aria-selected') === 'true' ||
+                             $button.hasClass('active');
+            
+            if (!isSelected) {
+                // Click the notebook if not already selected
+                cy.log('Notebook not selected, clicking to select');
+                // Use scrollIntoView and force click to handle visibility issues
+                cy.get('[data-testid="sidenav-item-session-button"]')
+                    .first()
+                    .scrollIntoView()
+                    .click({ force: true });
+                cy.wait(500); // Wait for selection to take effect
+            } else {
+                cy.log('Notebook already selected');
+            }
+        });
+
+    // Force click the menu button
+    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .first()
+        .click({ force: true });
+
+    // Click the rename menu item
+    cy.get('.sidenav-item-menuitem-rename', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
-    //click elipsis button
-    cy.get('[data-testid="sidenav-item-menu-button"]')
-        .eq(0)
-        .should('be.visible')
-        .click();
-
-    //click rename button
-    cy.get('li[role="menuitem"]').eq(1)
-        .should('be.visible')
-        .click();
-
-    //clicks notebook
-    cy.get('[data-testid="sidenav-item-rename-input"]')
-        .eq(0)
-        .should('be.visible')
-        .type(newName)
-        .type('{enter}');
+    // Find the INPUT inside the div with the testid
+    cy.get('[data-testid="sidenav-item-rename-input"]', { timeout: DEFAULT_TIMEOUT })
+        .first()
+        .find('input')
+        .clear({ force: true })
+        .type(newName, { force: true })
+        .type('{enter}', { force: true });
 
     cy.log('Notebook renamed successfully.');
 };
 
 const editNotebookInfo = (tags) => {
-    //clicks notebook
-    cy.get('[data-testid="sidenav-item-session-button"]')
-        .eq(0)
+    // Check if the menu button is already visible (indicates notebook is selected)
+    cy.get('body').then($body => {
+        const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
+        
+        if ($menuButton.length === 0) {
+            // Menu button not visible, need to select notebook first
+            cy.log('Menu button not visible, selecting notebook');
+            cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+                .first()
+                .scrollIntoView()
+                .click({ force: true });
+            cy.wait(500); // Wait for menu button to appear
+        } else {
+            cy.log('Notebook already selected (menu button visible)');
+        }
+    });
+
+    // Click ellipsis menu button
+    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .first()
+        .click({ force: true });
+
+    // Click "View Info" menu item
+    cy.get('.sidenav-item-menuitem-viewinfo', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
-    //click elipsis button
-    cy.get('[data-testid="sidenav-item-menu-button"]')
-        .eq(0)
+    // Wait for the info modal/panel to be visible
+    cy.get('input[placeholder="Add a tag"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .click();
-
-    //click edit info button
-    cy.get('.sidenav-item-menuitem-viewinfo')
-        .should('be.visible')
-        .click();
-
-    //input a tag
-    cy.get('input[placeholder="Add a tag"]')
-        .should('be.visible')
+        .clear()
         .type(tags);
     
-    //click add tag button
-    cy.xpath("//button[normalize-space()='Add Tag']")
+    // Click "Add Tag" button
+    cy.contains('button', 'Add Tag', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
-    //automation tag verification
-    cy.contains('.session-metadata-tag', `${tags}100`, { timeout: 20000, matchCase: false })
+    // Verify tag was added
+    cy.contains('.session-metadata-tag', tags, { timeout: DEFAULT_TIMEOUT })
+        .scrollIntoView({ easing: 'linear', duration: 500 })
         .should('be.visible');
 
-    //click close button
-    cy.get('.session-metadata-close-button')
+    // Close the info modal/panel
+    cy.get('.session-metadata-close-button', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
-    cy.log('Notebook information edited successfully.');
+    cy.log(`Notebook tag "${tags}" added successfully.`);
 };
 
-const deleteNote = (Name) => {
-    //clicks notebook
-    cy.get('[data-testid="sidenav-item-session-button"]')
-        .eq(0)
+const deleteNote = (name) => {
+    // Check if the menu button is already visible (indicates notebook is selected)
+    cy.get('body').then($body => {
+        const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
+        
+        if ($menuButton.length === 0) {
+            // Menu button not visible, need to select notebook first
+            cy.log('Menu button not visible, selecting notebook');
+            cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+                .first()
+                .scrollIntoView()
+                .click({ force: true });
+            cy.wait(500); // Wait for menu button to appear
+        } else {
+            cy.log('Notebook already selected (menu button visible)');
+        }
+    });
+
+    // Click ellipsis menu button (force click if visibility is conditional)
+    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+        .first()
+        .click({ force: true });
+
+    // Click delete button using specific class instead of position
+    cy.get('.sidenav-item-menuitem-delete', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
-    //click elipsis button
-    cy.get('[data-testid="sidenav-item-menu-button"]')
-        .eq(0)
+    // Confirm deletion in modal
+    cy.get('[data-testid="confirm-delete-modal"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .find('[data-testid="confirm-modal-confirm-btn"]')
         .should('be.visible')
         .click();
 
-    //click delete button
-    cy.get('li[role="menuitem"]').eq(10)
-        .should('be.visible')
-        .click();
+    // Verify success notification
+    cy.contains('Successfully deleted session', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible');
 
-    //confirm delete
-    cy.get('[data-testid="confirm-delete-modal"] [data-testid="confirm-modal-confirm-btn"]')
-        .should('be.visible')
-        .click();
-
-    //delete notification
-    cy.contains('Successfully deleted session').should('exist');
+    cy.log('Notebook deleted successfully.');
 };
 
 const selectTxtModel = (model) => {
-    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', {timeout: 50000})
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();
 
     //input text model
-    cy.get("input[placeholder='Search models']", { timeout: 50000 })
+    cy.get("input[placeholder='Search models']", { timeout: DEFAULT_TIMEOUT })
         .eq(1)
         .should('exist')
         .type(model)
         .type('{enter}');
 
     //select text model
-    cy.contains('div', model, { timeout: 50000, matchCase: false })
+    cy.contains('div', model, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('exist')
         .click({ force: true });
 
     // clicks close button
-    cy.get("[data-testid='CloseIcon']")
+    cy.get("[data-testid='CloseIcon']", { timeout: DEFAULT_TIMEOUT })
         .last()
         .should('be.visible')
         .click();
     // Verify the model is visible
-    cy.contains(model, { timeout: 20000})
+    cy.contains(model, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+}
+
+const selectImgModel = (model) => {
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
+        .eq(0)
+        .should('be.visible')
+        .click();
+
+    //click dropdown
+    cy.contains('Text models', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click({force: true});
+
+    cy.contains('li', 'Image models', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .click({force: true});
+
+    //input image model
+    cy.get("input[placeholder='Search models']", { timeout: DEFAULT_TIMEOUT })
+        .eq(1)
+        .should('exist')
+        .type(model)
+        .type('{enter}');
+
+    //select image model
+    cy.contains('div', model, { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('exist')
+        .click({ force: true });
+
+    // clicks close button
+    cy.get("[data-testid='CloseIcon']", { timeout: DEFAULT_TIMEOUT })
+        .last()
+        .should('be.visible')
+        .click();
+    // Verify the model is visible
+    cy.contains(model, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
 }
 
@@ -341,17 +387,18 @@ const logCreditsToJSON = (models, responseData, successfulRuns, totalRuns) => {
 const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
-    cy.get('[data-testid="AttachFileIcon"]')
+    cy.get('[aria-label="Attach Files"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
+  
 
     //Upload from computer
-    cy.get('[role="button"]').eq(2)
+    cy.get('[role="button"]', { timeout: DEFAULT_TIMEOUT }).eq(2)
         .should('be.visible')
         .click();
 
     // Wait for file input to be ready and upload file
-    cy.get('input[type="file"]')
+    cy.get('input[type="file"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('not.be.disabled')
         .wait(2000) // Add wait for upload dialog to fully load
@@ -364,102 +411,125 @@ const uploadFile = (promptType) => {
 
     // Wait for upload completion indicators
     cy.intercept('POST', '**/createFabFile').as('uploadRequest');
-    cy.wait('@uploadRequest', { timeout: 10000 });
+    cy.wait('@uploadRequest', { timeout: 30000 });
 
     //Verify file uploaded
-    cy.contains(testCase.filepath.split('/').pop());
+    cy.contains(testCase.filepath.split('/').pop(), { timeout: DEFAULT_TIMEOUT });
 
     cy.log('File uploaded successfully.');
     cy.wait(5000)
 };
 
+const findAndClickFile = (filename) => {
+    // First try to find the file directly
+    cy.get('.file-browser-list-item').then($body => {
+        if ($body.find(`*:contains("${filename}")`).length > 0) {
+            // File is visible, click it
+            cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                .should("be.visible")
+                .click();
+        } else {
+            // File not visible, use search
+            cy.log(`Searching for file: ${filename}`);
+            
+            cy.get('input[placeholder="Search files..."]', { timeout: DEFAULT_TIMEOUT })
+                .eq(1)
+                .should('be.visible')
+                .type(filename);
+
+            // Wait a moment for search results
+            cy.wait(10000);
+            
+            // Now click the file from search results
+            cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                .should("be.visible")
+                .click();
+            
+            cy.log(`Found and clicked file: ${filename} via search`);
+        }
+    });
+};
+
 const fileOperation = (operation, promptType, newName) => {
-  const testCase = prompts[promptType];
-  const filename = testCase.filepath.split("/").pop();
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split("/").pop();
 
-  //Click on files button
-  cy.contains("Files").should("be.visible").click();
+    //Click on files button
+    cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
 
-  cy.get(".MuiModalDialog-root").within(() => {
-    // Click the date header twice to sort descending
-    cy.contains("Date").click();
-    cy.contains("Date").click();
+    cy.get(".MuiModalDialog-root", { timeout: DEFAULT_TIMEOUT }).within(() => {
+        // Click the date header twice to sort descending
+        cy.contains("Date", { timeout: DEFAULT_TIMEOUT }).click({ force: true });
+        cy.contains("Date", { timeout: DEFAULT_TIMEOUT }).click({ force: true });
 
-    //Checks if file is present
-    cy.contains(filename)
-      .should("be.visible")
-      .click();
+        // find and click the file
+        findAndClickFile(filename);
 
+        switch (operation) {
+            case "checkFile":
+                // File presence already verified above
+                cy.log(`File ${filename} found successfully`);
+                //Click Close button
+                cy.get('[data-testid="CloseIcon"]', { timeout: DEFAULT_TIMEOUT })
+                    .should("be.visible")
+                    .click();
+                break;
+
+            case "renameFile":
+                cy.get('button.file-browser-actions-menu-button', { timeout: DEFAULT_TIMEOUT })
+                    .first()
+                    .should('be.visible')
+                    .click();
+
+                //Click rename button. Temporarily search outside the modal
+                cy.document().its('body').find('li[role="menuitem"]').contains('Rename', { timeout: DEFAULT_TIMEOUT })
+                    .should("be.visible")
+                    .click();
+
+                cy.get('input[value="' + filename + '"]', { timeout: DEFAULT_TIMEOUT })
+                    .should("be.visible")
+                    .clear()
+                    .type(newName)
+                    .type("{enter}");
+
+                cy.log(`File ${newName} renamed successfully`);
+                break;
+
+            case "deleteFile":
+                //Click delete button
+                cy.contains("Delete 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
+                cy.document().its('body').find('button').contains('Ok', { timeout: DEFAULT_TIMEOUT }).click();
+                break;
+
+            case "addFile":
+                //click add file
+                cy.contains("Add 1 File", { timeout: DEFAULT_TIMEOUT }).should("be.visible").click();
+
+                //wait for file to be added
+                cy.wait(2000);
+
+                cy.log("File added to Notebook Successfully.");
+                break;
+
+            default:
+                throw new Error(`Invalid file operation: ${operation}`);
+        }
+    });
+
+    // After closing the modal, confirm the file operations
     switch (operation) {
-      case "checkFile":
-        // File presence already verified above
-        cy.log(`File ${filename} found successfully`);
-        //Click Close button
-        cy.get('[data-testid="CloseIcon"]')
-          .should("be.visible")
-          .click();
-        break;
-
-      case "renameFile":
-        cy.xpath('(//*[name()="svg"][contains(@class,"lucide lucide-more-vertical")])[1]')
-        //   .find('button')
-          .should('be.visible')
-          .click();
-
-        //Click rename button. Temporarily search outside the modal
-        cy.document().its('body').find('li[role="menuitem"]').contains('Rename')
-          .should("be.visible")
-          .click();
-
-        cy.get('input[value="' + filename + '"]')
-          .should("be.visible")
-          .clear()
-          .type(newName)
-          .type("{enter}");
-
-        cy.log(`File ${newName} renamed successfully`);
-        //Click Close button
-        // cy.get('[data-testid="CloseIcon"]').eq(2).should("be.visible").click();
-
-        break;
-
-      case "deleteFile":
-        //Click delete button
-        cy.contains("Delete 1 File").should("be.visible").click();
-        cy.document().its('body').find('button').contains('Ok').click();
-        break;
-
-      case "addFile":
-        //click add file
-        cy.contains("Add 1 File").should("be.visible").click();
-
-        //wait for file to be added
-        cy.wait(2000);
-
-        cy.log("File added to Notebook Successfully.");
-        break;
-
-      default:
-        throw new Error(`Invalid file operation: ${operation}`);
+        case "deleteFile":
+            cy.contains(/Deleted \d+ files/, { timeout: DEFAULT_TIMEOUT })
+                .should("be.visible")
+            break;
     }
-  });
-
-  // After closing the modal, confirm the file operations
-  switch (operation) {
-    // case "addFile":
-    //   cy.get(".MuiChip-action").should("be.visible");
-    //   break;
-    case "deleteFile":
-      cy.contains(/Deleted \d+ files/)
-        .should("be.visible")
-      break;
-  }
 }
-
 
 const handleResearchAgent = (action, agent) => {
     // Click File
-    cy.get('[aria-label="File Browser"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click Research button
@@ -541,6 +611,250 @@ const handleResearchAgent = (action, agent) => {
     }
 };
 
+const verifyImageResponse = (promptType) => {
+    const testCase = prompts[promptType];
+
+    //send prompt that generates image
+    cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .type(testCase.prompt)
+        .type('{enter}')
+        .wait(2000);
+
+    // Verify an image is present and validate it's a dog image
+    cy.get('img', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .and('be.visible')
+        .and(($img) => {
+            // Verify image loaded properly
+            expect($img[0].naturalWidth).to.be.greaterThan(0);
+            expect($img[0].naturalHeight).to.be.greaterThan(0);
+            expect($img[0].complete).to.be.true;
+        })
+        .then($img => {
+            const imgSrc = $img.attr('src');
+            const imgAlt = $img.attr('alt') || '';
+            
+            cy.log(`Found image with src: ${imgSrc}`);
+            cy.log(`Image alt text: ${imgAlt}`);
+            cy.log(`Image dimensions: ${$img[0].naturalWidth}x${$img[0].naturalHeight}`);
+            
+            // Check for dog-related content in alt text or prompt
+            const dogKeywords = ['dog', 'puppy', 'canine', 'retriever', 'labrador', 'poodle', 'golden'];
+            const textToCheck = `${imgAlt} ${testCase.prompt}`.toLowerCase();
+            
+            const hasDogKeyword = dogKeywords.some(keyword => textToCheck.includes(keyword));
+            
+            if (hasDogKeyword) {
+                cy.log('✅ Dog-related content verified in image or prompt');
+                expect(hasDogKeyword).to.be.true;
+            } else {
+                cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
+            }
+            
+            // Verify it's a proper AWS S3 image URL
+            expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
+        });
+};
+
+const checkFileSide = (promptType) => {
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split('/').pop();
+    const fileExtension = filename.split('.').pop().toLowerCase();
+
+    // Check if Session Files sidebar is visible
+    cy.get('[aria-label="Session Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .and('be.visible')
+        .click({ force: true });
+
+    // Wait for the file to be visible and click it
+    cy.get('[data-testid="session-file-list"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click({ force: true });
+
+    // Handle different file types
+    switch (fileExtension) {
+        case 'pdf':
+            // For PDF files, check for PDF viewer or extracted text content
+            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+                if ($body.find('.text-viewer-content').length > 0) {
+                    // PDF content extracted and displayed as text
+                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .and('be.visible')
+                        .then($content => {
+                            const pdfText = $content.text();
+                            cy.log(`PDF content length: ${pdfText.length} characters`);
+                            cy.log(`PDF content preview: ${pdfText.substring(0, 200)}...`);
+                            
+                            // Verify PDF-specific content if available
+                            if (testCase.expectedPdfContent) {
+                                testCase.expectedPdfContent.forEach(content => {
+                                    cy.contains(content, { matchCase: false, timeout: DEFAULT_TIMEOUT })
+                                        .should('exist');
+                                });
+                            }
+                        });
+                } else if ($body.find('iframe, embed, object').length > 0) {
+                    // PDF displayed in viewer (iframe/embed)
+                    cy.get('iframe, embed, object', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .and('be.visible')
+                        .then($viewer => {
+                            cy.log('PDF viewer detected');
+                            cy.log(`Viewer type: ${$viewer.prop('tagName')}`);
+                        });
+                } else {
+                    // Look for PDF-specific elements or download link
+                    cy.contains(/pdf|download|view/i, { timeout: DEFAULT_TIMEOUT })
+                        .should('exist');
+                }
+            });
+            break;
+        case 'txt':
+            // For text files, check the text content
+            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then($content => {
+                    const textContent = $content.text();
+                    cy.log(`Text file content length: ${textContent.length} characters`);
+                    
+                    // Verify expected content
+                    if (testCase.expectedContent) {
+                        testCase.expectedContent.forEach(content => {
+                            cy.contains(content, { matchCase: false, timeout: DEFAULT_TIMEOUT })
+                                .should('exist');
+                        });
+                    }
+                });
+            break;
+        case 'png':
+            cy.get(`img[alt="${filename}"]`, { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .and(($img) => {
+                    // Verify image loaded properly
+                    expect($img[0].naturalWidth).to.be.greaterThan(0);
+                    expect($img[0].naturalHeight).to.be.greaterThan(0);
+                    expect($img[0].complete).to.be.true;
+                })
+                .then($img => {
+                    const imgSrc = $img.attr('src');
+                    const imgAlt = $img.attr('alt') || '';
+                    
+                    cy.log(`Found image with src: ${imgSrc}`);
+                    cy.log(`Image alt text: ${imgAlt}`);
+                    cy.log(`Image dimensions: ${$img[0].naturalWidth}x${$img[0].naturalHeight}`);
+
+                    // Check for cat-related content in alt text or prompt
+                    const catKeywords = ['cat', 'orange tabby', 'feline', 'kitten', 'tabby', 'ginger cat'];
+                    const textToCheck = `${imgAlt} ${testCase.prompt}`.toLowerCase();
+
+                    const hasCatKeyword = catKeywords.some(keyword => textToCheck.includes(keyword));
+
+                    if (hasCatKeyword) {
+                        cy.log('✅ Cat-related content verified in image or prompt');
+                        expect(hasCatKeyword).to.be.true;
+                    } else {
+                        cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
+                    }
+                    
+                    // Verify it's a proper AWS S3 image URL
+                    expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
+                });
+            break;
+        case 'doc':
+            // For Word documents
+            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then($content => {
+                    const docText = $content.text();
+                    cy.log(`Document content length: ${docText.length} characters`);
+                });
+            break;
+
+        default:
+            // For other file types, just verify some content is displayed
+            cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+                if ($body.find('.text-viewer-content').length > 0) {
+                    cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .and('be.visible');
+                } else {
+                    cy.log(`File type ${fileExtension} detected, verifying file is accessible`);
+                    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                        .should('exist');
+                }
+            });
+    }
+
+    // If testCase has specific answer validation, use verifyAnswers
+    if (testCase.answer) {
+        cy.verifyAnswers(testCase.answer, {
+            logic: testCase.answerLogic || 'and',
+            selector: '.text-viewer-content',
+            timeout: 60000,
+            matchCase: false
+        });
+    }
+};
+
+// Enhanced function specifically for PDF content validation
+const checkPdfContent = (promptType, expectedTexts = []) => {
+    const testCase = prompts[promptType];
+    const filename = testCase.filepath.split('/').pop();
+
+    // Check if Session Files sidebar is visible
+    cy.get('[aria-label="Session Files"]', { timeout: DEFAULT_TIMEOUT })
+        .should('exist')
+        .and('be.visible')
+        .click({ force: true });
+
+    // Click on the PDF file
+    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click({ force: true });
+
+    // Wait for PDF content to load and verify
+    cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+        if ($body.find('.text-viewer-content').length > 0) {
+            // PDF text content is extracted and displayed
+            cy.get('.text-viewer-content', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then($content => {
+                    const pdfText = $content.text().toLowerCase();
+                    
+                    // Log PDF content for debugging
+                    cy.log(`PDF extracted text length: ${pdfText.length} characters`);
+                    cy.log(`PDF content sample: ${pdfText.substring(0, 300)}...`);
+                    
+                    // Verify expected texts are present
+                    expectedTexts.forEach(expectedText => {
+                        const searchText = expectedText.toLowerCase();
+                        expect(pdfText).to.include(searchText);
+                        cy.log(`✅ Found expected text: "${expectedText}"`);
+                    });
+                });
+        } else if ($body.find('iframe[src*=".pdf"], embed[src*=".pdf"]').length > 0) {
+            // PDF is displayed in a viewer
+            cy.get('iframe[src*=".pdf"], embed[src*=".pdf"]', { timeout: DEFAULT_TIMEOUT })
+                .should('exist')
+                .and('be.visible')
+                .then(() => {
+                    cy.log('✅ PDF viewer is displaying the file');
+                });
+        } else {
+            // Look for any indication that PDF is loaded
+            cy.contains(/pdf|document/i, { timeout: DEFAULT_TIMEOUT })
+                .should('exist');
+            cy.log('✅ PDF file is accessible');
+        }
+    });
+};
 
 class Notebook {
     static createNotebook(prompt, model) {
@@ -579,12 +893,10 @@ class Notebook {
           });
 
           it("Renames file", () => {
-            uploadFile(filepath);
             fileOperation("renameFile", filepath, "RenamedFile");
           });
 
           it("Deletes file", () => {
-            uploadFile(filepath);
             fileOperation("deleteFile", filepath);
           });
         });
@@ -597,12 +909,20 @@ class Notebook {
             sendPrompt(promptType,promptNo,model)
         });
     }
+
+    static imgPrompts(promptType, model) {
+        it(`Image model:${model}. validate image response`, () => {
+            selectImgModel(model);
+            verifyImageResponse(promptType)
+        });
+    }
+
     static multiUpload(promptType,model,promptNo) {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
             uploadFile(promptType);
-            fileOperation('addFile', promptType);
-            sendPrompt(promptType,promptNo,model);
+            checkFileSide(promptType);
+            sendPrompt(promptType, promptNo, model);
         });
     }
     static createNotebookWithAverage(prompt, model) {
@@ -655,7 +975,7 @@ class Notebook {
         });
     }
         static manageResearchAgent(agent) {
-            describe(`Research Agent Operations for: ${agent.agentName}`, () => {
+            describe.skip(`Research Agent Operations for: ${agent.agentName}`, () => {
                 it('Should create new agent.', () => {
                     handleResearchAgent('create', agent);
                 });

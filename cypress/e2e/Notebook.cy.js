@@ -23,9 +23,7 @@ describe('Notebook Operations', () => {
     Notebook.addNotebookTags('automation');
     // Deletes the notebook
     Notebook.deleteNotebook('Renamed Notebook');
-        // Create/renamed & delete an agent
-    Agents.manageAgent('Test Agent', 'Renamed Agent');
-    //add a file to the notebook
+    // add a file to the notebook
     Notebook.Files('prime');
     // Manage research agent
     Notebook.manageResearchAgent({
@@ -37,7 +35,7 @@ describe('Notebook Operations', () => {
     // Create/renamed & delete an agent
     Agents.manageAgent('Test Agent', 'Renamed Agent');
     // Validate agent prompt with random model
-    const randomIndex = Math.floor(Math.random() * 4);
+    const randomIndex = Math.floor(Math.random() * randomTextModels.length);
      // Validate agent prompt content
     Agents.validateAgentPrompt('Renamed Agent', 'movie', randomTextModels[randomIndex])
 });

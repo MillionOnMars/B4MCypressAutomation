@@ -100,28 +100,66 @@ const deleteProject = (projectName) => {
     // Checks if the project created exists
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        // .parent() // Go to parent container
-        // .trigger('mouseover')
-        // .find('.project-card-menu-button')
     cy.get('.project-card-menu-button').eq(0)
         .should('exist')
         .click({ force: true }); // Force click even if not visible
 
     //Clicks Delete button
-    cy.get('.MuiMenuItem-variantPlain', { timeout: DEFAULT_TIMEOUT })
-        .eq(1)
+    cy.contains('.MuiMenuItem-variantPlain','delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible')
         .click();
 
     // Confirm the deletion in the confirmation dialog
-    cy.get('.MuiButton-sizeMd.css-25d5g8', { timeout: DEFAULT_TIMEOUT })
-        .contains('Delete')
+    cy.contains('button', 'delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible')
         .click();
 
     // Verify the project is deleted
     cy.contains('Project deleted successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('not.exist');
+};
+
+const checkAndDeleteProjectIfExists = (projectName) => {
+    // Click the "Project" button to open projects list
+    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click();
+
+    // Verify the project list is visible
+    cy.contains('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible');
+
+    // Check if the project exists
+    cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
+        if ($body.find(`*:contains("${projectName}")`).length > 0) {
+            cy.log(`Project "${projectName}" found, proceeding to delete it`);
+            
+            // Project exists, delete it
+            cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .then(() => {
+                    // Click the menu button for this project
+                    cy.get('.project-card-menu-button').eq(0)
+                        .should('exist')
+                        .click({ force: true });
+
+                    // Click Delete button
+                    cy.contains('.MuiMenuItem-variantPlain','delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+                        .should('be.visible')
+                        .click();
+
+                    // Confirm the deletion in the confirmation dialog
+                    cy.contains('button', 'delete', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+                        .should('be.visible')
+                        .click();
+
+                    // Verify the project is deleted
+                    cy.contains('Project deleted successfully', { timeout: DEFAULT_TIMEOUT }).should('exist');
+                    cy.log(`Project "${projectName}" successfully deleted`);
+                });
+        } else {
+            cy.log(`Project "${projectName}" not found, continuing with test execution`);
+        }
+    });
 };
 
 const addNotebook = (notebookName, projectName) => {
@@ -239,47 +277,23 @@ const createNotebook = (promptType, projectName) => {
         .click();
 
     // Type the question in the textarea
-    cy.xpath('//textarea[@placeholder="Type your message here..."]')
+    cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
         .type(testCase.prompt)
         .type('{enter}');
 
     // Wait until the notebook is created
-    cy.contains('New Notebook', { timeout: 50000 })
+    cy.contains('Chat', { timeout: 50000 })
         .should('be.visible');
 
     // Handle both array and string answers
-    if (Array.isArray(testCase.answer)) {
-        testCase.answer.forEach((answer) => {
-            cy.contains(answer, { timeout: 50000 }).should('be.visible');
-        });
-        return 0; // Return 0 for array answers or handle differently
-    } else {
-        return new Cypress.Promise(resolve => {
-            cy.window().then(() => { startTime = Date.now(); });
 
-            // Wait until the question appears
-            cy.contains(testCase.prompt, { timeout: 50000 })
-                .should('be.visible');
-
-            cy.get('p.MuiTypography-root')
-                .contains(testCase.answer, { timeout: 50000, matchCase: false })
-                .should('be.visible')
-                .then(() => {
-                    const duration = (Date.now() - startTime) / 1000;
-                    cy.log(`It took ${duration} seconds for the answer to appear and be visible.`);
-                    resolve(duration);
-                });
-            cy.contains(projectName, { timeout: 50000 })
-                .should('be.visible');
-            cy.log('Notebook creation completed successfully.');
-
-        });
-
-    }
-
-
-
+    cy.verifyAnswers(testCase.answer, {
+        logic: testCase.answerLogic || 'or',
+        selector: '[data-testid="ai-response"]',
+        timeout: 50000,
+        matchCase: false
+    });
 };
 
 const clickMembersTab = (projectName) => {
@@ -432,7 +446,7 @@ const logoutUser = () => {
     cy.wait(3000); // Wait for 3 seconds to ensure logout is complete
 
     // Verify logout by checking the welcome message and URL
-    cy.contains('Welcome to Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
+    cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
     cy.url().should('contain', '/login');
 };
 
@@ -575,6 +589,7 @@ class Projects {
 
     static createProject(projectName) {
         it('Should create a new project', () => {
+            // checkAndDeleteProjectIfExists('Renamed Test Project')
             createProject(projectName);
         });
     }
