@@ -26,7 +26,7 @@ const setAgentSettings = (settings, enable) => {
         .click({ force: true });
 };
 
-const validateAgentPrompt = (agentName, promptType, model) => {
+const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
@@ -57,14 +57,23 @@ const validateAgentPrompt = (agentName, promptType, model) => {
                 .click();
         });
 
-    // Type the question in the textarea
+    // Verify the agent is enabled by checking the count badge
+    cy.get('.count-badge.MuiBox-root.css-s8b056', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .and('contain', '+1');
+
+    // Wait for the agent badge to stabilize
+    cy.wait(1000);
+
+    // Type the question in the textarea with optional trigger word
+    const messageToSend = triggerWord ? `${triggerWord} ${testCase.prompt}` : testCase.prompt;
     cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
-        .type(testCase.prompt)
+        .type(messageToSend)
         .type('{enter}');
     
     // Check if agent response is visible
-    cy.contains('Agent Response:', { timeout: 50000 })
+    cy.contains('Response:', { timeout: 50000 })
         .should('be.visible');
     //contains the agent name
     cy.contains(agentName, { timeout: 50000 }).should('be.visible');
@@ -78,9 +87,7 @@ const validateAgentPrompt = (agentName, promptType, model) => {
     cy.log('Agent prompt validated successfully.');
 }
 
-
-
-const handleAgentOperations = (action, agentName, newName) => {
+const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto') => {
     // Click Agents tab
     cy.get('[data-testid="notebook-sidenav-agents-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
@@ -104,7 +111,19 @@ const handleAgentOperations = (action, agentName, newName) => {
                 .type(agentName)
                 .click();
 
-            //click generate button to auto fill
+            // Input trigger word if provided
+            if (triggerWord) {
+                cy.get('input[placeholder="Add trigger word"]', { timeout: DEFAULT_TIMEOUT })
+                    .should('be.visible')
+                    .type(triggerWord);
+
+                //click add trigger word button
+                cy.contains('button', 'Add', { timeout: DEFAULT_TIMEOUT })
+                    .should('be.visible')
+                    .click();
+            }
+
+            // Click generate button to auto fill
             cy.contains('Auto Fill', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click();
@@ -122,20 +141,20 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         case 'rename':     
-
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
 
             // Click edit button
-            cy.contains('Edit', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('Edit Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({force: true});
 
             // Input new agent name
             cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
+                .scrollIntoView({ easing: 'linear', duration: 500 })
                 .clear()
                 .type(newName);
 
@@ -151,18 +170,21 @@ const handleAgentOperations = (action, agentName, newName) => {
             break;
 
         case 'delete':
-
             // Find and click specific agent
             cy.contains('.MuiTypography-h4', agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
 
-            // Find the Edit button and click the three-dot menu closest to it
-            cy.contains('button', 'Edit', { timeout: DEFAULT_TIMEOUT })
+            // Wait for the agent details to load
+            cy.wait(500);
+
+            // Find the Edit Agent button and get its parent container
+            cy.contains('button', 'Edit Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
-                .parent() // Get the container with both Edit and menu button
-                .find('[data-testid="MoreVertIcon"]')
-                .first()
+                .parent()
+                .parent() // Navigate up to find the container with both buttons
+                .find('button')
+                .last() // Get the last button (three-dot menu)
                 .click({ force: true });
 
             // Click Delete from the dropdown menu
@@ -191,14 +213,12 @@ const handleAgentOperations = (action, agentName, newName) => {
     }
 };
 
-
-
 class Agents {
-    static manageAgent(agentName, newName = 'Renamed Agent') {
+    static manageAgent(agentName, newName = 'Renamed Agent', triggerWord = '@auto') {
         describe(`Agent Operations for: ${agentName}`, () => {
             it('Should create new agent.', () => {
                 setAgentSettings('Settings', true);
-                handleAgentOperations('create', agentName);
+                handleAgentOperations('create', agentName, null, triggerWord);
             });
             it(`Should rename it to ${newName}.`, () => {
                 setAgentSettings('Settings', true);
@@ -206,11 +226,12 @@ class Agents {
             });
         });
     }
-        static validateAgentPrompt(agentName, promptType, model) {
+    
+    static validateAgentPrompt(agentName, promptType, model, triggerWord = '@auto') {
         describe(`Agent Prompt Validation for: ${agentName}`, () => {
             it(`${model}: Should validate agent prompt content.`, () => {
                 setAgentSettings('Settings', true);
-                validateAgentPrompt(agentName, promptType, model);
+                validateAgentPrompt(agentName, promptType, model, triggerWord);
             });
             it(`Should delete ${agentName}.`, () => {
                 setAgentSettings('Settings', true);
