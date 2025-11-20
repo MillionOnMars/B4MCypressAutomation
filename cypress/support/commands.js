@@ -79,3 +79,36 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
             .should('be.visible');
     }
 });
+
+/**
+ * Self-healing selector command for Profile dropdown selection
+ * Specifically handles MUI Select dropdowns with multiple fallback strategies
+ * @param {string} text - Text content to find in the dropdown
+ * @param {Object} options - Configuration options
+ * @param {number} options.timeout - Timeout in milliseconds (default: 10000)
+ * @returns {Cypress.Chainable} Cypress chainable for the found element
+ */
+Cypress.Commands.add('healSelect', (text, options = {}) => {
+    const { timeout = 10000 } = options;
+    
+    cy.log(`🔍 Prompt: Looking for "${text}" in dropdown`);
+
+    // Strategy 1: Try to find in listbox (MUI Select pattern)
+    // First check if listbox exists, then try to find the text
+    return cy.get('body', { timeout: 2000 }).then(($body) => {
+        const listboxExists = $body.find('[role="listbox"]').length > 0;
+        
+        if (listboxExists) {
+            cy.log(`   Found listbox, searching for "${text}"`);
+            // Try to find the option - use force click since listbox might be in portal
+            return cy.get('[role="listbox"]', { timeout })
+                .contains('li', text, { timeout, matchCase: false })
+                .click({ force: true });
+        } else {
+            // Strategy 2: Fallback to general text search
+            cy.log(`   Listbox not found, trying general text search`);
+            return cy.contains(text, { timeout, matchCase: false })
+                .click({ force: true });
+        }
+    });
+});

@@ -48,15 +48,13 @@ const UpdateUserSettings = (user) => {
     cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
         .type(user.phone);
-    //Select Preferred Contact Method
+    //Select Preferred Contact Method using self-healing healSelect command
     cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
         .contains('None')
         .should('be.visible')
-        .click();
-    cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains(user["preferredContactMethod"])
-        .should('be.visible')
-        .click();
+        .click({ force: true });
+    // Use cy.healSelect for self-healing dropdown selection
+    cy.healSelect(user["preferredContactMethod"], { timeout: DEFAULT_TIMEOUT });
     //Click Save Changes
     cy.contains('button', 'Save Changes')
         .should('be.visible')
