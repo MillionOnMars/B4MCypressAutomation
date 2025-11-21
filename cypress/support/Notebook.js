@@ -614,6 +614,8 @@ const handleResearchAgent = (action, agent) => {
 const verifyImageResponse = (promptType) => {
     const testCase = prompts[promptType];
 
+    cy.intercept('POST', '/api/ai/generate-image').as('generateImage');
+
     //send prompt that generates image
     cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
@@ -621,8 +623,14 @@ const verifyImageResponse = (promptType) => {
         .type('{enter}')
         .wait(2000);
 
+    cy.wait('@generateImage', { timeout: DEFAULT_TIMEOUT });
+
+    cy.get('[data-testid="ai-loading-status"]', { timeout: 90000 })
+        .should('exist')
+        .and('be.visible')
+
     // Verify an image is present and validate it's a dog image
-    cy.get('img', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="ai-response-root-container"] img', { timeout: 120000 })
         .should('exist')
         .and('be.visible')
         .and(($img) => {
