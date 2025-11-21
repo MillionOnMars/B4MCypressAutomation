@@ -11,7 +11,7 @@ before(() => {
 
 const openProject = (projectName) => {
     // Click the "Project" button
-    cy.xpath(' //button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-projects-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -25,7 +25,7 @@ const openProject = (projectName) => {
 
 const createProject = (projectName) => {
     // Click the "Project" button
-    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-projects-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -56,7 +56,7 @@ const createProject = (projectName) => {
 
 const renameProject = (oldName, newName) => {
     // Click the "Project" button
-    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-projects-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -93,7 +93,7 @@ const renameProject = (oldName, newName) => {
 
 const deleteProject = (projectName) => {
     // Click the "Project" button
-    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-projects-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -121,7 +121,7 @@ const deleteProject = (projectName) => {
 
 const checkAndDeleteProjectIfExists = (projectName) => {
     // Click the "Project" button to open projects list
-    cy.xpath('//button[normalize-space()="Projects"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-projects-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -132,7 +132,7 @@ const checkAndDeleteProjectIfExists = (projectName) => {
     cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
         if ($body.find(`*:contains("${projectName}")`).length > 0) {
             cy.log(`Project "${projectName}" found, proceeding to delete it`);
-            
+
             // Project exists, delete it
             cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
@@ -253,7 +253,7 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
     cy.contains("Add 1 File").should("be.visible").click();
 
     // Verify appropriate success message based on tab type
-    const successMessage = tabType === 'Project Files' 
+    const successMessage = tabType === 'Project Files'
         ? 'Files added to project successfully'
         : 'System Prompts added successfully';
 
@@ -324,7 +324,7 @@ const addMembers = (memberEmail) => {
     cy.contains('[data-testid="generic-add-items-item"]', memberEmail, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-    
+
     // Click the "Add 1 members" button (BUG: Should be members not items)
     cy.xpath("//button[normalize-space()='Add 1 items']", { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
@@ -433,17 +433,19 @@ const loginAs = (userKey) => {
 // Log out the user by interacting with the menu
 const logoutUser = () => {
     cy.log('Logging out user...');
+    cy.intercept('GET', '/api/logout').as('logout');
     // Wait for user menu button and force click
     cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .click();
 
     // Wait for logout icon and force click
-    cy.get('[data-testid="LogoutIcon"]')
+    cy.get('[data-testid="logout-btn"]')
         .should('exist')
         .click({ force: true });
 
-    cy.wait(3000); // Wait for 3 seconds to ensure logout is complete
+    // wait for the request to complete
+    cy.wait('@logout', { timeout: DEFAULT_TIMEOUT });
 
     // Verify logout by checking the welcome message and URL
     cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
@@ -482,7 +484,7 @@ const handleProjectInvite = (projectName, action) => {
             .eq(0)
             .should('be.visible')
             .click();
-            
+
         // Verify success message
         cy.contains('Successfully joined the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
             .should('be.visible');
@@ -493,7 +495,7 @@ const handleProjectInvite = (projectName, action) => {
             .eq(0)
             .should('be.visible')
             .click();
-            
+
         // Verify denial message
         cy.contains('Successfully refused the project', { timeout: DEFAULT_TIMEOUT, matchCase: false })
             .should('be.visible');
@@ -513,7 +515,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
     cy.contains('.MuiTab-variantPlain', 'Notebooks', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-    
+
     // Verify notebook is present
     cy.contains(`${notebook}`, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
@@ -532,7 +534,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
     cy.contains('.MuiTab-variantPlain', 'Members', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-    
+
     // Verify member is present
     cy.contains(`${user}`, { timeout: DEFAULT_TIMEOUT, matchCase: false })
         .should('be.visible');
@@ -559,7 +561,7 @@ class Projects {
             }
 
             if (options.uploadFile) {
-                it("Upload file", () => {
+                it("Add file to project", () => {
                     uploadFileWithFileBrowser(options.uploadFile, projectName, 'Project Files');
                 });
             }
@@ -569,8 +571,8 @@ class Projects {
                     clickMembersTab(projectName);
                     addMembers(options.memberEmail);
                 });
-            }   
-            
+            }
+
             if (options.systemPrompt) {
                 it("Add system prompt", () => {
                     clickSystemPromptsTab(projectName);
@@ -607,7 +609,7 @@ class Projects {
             });
         });
     }
-    
+
     static createNotebook(notebookName, projectName) {
         it('Should create a new notebook', () => {
             createNotebook(notebookName, projectName);

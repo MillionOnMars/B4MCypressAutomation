@@ -208,7 +208,7 @@ jobs:
         fi
 
     - name: Send Slack notification
-      if: always() && !cancelled()
+      if: always() && !cancelled() && github.ref == 'refs/heads/master'
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |

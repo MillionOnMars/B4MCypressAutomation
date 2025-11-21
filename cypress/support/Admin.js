@@ -1,3 +1,5 @@
+import { logoutUser } from './Auth';
+
 const DEFAULT_TIMEOUT = 20000;
 
 // Function to navigate to the Admin Dashboard
@@ -31,30 +33,30 @@ const searchUser = (username, email) => {
 const sortname = (username, sortBy) => {
     navigateToAdminDashboard(); // Call the navigation function
     cy.log("Sorting by:", sortBy);
-    
+
     // Map sortBy value to the correct data-testid
     const sortTestIdMap = {
         'Name': 'sort-option-name',
         'Created At': 'sort-option-created-at'
     };
-    
+
     // Click Sort Combobox
-    cy.get('[data-testid="admin-sort-by-select"]')
+    cy.get('[data-testid="admin-sort-by-select"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-    
+
     // Wait for the dropdown to open and click the sort option using data-testid
     cy.get(`[data-testid="${sortTestIdMap[sortBy]}"]`, { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .click({ force: true });
-    
+
     //Click order to change to A-Z
-    cy.get('[data-testid="admin-sort-order-button"]')
+    cy.get('[data-testid="admin-sort-order-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-    
+
     // Verify that username is visible in the results
-    cy.get(`[aria-label="${username}"]`)
+    cy.get(`[aria-label="${username}"]`, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 
 }
@@ -162,16 +164,16 @@ const DeleteUser = (username) => {
     cy.contains('User deleted successfully', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
 }
-let inviteCode;
+
 const CreateInviteCode = (createdby) => {
-    inviteCode = null;
+    Cypress.env('inviteCode', null);
     navigateToAdminDashboard();
     //Click Invite Codes tab
-    cy.contains('Invite Codes')
+    cy.contains('Invite Codes', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click Create button
-    cy.xpath("//button[normalize-space()='Create']")
+    cy.xpath("//button[normalize-space()='Create']", { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click submit button
@@ -189,20 +191,15 @@ const CreateInviteCode = (createdby) => {
         .eq(0) // Get the first invite code in the list
         .invoke('text')
         .then((text) => {
-            inviteCode = text;
-            cy.log('Invite Code:', inviteCode);
+            Cypress.env('inviteCode', text);
+            cy.log('Invite Code:', text);
         });
 }
 const UseInviteCode = (username, email, password, fullname) => {
-    // Wait for user menu button and force click
-    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
-        .should('exist')
-        .click();
-    // Wait for logout icon and force click
-    cy.get('[data-testid="LogoutIcon"]')
-        .should('exist')
-        .click({ force: true });
-    // Ensure logout is successful 
+    cy.log('Invite code to use:', Cypress.env('inviteCode'))
+    logoutUser()
+
+    // Ensure logout is successful
     cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT })
         .should('exist');
     cy.url().should('contain', '/login');
@@ -214,9 +211,9 @@ const UseInviteCode = (username, email, password, fullname) => {
     cy.url()
         .should('include', '/register', { timeout: DEFAULT_TIMEOUT });
     // Enter the invite code
-    cy.get('input[name="inviteCode"]')
+    cy.get('input[name="inviteCode"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .type(inviteCode);
+        .type(Cypress.env('inviteCode'));
     // Fill out the rest of the registration form
     cy.get('#username').should('be.visible').type(username);
     cy.get('.MuiInput-root > #email').should('be.visible').type(email);
@@ -227,7 +224,7 @@ const UseInviteCode = (username, email, password, fullname) => {
     cy.get('	.MuiButton-fullWidth').should('be.visible').click();
 }
 const DeleteInviteCode = (username) => {
-    //Delete user created with invite code 
+    //Delete user created with invite code
     DeleteUser(username);
     //Click escape to close any open dialogs
     cy.get('body').type('{esc}');
@@ -236,7 +233,7 @@ const DeleteInviteCode = (username) => {
         .should('be.visible')
         .click();
     //Click Delete button
-    cy.get('[data-testid="DeleteForeverIcon"]')
+    cy.get('[data-testid="delete-invite-code-btn"]')
         .eq(0) // Target the first matching element
         .should('be.visible')
         .click();

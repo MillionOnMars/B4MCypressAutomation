@@ -8,3 +8,12 @@ cypress/reports/consoleErrors.json
 
 # Claude
 .claude/settings.local.json
+
+# Cypress asset folders to exclude from source control
+cypress/downloads/
+cypress/screenshots/
+cypress/videos/
+
+cypress.env.json
+
+.DS_Store
