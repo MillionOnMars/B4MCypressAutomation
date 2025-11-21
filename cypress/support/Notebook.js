@@ -26,7 +26,7 @@ const createNote = (promptType, model) => {
         .should('be.visible')
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']" , { timeout: DEFAULT_TIMEOUT })
+    cy.xpath("//button[normalize-space()='Chat']", { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -56,19 +56,19 @@ const createNote = (promptType, model) => {
 
             // Check if credits element exists, make it optional
 
-                    cy.get('[data-testid="credits-used"]', { timeout: DEFAULT_TIMEOUT })
-                        .should('be.visible')
-                        .click()
-                        .then(() => {
-                            cy.contains('Credits Used', { timeout: DEFAULT_TIMEOUT })
-                                .should('exist')
-                                .invoke('text')
-                                .then((creditsText) => {
-                                    const credits = creditsText?.match(/\d+/)?.[0] || null;
-                                    cy.log(`Credits used: ${credits}`);
-                                    resolve({ duration, credits: credits ? parseInt(credits) : null });
-                                });
+            cy.get('[data-testid="credits-used"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click()
+                .then(() => {
+                    cy.contains('Credits Used', { timeout: DEFAULT_TIMEOUT })
+                        .should('exist')
+                        .invoke('text')
+                        .then((creditsText) => {
+                            const credits = creditsText?.match(/\d+/)?.[0] || null;
+                            cy.log(`Credits used: ${credits}`);
+                            resolve({ duration, credits: credits ? parseInt(credits) : null });
                         });
+                });
 
 
         });
@@ -79,7 +79,7 @@ const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']" , { timeout: DEFAULT_TIMEOUT })
+    cy.xpath("//button[normalize-space()='Chat']", { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -123,10 +123,10 @@ const renameNote = (newName) => {
         .first()
         .then($button => {
             // Check for active/selected state using various possible class names or attributes
-            const isSelected = $button.hasClass('Mui-selected') || 
-                             $button.attr('aria-selected') === 'true' ||
-                             $button.hasClass('active');
-            
+            const isSelected = $button.hasClass('Mui-selected') ||
+                $button.attr('aria-selected') === 'true' ||
+                $button.hasClass('active');
+
             if (!isSelected) {
                 // Click the notebook if not already selected
                 cy.log('Notebook not selected, clicking to select');
@@ -166,7 +166,7 @@ const editNotebookInfo = (tags) => {
     // Check if the menu button is already visible (indicates notebook is selected)
     cy.get('body').then($body => {
         const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
-        
+
         if ($menuButton.length === 0) {
             // Menu button not visible, need to select notebook first
             cy.log('Menu button not visible, selecting notebook');
@@ -195,7 +195,7 @@ const editNotebookInfo = (tags) => {
         .should('be.visible')
         .clear()
         .type(tags);
-    
+
     // Click "Add Tag" button
     cy.contains('button', 'Add Tag', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
@@ -218,7 +218,7 @@ const deleteNote = (name) => {
     // Check if the menu button is already visible (indicates notebook is selected)
     cy.get('body').then($body => {
         const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
-        
+
         if ($menuButton.length === 0) {
             // Menu button not visible, need to select notebook first
             cy.log('Menu button not visible, selecting notebook');
@@ -293,11 +293,11 @@ const selectImgModel = (model) => {
     //click dropdown
     cy.contains('Text models', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
-        .click({force: true});
+        .click({ force: true });
 
     cy.contains('li', 'Image models', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
-        .click({force: true});
+        .click({ force: true });
 
     //input image model
     cy.get("input[placeholder='Search models']", { timeout: DEFAULT_TIMEOUT })
@@ -342,19 +342,19 @@ const logCreditsToJSON = (models, responseData, successfulRuns, totalRuns) => {
         const logModelData = (model, avgCredits, avgResponseTime) => {
             cy.readFile('cypress/fixtures/credits.json').then((existingData) => {
                 const newData = existingData || [];
-                
+
                 // Format ResponseTime as null if no successful runs
-                const formattedResponse = successfulRuns === 0 ? 
-                    null : 
+                const formattedResponse = successfulRuns === 0 ?
+                    null :
                     `${Number(avgResponseTime)} secs.`;
-                
+
                 newData.push({
                     textModel: model,
                     Credits: avgCredits,
                     ResponseTime: formattedResponse,
                     RepRate: `${successfulRuns}/${totalRuns}`
                 });
-                
+
                 cy.writeFile('cypress/fixtures/credits.json', newData).then(() => {
                     cy.log(`Logged data for ${model} - Average Credits: ${avgCredits || 'null'}, Average Response Time: ${avgResponseTime || 'null'}, RepRate: ${successfulRuns}/${totalRuns}`);
                     processModel(index + 1);
@@ -365,15 +365,15 @@ const logCreditsToJSON = (models, responseData, successfulRuns, totalRuns) => {
         // Calculate averages from responseData
         if (responseData && responseData.length > 0) {
             const validResponses = responseData.filter(data => data.duration > 0);
-            const avgResponseTime = validResponses.length > 0 ? 
-                (validResponses.reduce((sum, data) => sum + data.duration, 0) / validResponses.length).toFixed(2) : 
+            const avgResponseTime = validResponses.length > 0 ?
+                (validResponses.reduce((sum, data) => sum + data.duration, 0) / validResponses.length).toFixed(2) :
                 null;
-            
+
             const creditsData = responseData.filter(data => data.credits !== null);
-            const avgCredits = creditsData.length > 0 ? 
-                Math.round(creditsData.reduce((sum, data) => sum + data.credits, 0) / creditsData.length) : 
+            const avgCredits = creditsData.length > 0 ?
+                Math.round(creditsData.reduce((sum, data) => sum + data.credits, 0) / creditsData.length) :
                 null;
-            
+
             logModelData(model, avgCredits, avgResponseTime);
         } else {
             logModelData(model, null, null);
@@ -390,7 +390,7 @@ const uploadFile = (promptType) => {
     cy.get('[aria-label="Attach Files"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
-  
+
 
     //Upload from computer
     cy.get('[role="button"]', { timeout: DEFAULT_TIMEOUT }).eq(2)
@@ -431,7 +431,7 @@ const findAndClickFile = (filename) => {
         } else {
             // File not visible, use search
             cy.log(`Searching for file: ${filename}`);
-            
+
             cy.get('input[placeholder="Search files..."]', { timeout: DEFAULT_TIMEOUT })
                 .eq(1)
                 .should('be.visible')
@@ -439,12 +439,12 @@ const findAndClickFile = (filename) => {
 
             // Wait a moment for search results
             cy.wait(10000);
-            
+
             // Now click the file from search results
             cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
                 .should("be.visible")
                 .click();
-            
+
             cy.log(`Found and clicked file: ${filename} via search`);
         }
     });
@@ -537,7 +537,7 @@ const handleResearchAgent = (action, agent) => {
         .should('be.visible')
         .click();
 
-    switch(action) {
+    switch (action) {
         case 'create':
             cy.contains('button', 'Create New Agent', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
@@ -560,7 +560,7 @@ const handleResearchAgent = (action, agent) => {
                 .should('be.visible');
             break;
 
-        case 'edit':     
+        case 'edit':
             cy.contains(agent.agentName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click({ force: true });
@@ -634,17 +634,17 @@ const verifyImageResponse = (promptType) => {
         .then($img => {
             const imgSrc = $img.attr('src');
             const imgAlt = $img.attr('alt') || '';
-            
+
             cy.log(`Found image with src: ${imgSrc}`);
             cy.log(`Image alt text: ${imgAlt}`);
             cy.log(`Image dimensions: ${$img[0].naturalWidth}x${$img[0].naturalHeight}`);
-            
+
             // Check for dog-related content in alt text or prompt
             const dogKeywords = ['dog', 'puppy', 'canine', 'retriever', 'labrador', 'poodle', 'golden'];
             const textToCheck = `${imgAlt} ${testCase.prompt}`.toLowerCase();
-            
+
             const hasDogKeyword = dogKeywords.some(keyword => textToCheck.includes(keyword));
-            
+
             if (hasDogKeyword) {
                 cy.log('✅ Dog-related content verified in image or prompt');
                 expect(hasDogKeyword).to.be.true;
@@ -652,8 +652,8 @@ const verifyImageResponse = (promptType) => {
                 cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
             }
 
-            // Verify it's a proper image URL
-            expect(imgSrc).to.match(/.*\.bike4mind\.com\/.*\.(jpg|jpeg|png|gif|webp)/i);
+            // Verify it's a proper AWS S3 image URL
+            expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
         });
 };
 
@@ -687,7 +687,7 @@ const checkFileSide = (promptType) => {
                             const pdfText = $content.text();
                             cy.log(`PDF content length: ${pdfText.length} characters`);
                             cy.log(`PDF content preview: ${pdfText.substring(0, 200)}...`);
-                            
+
                             // Verify PDF-specific content if available
                             if (testCase.expectedPdfContent) {
                                 testCase.expectedPdfContent.forEach(content => {
@@ -720,7 +720,7 @@ const checkFileSide = (promptType) => {
                 .then($content => {
                     const textContent = $content.text();
                     cy.log(`Text file content length: ${textContent.length} characters`);
-                    
+
                     // Verify expected content
                     if (testCase.expectedContent) {
                         testCase.expectedContent.forEach(content => {
@@ -743,7 +743,7 @@ const checkFileSide = (promptType) => {
                 .then($img => {
                     const imgSrc = $img.attr('src');
                     const imgAlt = $img.attr('alt') || '';
-                    
+
                     cy.log(`Found image with src: ${imgSrc}`);
                     cy.log(`Image alt text: ${imgAlt}`);
                     cy.log(`Image dimensions: ${$img[0].naturalWidth}x${$img[0].naturalHeight}`);
@@ -761,8 +761,8 @@ const checkFileSide = (promptType) => {
                         cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
                     }
 
-                    // Verify it's a proper image URL
-                    expect(imgSrc).to.match(/.*\.bike4mind\.com\/.*\.(jpg|jpeg|png|gif|webp)/i);
+                    // Verify it's a proper AWS S3 image URL
+                    expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
                 });
             break;
         case 'doc':
@@ -827,11 +827,11 @@ const checkPdfContent = (promptType, expectedTexts = []) => {
                 .and('be.visible')
                 .then($content => {
                     const pdfText = $content.text().toLowerCase();
-                    
+
                     // Log PDF content for debugging
                     cy.log(`PDF extracted text length: ${pdfText.length} characters`);
                     cy.log(`PDF content sample: ${pdfText.substring(0, 300)}...`);
-                    
+
                     // Verify expected texts are present
                     expectedTexts.forEach(expectedText => {
                         const searchText = expectedText.toLowerCase();
@@ -887,18 +887,18 @@ class Notebook {
     }
     static Files(filepath) {
         describe("Files Operations", () => {
-          it("Adds file", () => {
-            uploadFile(filepath);
-            fileOperation("addFile", filepath);
-          });
+            it("Adds file", () => {
+                uploadFile(filepath);
+                fileOperation("addFile", filepath);
+            });
 
-          it("Renames file", () => {
-            fileOperation("renameFile", filepath, "RenamedFile");
-          });
+            it("Renames file", () => {
+                fileOperation("renameFile", filepath, "RenamedFile");
+            });
 
-          it("Deletes file", () => {
-            fileOperation("deleteFile", filepath);
-          });
+            it("Deletes file", () => {
+                fileOperation("deleteFile", filepath);
+            });
         });
 
 
@@ -906,7 +906,7 @@ class Notebook {
     static multiPrompts(promptType, model, promptNo) {
         it(`Text model:${model} Prompts: ${promptNo}`, () => {
             selectTxtModel(model);
-            sendPrompt(promptType,promptNo,model)
+            sendPrompt(promptType, promptNo, model)
         });
     }
 
@@ -917,7 +917,7 @@ class Notebook {
         });
     }
 
-    static multiUpload(promptType,model,promptNo) {
+    static multiUpload(promptType, model, promptNo) {
         it(`${model}: Upload file for ${promptType}.`, () => {
             selectTxtModel(model);
             uploadFile(promptType);
@@ -953,11 +953,11 @@ class Notebook {
 
             after(() => {
                 const successfulRuns = responseData.filter(data => data.duration > 0).length;
-                
+
                 if (successfulRuns > 0) {
                     cy.log(`Total successful runs: ${successfulRuns} out of ${totalRuns}`);
                     cy.log('Individual run data:', JSON.stringify(responseData, null, 2));
-                    
+
                     // Log with response data array containing both duration and credits
                     logCreditsToJSON([model], responseData, successfulRuns, totalRuns);
                 } else {
@@ -974,20 +974,20 @@ class Notebook {
             });
         });
     }
-        static manageResearchAgent(agent) {
-            describe.skip(`Research Agent Operations for: ${agent.agentName}`, () => {
-                it('Should create new agent.', () => {
-                    handleResearchAgent('create', agent);
-                });
-                it(`Should edit it to ${agent.newName}.`, () => {
-                    handleResearchAgent('edit', agent);
-                });
-                it(`Should delete ${agent.newName}.`, () => {
-                    handleResearchAgent('delete', agent);
-                });
+    static manageResearchAgent(agent) {
+        describe.skip(`Research Agent Operations for: ${agent.agentName}`, () => {
+            it('Should create new agent.', () => {
+                handleResearchAgent('create', agent);
             });
-        }
-    
+            it(`Should edit it to ${agent.newName}.`, () => {
+                handleResearchAgent('edit', agent);
+            });
+            it(`Should delete ${agent.newName}.`, () => {
+                handleResearchAgent('delete', agent);
+            });
+        });
+    }
+
 }
 
 export default Notebook;
