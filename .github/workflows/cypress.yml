@@ -2,9 +2,9 @@ name: Cypress Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   workflow_dispatch:
   schedule:
     - cron: '0 7,13,22 * * *'
@@ -12,288 +12,288 @@ on:
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Validate required secrets
-      run: |
-        if [ -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
-          echo "Error: SLACK_WEBHOOK_URL secret is not set"
-          exit 1
-        fi
-        if [ -z "${{ secrets.CYPRESS_APP_URL }}" ]; then
-          echo "Error: CYPRESS_APP_URL secret is not set"
-          exit 1
-        fi
-        echo "✅ Required secrets are configured"
-
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm install
-
-    - name: 🚀 Launch Cypress Test Suite 🧪
-      id: cypress
-      uses: cypress-io/github-action@v5
-      with:
-        browser: chrome
-        config-file: cypress.config.js
-        publish-summary: true
-        reporter: mochawesome
-        reporter-options: >-
-          reportDir=cypress/reports/mochawesome,
-          overwrite=false,
-          html=true,
-          json=true,
-          quiet=true,
-          reportFilename=mochawesome-[datetime]
-      env:
-        CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
-      continue-on-error: true
-
-    - name: Process test results
-      id: test-results
-      if: always()
-      run: |
-        if [ -f "cypress/reports/results.json" ]; then
-          # Extract test counts including skipped
-          TOTAL=$(jq '.totalTests' cypress/reports/results.json)
-          PASSING=$(jq '.totalPassed' cypress/reports/results.json)
-          FAILING=$(jq '.totalFailed' cypress/reports/results.json)
-          SKIPPED=$(jq '(.totalSkipped + .totalPending)' cypress/reports/results.json)
-          
-          echo "Found test results:"
-          echo "Total: $TOTAL"
-          echo "Passing: $PASSING"
-          echo "Failing: $FAILING"
-          echo "Skipped: $SKIPPED"
-          
-          # Set outputs
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passing=$PASSING" >> $GITHUB_OUTPUT
-          echo "failing=$FAILING" >> $GITHUB_OUTPUT
-          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
-        else
-          echo "No results.json file found"
-          echo "total=0" >> $GITHUB_OUTPUT
-          echo "passing=0" >> $GITHUB_OUTPUT
-          echo "failing=0" >> $GITHUB_OUTPUT
-          echo "skipped=0" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Display test results
-      if: always()
-      run: |
-        echo "📊 Final Test Results:"
-        echo "┌────────────────────────────────┐"
-        echo "│ Total Tests: $TOTAL_TESTS"
-        echo "│ Passing: $PASSING_TESTS"
-        echo "│ Failing: $FAILING_TESTS"
-        echo "│ Skipped: $SKIPPED_TESTS"
-        echo "└────────────────────────────────┘"
-
-      # Add step to get console errors count
-    - name: Get console errors
-      id: console-errors
-      if: always()
-      run: |
-        if [ -f "cypress/reports/consoleErrors.json" ]; then
-          TOTAL_ERRORS=$(jq -r '.totalErrors' cypress/reports/consoleErrors.json)
-          echo "total=$TOTAL_ERRORS" >> "$GITHUB_OUTPUT"
-          echo "Found $TOTAL_ERRORS console errors"
-        else
-          echo "total=0" >> "$GITHUB_OUTPUT"
-          echo "No consoleErrors.json found"
-        fi
-
-    - name: Get quality issues
-      id: selector-quality
-      if: always()
-      run: |
-        if [ -f "cypress/reports/testQuality.json" ]; then
-          TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/testQuality.json)
-          
-          # By Category
-          SELECTOR_ISSUES=$(jq -r '.summary.selectorIssues' cypress/reports/testQuality.json)
-          DATA_VALIDATION=$(jq -r '.summary.dataValidation' cypress/reports/testQuality.json)
-          VISIBILITY_ISSUES=$(jq -r '.summary.visibilityIssues' cypress/reports/testQuality.json)
-          PERFORMANCE=$(jq -r '.summary.performance' cypress/reports/testQuality.json)
-          ASSERTION_ERRORS=$(jq -r '.summary.assertionErrors' cypress/reports/testQuality.json)
-          
-          # Extract top 3 specific issues for Slack (prioritize high severity)
-          SPECIFIC_ISSUES=$(jq -r '
-            [.issues[] | select(.severity == "high")] as $high |
-            [.issues[] | select(.severity == "medium")] as $medium |
-            ($high + $medium)[0:3] |
-            map("⚠️ \(.test) -> \(.category)") |
-            join("\n")
-          ' cypress/reports/testQuality.json)
-          
-          # Escape newlines for GitHub Actions output
-          SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
-          
-          echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
-          
-          # By Category
-          echo "selectorIssues=$SELECTOR_ISSUES" >> "$GITHUB_OUTPUT"
-          echo "dataValidation=$DATA_VALIDATION" >> "$GITHUB_OUTPUT"
-          echo "visibilityIssues=$VISIBILITY_ISSUES" >> "$GITHUB_OUTPUT"
-          echo "performance=$PERFORMANCE" >> "$GITHUB_OUTPUT"
-          echo "assertionErrors=$ASSERTION_ERRORS" >> "$GITHUB_OUTPUT"
-          echo "examples=$SPECIFIC_ISSUES" >> "$GITHUB_OUTPUT"
-
-          echo "Found $TOTAL_ISSUES test quality issues"
-          echo "  By Category:"
-          echo "    - Selector Issues: $SELECTOR_ISSUES"
-          echo "    - Data Validation: $DATA_VALIDATION"
-          echo "    - Visibility Issues: $VISIBILITY_ISSUES"
-          echo "    - Performance: $PERFORMANCE"
-          echo "    - Assertion Errors: $ASSERTION_ERRORS"
-        else
-          echo "total=0" >> "$GITHUB_OUTPUT"
-          echo "selectorIssues=0" >> "$GITHUB_OUTPUT"
-          echo "dataValidation=0" >> "$GITHUB_OUTPUT"
-          echo "visibilityIssues=0" >> "$GITHUB_OUTPUT"
-          echo "performance=0" >> "$GITHUB_OUTPUT"
-          echo "assertionErrors=0" >> "$GITHUB_OUTPUT"
-          echo "examples=" >> "$GITHUB_OUTPUT"
-          echo "No testQuality.json found"
-        fi
-
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: cypress-results-${{ github.run_id }}
-        path: |
-          cypress/reports/mochawesome-html/**
-          cypress/reports/mochawesome/*.json
-          cypress/screenshots/**/*.png
-          cypress/videos/**/*.mp4
-          cypress/fixtures/credits.json
-          cypress/reports/consoleErrors.json
-          cypress/reports/testQuality.json
-          cypress/reports/results.json
-        if-no-files-found: warn
-        retention-days: 14
-
-    - name: Get credits data
-      id: credits
-      if: always()
-      run: |
-        if [ -f "cypress/fixtures/credits.json" ]; then
-          # Format credits data including RepRate using jq (objects only, skip malformed entries)
-          CREDITS=$(jq -r '
-            [.[]?
-             | select(type == "object")
-             | "\(.textModel // "Unknown model"), credits: \(.Credits // "n/a"), avgtime: \(.ResponseTime // "n/a"), success rate: \(.RepRate // "n/a")"
-            ]
-            | del(.[] | select(. == null))
-            | join("\n")
-          ' cypress/fixtures/credits.json)
-          # Escape newlines for GitHub Actions output
-          CREDITS="${CREDITS//$'\n'/'\n'}"
-          echo "credits=$CREDITS" >> $GITHUB_OUTPUT
-          echo "Found credits data:"
-          echo "$CREDITS" 
-        else
-          echo "No credits.json file found"
-          echo "credits=No credits data available" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Send Slack notification
-      if: always() && !cancelled() && github.ref == 'refs/heads/master'
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "username": "GitHub Actions",
-            "icon_emoji": ":github:",
-            "text": "${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n  📍 Selector Issues: {1}\n  📊 Data Validation: {2}\n  👁️ Visibility Issues: {3}\n  ⚡ Performance: {4}\n  ❗ Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-    - name: Check for slow responses in credits.json
-      id: slow
-      if: always()
-      run: |
-        SLOW=false
-        if [ -f "cypress/fixtures/credits.json" ]; then
-          # Extract and check if any ResponseTime > 15, handling null values and malformed entries
-          SLOW_COUNT=$(
-            jq '[.[]?
-                 | select(type == "object" and .ResponseTime != null)
-                 | .ResponseTime
-                 | sub(" secs.";"")
-                 | select(test("^[0-9]+(\\.[0-9]+)?$"))
-                 | tonumber
-                 | select(. > 15)
-                ] | length' cypress/fixtures/credits.json
-          )
-          
-          echo "Found $SLOW_COUNT slow responses (>15 sec)"
-          
-          if [ "$SLOW_COUNT" -gt 0 ]; then
-            SLOW=true
-            echo "There are $SLOW_COUNT slow responses (>15 sec) in credits.json"
-          else
-            echo "No slow responses found"
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            echo "Error: SLACK_WEBHOOK_URL secret is not set"
+            exit 1
           fi
-        else
-          echo "No credits.json file found"
-        fi
-        echo "slow=$SLOW" >> $GITHUB_OUTPUT
+          if [ -z "${{ secrets.CYPRESS_APP_URL }}" ]; then
+            echo "Error: CYPRESS_APP_URL secret is not set"
+            exit 1
+          fi
+          echo "✅ Required secrets are configured"
 
-    - name: Send Slack notification for slow responses
-      if: steps.slow.outputs.slow == 'true'
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "text": "⚠️ One or more text model responses took more than 15 seconds! Please investigate.<#C08QZ42L9KM|b4m-automation-results>."
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES}}
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Check for high credit usage
-      id: highcredits
-      if: always()
-      run: |
-        if [ -f "cypress/fixtures/credits.json" ]; then
-          HIGH=$(
-            jq '[.[]?
-                 | select(type == "object" and (.Credits != null))
-                 | .Credits
-                 | tostring
-                 | select(test("^-?[0-9]+(\\.[0-9]+)?$"))
-                 | tonumber
-                 | select(. == 0 or . >= 20)
-                ] | length' cypress/fixtures/credits.json
-          )
-          if [ "$HIGH" -gt 0 ]; then
-            echo "high=true" >> $GITHUB_OUTPUT
-            echo "$HIGH entries used 0 credits or 20+ credits."
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: 🚀 Launch Cypress Test Suite 🧪
+        id: cypress
+        uses: cypress-io/github-action@v5
+        with:
+          browser: chrome
+          config-file: cypress.config.js
+          publish-summary: true
+          reporter: mochawesome
+          reporter-options: >-
+            reportDir=cypress/reports/mochawesome,
+            overwrite=false,
+            html=true,
+            json=true,
+            quiet=true,
+            reportFilename=mochawesome-[datetime]
+        env:
+          CYPRESS_APP_URL: ${{ secrets.CYPRESS_APP_URL }}
+        continue-on-error: true
+
+      - name: Process test results
+        id: test-results
+        if: always()
+        run: |
+          if [ -f "cypress/reports/results.json" ]; then
+            # Extract test counts including skipped
+            TOTAL=$(jq '.totalTests' cypress/reports/results.json)
+            PASSING=$(jq '.totalPassed' cypress/reports/results.json)
+            FAILING=$(jq '.totalFailed' cypress/reports/results.json)
+            SKIPPED=$(jq '(.totalSkipped + .totalPending)' cypress/reports/results.json)
+
+            echo "Found test results:"
+            echo "Total: $TOTAL"
+            echo "Passing: $PASSING"
+            echo "Failing: $FAILING"
+            echo "Skipped: $SKIPPED"
+
+            # Set outputs
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passing=$PASSING" >> $GITHUB_OUTPUT
+            echo "failing=$FAILING" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+          else
+            echo "No results.json file found"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passing=0" >> $GITHUB_OUTPUT
+            echo "failing=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display test results
+        if: always()
+        run: |
+          echo "📊 Final Test Results:"
+          echo "┌────────────────────────────────┐"
+          echo "│ Total Tests: $TOTAL_TESTS"
+          echo "│ Passing: $PASSING_TESTS"
+          echo "│ Failing: $FAILING_TESTS"
+          echo "│ Skipped: $SKIPPED_TESTS"
+          echo "└────────────────────────────────┘"
+
+        # Add step to get console errors count
+      - name: Get console errors
+        id: console-errors
+        if: always()
+        run: |
+          if [ -f "cypress/reports/consoleErrors.json" ]; then
+            TOTAL_ERRORS=$(jq -r '.totalErrors' cypress/reports/consoleErrors.json)
+            echo "total=$TOTAL_ERRORS" >> "$GITHUB_OUTPUT"
+            echo "Found $TOTAL_ERRORS console errors"
+          else
+            echo "total=0" >> "$GITHUB_OUTPUT"
+            echo "No consoleErrors.json found"
+          fi
+
+      - name: Get quality issues
+        id: selector-quality
+        if: always()
+        run: |
+          if [ -f "cypress/reports/testQuality.json" ]; then
+            TOTAL_ISSUES=$(jq -r '.totalIssues' cypress/reports/testQuality.json)
+
+            # By Category
+            SELECTOR_ISSUES=$(jq -r '.summary.selectorIssues' cypress/reports/testQuality.json)
+            DATA_VALIDATION=$(jq -r '.summary.dataValidation' cypress/reports/testQuality.json)
+            VISIBILITY_ISSUES=$(jq -r '.summary.visibilityIssues' cypress/reports/testQuality.json)
+            PERFORMANCE=$(jq -r '.summary.performance' cypress/reports/testQuality.json)
+            ASSERTION_ERRORS=$(jq -r '.summary.assertionErrors' cypress/reports/testQuality.json)
+
+            # Extract top 3 specific issues for Slack (prioritize high severity)
+            SPECIFIC_ISSUES=$(jq -r '
+              [.issues[] | select(.severity == "high")] as $high |
+              [.issues[] | select(.severity == "medium")] as $medium |
+              ($high + $medium)[0:3] |
+              map("⚠️ \(.test) -> \(.category)") |
+              join("\n")
+            ' cypress/reports/testQuality.json)
+
+            # Escape newlines for GitHub Actions output
+            SPECIFIC_ISSUES="${SPECIFIC_ISSUES//$'\n'/'\n'}"
+
+            echo "total=$TOTAL_ISSUES" >> "$GITHUB_OUTPUT"
+
+            # By Category
+            echo "selectorIssues=$SELECTOR_ISSUES" >> "$GITHUB_OUTPUT"
+            echo "dataValidation=$DATA_VALIDATION" >> "$GITHUB_OUTPUT"
+            echo "visibilityIssues=$VISIBILITY_ISSUES" >> "$GITHUB_OUTPUT"
+            echo "performance=$PERFORMANCE" >> "$GITHUB_OUTPUT"
+            echo "assertionErrors=$ASSERTION_ERRORS" >> "$GITHUB_OUTPUT"
+            echo "examples=$SPECIFIC_ISSUES" >> "$GITHUB_OUTPUT"
+
+            echo "Found $TOTAL_ISSUES test quality issues"
+            echo "  By Category:"
+            echo "    - Selector Issues: $SELECTOR_ISSUES"
+            echo "    - Data Validation: $DATA_VALIDATION"
+            echo "    - Visibility Issues: $VISIBILITY_ISSUES"
+            echo "    - Performance: $PERFORMANCE"
+            echo "    - Assertion Errors: $ASSERTION_ERRORS"
+          else
+            echo "total=0" >> "$GITHUB_OUTPUT"
+            echo "selectorIssues=0" >> "$GITHUB_OUTPUT"
+            echo "dataValidation=0" >> "$GITHUB_OUTPUT"
+            echo "visibilityIssues=0" >> "$GITHUB_OUTPUT"
+            echo "performance=0" >> "$GITHUB_OUTPUT"
+            echo "assertionErrors=0" >> "$GITHUB_OUTPUT"
+            echo "examples=" >> "$GITHUB_OUTPUT"
+            echo "No testQuality.json found"
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-results-${{ github.run_id }}
+          path: |
+            cypress/reports/mochawesome-html/**
+            cypress/reports/mochawesome/*.json
+            cypress/screenshots/**/*.png
+            cypress/videos/**/*.mp4
+            cypress/fixtures/credits.json
+            cypress/reports/consoleErrors.json
+            cypress/reports/testQuality.json
+            cypress/reports/results.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Get credits data
+        id: credits
+        if: always()
+        run: |
+          if [ -f "cypress/fixtures/credits.json" ]; then
+            # Format credits data including RepRate using jq (objects only, skip malformed entries)
+            CREDITS=$(jq -r '
+              [.[]?
+               | select(type == "object")
+               | "\(.textModel // "Unknown model"), credits: \(.Credits // "n/a"), avgtime: \(.ResponseTime // "n/a"), success rate: \(.RepRate // "n/a")"
+              ]
+              | del(.[] | select(. == null))
+              | join("\n")
+            ' cypress/fixtures/credits.json)
+            # Escape newlines for GitHub Actions output
+            CREDITS="${CREDITS//$'\n'/'\n'}"
+            echo "credits=$CREDITS" >> $GITHUB_OUTPUT
+            echo "Found credits data:"
+            echo "$CREDITS"
+          else
+            echo "No credits.json file found"
+            echo "credits=No credits data available" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: always() && !cancelled() && github.ref == 'refs/heads/master'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "username": "GitHub Actions",
+              "icon_emoji": ":github:",
+              "text": "*${{ steps.test-results.outputs.failing > 0 && '🔴 CYPRESS TESTS FAILED' || '✅ CYPRESS TESTS PASSED' }}*\n\nEnvironment: ${{ env.CYPRESS_APP_URL || 'Staging' }}\nBranch: `${{ github.ref_name }}`\n\n📊 Test Results\n✅ Passed: ${{ steps.test-results.outputs.passing }}\n❌ Failed: ${{ steps.test-results.outputs.failing }}\n⏭️ Skipped: ${{ steps.test-results.outputs.skipped }}\n📝 Total: ${{ steps.test-results.outputs.total }}\n\n${{ steps.credits.outputs.credits }}\n\n${{ steps.console-errors.outputs.total > 0 && format('⚠️ Console Errors: {0} found', steps.console-errors.outputs.total) || '✨ No console errors detected' }}\n\n${{ steps.selector-quality.outputs.total > 0 && format('🔍 Test Quality Issues: {0} found\n  📍 Selector Issues: {1}\n  📊 Data Validation: {2}\n  👁️ Visibility Issues: {3}\n  ⚡ Performance: {4}\n  ❗ Assertion Errors: {5}\n\nTop Issues:\n{6}', steps.selector-quality.outputs.total, steps.selector-quality.outputs.selectorIssues, steps.selector-quality.outputs.dataValidation, steps.selector-quality.outputs.visibilityIssues, steps.selector-quality.outputs.performance, steps.selector-quality.outputs.assertionErrors, steps.selector-quality.outputs.examples) || '✨ No test quality issues' }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report> 📋"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Check for slow responses in credits.json
+        id: slow
+        if: always()
+        run: |
+          SLOW=false
+          if [ -f "cypress/fixtures/credits.json" ]; then
+            # Extract and check if any ResponseTime > 15, handling null values and malformed entries
+            SLOW_COUNT=$(
+              jq '[.[]?
+                   | select(type == "object" and .ResponseTime != null)
+                   | .ResponseTime
+                   | sub(" secs.";"")
+                   | select(test("^[0-9]+(\\.[0-9]+)?$"))
+                   | tonumber
+                   | select(. > 15)
+                  ] | length' cypress/fixtures/credits.json
+            )
+
+            echo "Found $SLOW_COUNT slow responses (>15 sec)"
+
+            if [ "$SLOW_COUNT" -gt 0 ]; then
+              SLOW=true
+              echo "There are $SLOW_COUNT slow responses (>15 sec) in credits.json"
+            else
+              echo "No slow responses found"
+            fi
+          else
+            echo "No credits.json file found"
+          fi
+          echo "slow=$SLOW" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification for slow responses
+        if: steps.slow.outputs.slow == 'true'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ One or more text model responses took more than 15 seconds! Please investigate.<#C08QZ42L9KM|b4m-automation-results>."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES}}
+
+      - name: Check for high credit usage
+        id: highcredits
+        if: always()
+        run: |
+          if [ -f "cypress/fixtures/credits.json" ]; then
+            HIGH=$(
+              jq '[.[]?
+                   | select(type == "object" and (.Credits != null))
+                   | .Credits
+                   | tostring
+                   | select(test("^-?[0-9]+(\\.[0-9]+)?$"))
+                   | tonumber
+                   | select(. == 0 or . >= 20)
+                  ] | length' cypress/fixtures/credits.json
+            )
+            if [ "$HIGH" -gt 0 ]; then
+              echo "high=true" >> $GITHUB_OUTPUT
+              echo "$HIGH entries used 0 credits or 20+ credits."
+            else
+              echo "high=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "high=false" >> $GITHUB_OUTPUT
           fi
-        else
-          echo "high=false" >> $GITHUB_OUTPUT
-        fi
 
-    - name: Send Slack notification for high credit usage
-      if: steps.highcredits.outputs.high == 'true'
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "text": "⚠️ One or more requests used 0 credits or 20+ credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
+      - name: Send Slack notification for high credit usage
+        if: steps.highcredits.outputs.high == 'true'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ One or more requests used 0 credits or 20+ credits! Please investigate in <#C08QZ42L9KM|b4m-automation-results>."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_SLOW_RESPONSES }}
