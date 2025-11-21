@@ -95,12 +95,16 @@ const sendPrompt = (promptType, promptNo, model) => {
             testCase.queries[currentPrompt % testCase.queries.length] :
             testCase;
 
+        cy.intercept('POST', '/api/ai/llm').as('llmApi');
+
         //enter prompt
         cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
             .type(currentPromptData.prompt)
             .type('{enter}')
             .wait(2000);
+
+        cy.wait('@llmApi', { timeout: DEFAULT_TIMEOUT });
 
         // Handle both array and single answer verification
         cy.verifyAnswers(currentPromptData.answer, {
