@@ -36,9 +36,9 @@ Cypress.on('uncaught:exception', (err) => {
         timestamp: new Date().toISOString(),
         stack: err.stack
     });
-    
+
     console.log('Uncaught Exception:', err.message);
-    
+
     return false;
 });
 
@@ -49,18 +49,18 @@ afterEach(function() {
             test: this.currentTest?.title || 'Unknown Test',
             suite: this.currentTest?.parent?.title || 'Unknown Suite'
         };
-        
+
         // Add test context to each error
         const errorsWithContext = uncaughtExceptions.map(err => ({
             ...err,
             ...testInfo
         }));
-        
+
         cy.task('updateErrorLog', {
             filePath: 'cypress/reports/consoleErrors.json',
             newErrors: errorsWithContext
         });
-        
+
         // Clear the array for the next test
         uncaughtExceptions.length = 0;
     }

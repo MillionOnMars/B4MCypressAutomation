@@ -3,20 +3,20 @@ let testIssues = new Set();
 
 export const setupTestQualityTracking = () => {
     console.log('[Test Quality] Setting up test quality tracking...');
-    
+
     // Intercept test failures to analyze all types of issues
     Cypress.on('fail', (error, runnable) => {
         console.log('[Test Quality] Test failed, analyzing error...');
         const testTitle = runnable.title;
         const suiteName = runnable.parent?.title || 'Unknown Suite';
-        
+
         // Analyze the error message for various test quality issues
         const errorMessage = error.message;
         console.log(`[Test Quality] Error message: ${errorMessage.substring(0, 100)}...`);
-        
+
         const issues = analyzeTestFailure(errorMessage, testTitle, suiteName);
         console.log(`[Test Quality] Found ${issues.length} issues`);
-        
+
         // Add issues to the set
         issues.forEach(issue => {
             const issueKey = JSON.stringify(issue);
@@ -42,6 +42,21 @@ before(function() {
     cy.task('initializeTestQualityLog', {
         filePath: issuesFilePath
     });
+
+    cy.clearCookies();
+    cy.clearLocalStorage();
+    // Clears all IndexedDB databases for the current origin
+    cy.window().then((win) => {
+        if (win.indexedDB && win.indexedDB.databases) {
+            // Modern browsers: list and delete all
+            return win.indexedDB.databases().then((dbs) => {
+                dbs.forEach((dbInfo) => {
+                if (!dbInfo.name) return;
+                win.indexedDB.deleteDatabase(dbInfo.name);
+                });
+            });
+        }
+    });
 });
 
 // Clear issues before each test
@@ -56,18 +71,18 @@ afterEach(function() {
     const state = currentTest.state;
     const attempts = currentTest._currentRetry || 0;
     const maxRetries = Cypress.config('retries');
-    
+
     // Only log if:
     // 1. Test failed (state === 'failed')
     // 2. All retries exhausted (attempts >= maxRetries OR state === 'passed')
     const shouldLog = (state === 'failed' && attempts >= maxRetries) || state === 'passed';
-    
+
     console.log(`[Test Quality] afterEach: ${testIssues.size} issues collected, state: ${state}, attempt: ${attempts + 1}/${maxRetries + 1}, shouldLog: ${shouldLog}`);
-    
+
     if (testIssues.size > 0 && shouldLog) {
         const uniqueIssues = Array.from(testIssues).map(issueKey => JSON.parse(issueKey));
         console.log(`[Test Quality] Logging ${uniqueIssues.length} issues:`, uniqueIssues.map(i => i.type));
-        
+
         cy.task('updateTestQualityLog', {
             filePath: issuesFilePath,
             newIssues: uniqueIssues
@@ -89,18 +104,18 @@ afterEach(function() {
 function analyzeTestFailure(errorMessage, testTitle, suiteName) {
     const issues = [];
     let match;
-    
+
     // Check if this is an AssertionError
     const isAssertionError = errorMessage.includes('AssertionError');
     console.log(`[Test Quality] isAssertionError: ${isAssertionError}`);
     console.log(`[Test Quality] Error type: ${isAssertionError ? 'Assertion' : 'Non-Assertion'}`);
-    
+
     // Only process non-assertion patterns if it's NOT an AssertionError
     if (!isAssertionError) {
         // Pattern 1: Content/Text not found (non-assertion errors)
         const contentNotFoundPattern = /Expected to find content:\s*['"]([^'"]+)['"].*but never did/i;
         const withinContentPattern = /Expected to find content:\s*['"]([^'"]+)['"].*within.*<([^>]+)>.*but never did/i;
-        
+
         if ((match = withinContentPattern.exec(errorMessage)) !== null) {
             const expectedContent = match[1];
             const withinElement = match[2];
@@ -130,7 +145,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             });
         }
     }
-    
+
     // Pattern 2: Element not found with timeout
     const elementNotFoundPattern = /Expected to find element:\s*`([^`]+)`.*but never found it/i;
     if ((match = elementNotFoundPattern.exec(errorMessage)) !== null) {
@@ -138,13 +153,13 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         const isClassSelector = selector.startsWith('.');
         const isDataTestId = selector.includes('[data-testid');
         const isAriaLabel = selector.includes('[aria-');
-        
+
         issues.push({
             type: 'Element Not Found',
             category: 'Selector Issue',
             severity: isClassSelector ? 'high' : 'medium',
             selector: selector,
-            recommendation: isClassSelector 
+            recommendation: isClassSelector
                 ? `Fragile CSS class selector "${selector}" not found. Consider:\n  1. Add data-testid attribute for stability\n  2. Check if UI has changed\n  3. Verify element is actually rendered\n  4. Check if feature is behind a feature flag`
                 : `Element "${selector}" not found. Check if:\n  1. Element exists in current UI state\n  2. Navigation is complete before searching\n  3. Element requires specific user permissions`,
             test: testTitle,
@@ -152,18 +167,18 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             timestamp: new Date().toISOString()
         });
     }
-    
+
     // Pattern 3: Complex MUI class chains (fragile selectors in error details)
     const muiClassPattern = /<([a-z]+)\.([^>]*MuiButton[^>]*|[^>]*MuiTypography[^>]*|[^>]*MuiSheet[^>]*|[^>]*MuiDrawer[^>]*|[^>]*css-[a-z0-9]+[^>]*)>/gi;
-    
+
     while ((match = muiClassPattern.exec(errorMessage)) !== null) {
         const fullElement = match[0];
         const elementTag = match[1];
         const classString = match[2];
-        
+
         // Check if element has many classes (indicating fragile selector)
         const classCount = (classString.match(/\./g) || []).length;
-        
+
         if (classCount >= 3) {
             issues.push({
                 type: 'Fragile CSS Selector',
@@ -178,7 +193,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             });
         }
     }
-    
+
     // Pattern 4: Elements covered by other elements
     const coveredPattern = /is not visible because it's being covered by another element:\s*`<([^>]+)>`/i;
     if ((match = coveredPattern.exec(errorMessage)) !== null) {
@@ -194,11 +209,11 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             timestamp: new Date().toISOString()
         });
     }
-    
+
     // Pattern 5: Elements with display:none or visibility issues
     const displayNonePattern = /has CSS property:\s*`display: none`/i;
     const positionFixedPattern = /has CSS property:\s*`position: fixed`.*being covered/i;
-    
+
     if (displayNonePattern.test(errorMessage)) {
         const elementMatch = /<([a-z]+)[^>]*>/i.exec(errorMessage);
         if (elementMatch) {
@@ -225,7 +240,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             timestamp: new Date().toISOString()
         });
     }
-    
+
     // Pattern 6: Expected element to be visible but it's not
     const expectedVisiblePattern = /expected.*to be 'visible'/i;
     if (expectedVisiblePattern.test(errorMessage) && issues.length === 0) {
@@ -239,7 +254,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             timestamp: new Date().toISOString()
         });
     }
-    
+
     // Pattern 7: Timeout errors (only if not an assertion error)
     const timeoutPattern = /Timed out retrying after (\d+)ms/i;
     if ((match = timeoutPattern.exec(errorMessage)) !== null && !isAssertionError && issues.length === 0) {
@@ -255,14 +270,14 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             timestamp: new Date().toISOString()
         });
     }
-    
+
     // ==================== ASSERTION ERROR PATTERNS ====================
     // Only process assertion patterns if this is an AssertionError
     if (isAssertionError) {
         // Extract the core assertion message (remove "Timed out retrying after Xms:" prefix if present)
         const coreMessage = errorMessage.replace(/^.*?Timed out retrying after \d+ms:\s*/i, '');
         console.log(`[Test Quality] Core message (first 200 chars): ${coreMessage.substring(0, 200)}`);
-        
+
         // Pattern 8a: Streaming not complete error from verifyAnswers (check first - most specific)
         const streamingPattern = /Waiting for streaming to complete.*expected.*to be true/i;
         if (streamingPattern.test(coreMessage)) {
@@ -286,7 +301,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             console.log(`[Test Quality] Expected answers: ${expectedAnswers}`);
             console.log(`[Test Quality] Selector: ${selector}`);
             console.log(`[Test Quality] Is AI Response: ${isAIResponse}`);
-            
+
             issues.push({
                 type: isAIResponse ? 'AI Response Validation - Streaming Issue' : 'Content Validation Failed',
                 category: 'Data Validation',
@@ -294,7 +309,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
                 expectedAnswers: expectedAnswers.split(',').map(a => a.trim()),
                 selector: selector,
                 errorMessage: coreMessage,
-                recommendation: isAIResponse 
+                recommendation: isAIResponse
                     ? `AI response validation failed. None of the expected answers [${expectedAnswers}] were found in ${selector}.\n\nPossible causes:\n  1. Streaming not complete - Response still generating (most common)\n  2. AI model didn't include expected keywords in response\n  3. Prompt in fixtures/prompts.json needs adjustment\n  4. Model doesn't support this type of query\n  5. File upload (if applicable) wasn't processed correctly\n\nRecommendations:\n  - Verify streaming completion logic in verifyAnswers\n  - Check if AI response contains ANY relevant content\n  - Review prompt quality and expected answers\n  - Try with a more deterministic prompt`
                     : `Content validation failed. None of [${expectedAnswers}] found in ${selector}. Check:\n  1. Verify content is rendered\n  2. Ensure sufficient wait time\n  3. Check if selector is correct\n  4. Review expected values in test data`,
                 test: testTitle,
@@ -307,7 +322,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const expectedContent = match[1];
             const withinElement = match[2];
             const isAIResponse = coreMessage.includes('ai-response') || withinElement.includes('ai-response');
-            
+
             issues.push({
                 type: isAIResponse ? 'AI Response Validation - Content Missing' : 'Assertion Failure - Content Not Found',
                 category: isAIResponse ? 'Data Validation' : 'Assertion Error',
@@ -381,11 +396,11 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if ((match = /expected\s+(true|false)\s+to\s+(?:be|equal)\s+(true|false)/i.exec(coreMessage)) !== null) {
             const actual = match[1];
             const expected = match[2];
-            
+
             // Extract context from the message before "expected"
             const contextMatch = /^(.+?):\s*expected/i.exec(coreMessage);
             const context = contextMatch ? contextMatch[1].trim() : 'Assertion failed';
-            
+
             issues.push({
                 type: 'Assertion Failure - Boolean',
                 category: 'Assertion Error',
@@ -404,7 +419,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if ((match = /expected\s+['"]?(.+?)['"]?\s+to\s+be\s+['"]?([^'"]+?)['"]?$/i.exec(coreMessage)) !== null) {
             const subject = match[1].trim();
             const expectedState = match[2].trim();
-            
+
             issues.push({
                 type: 'Assertion Failure - State',
                 category: 'Assertion Error',
@@ -423,7 +438,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const actual = match[1].trim();
             const assertion = match[2].trim();
             const expected = match[3].trim();
-            
+
             issues.push({
                 type: 'Assertion Failure - Equality',
                 category: 'Assertion Error',
@@ -443,7 +458,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const subject = match[1].trim();
             const assertion = match[2].trim();
             const expected = match[3].trim();
-            
+
             issues.push({
                 type: 'Assertion Failure - Collection',
                 category: 'Assertion Error',
@@ -463,7 +478,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             const subject = match[1].trim();
             const type = match[2].trim();
             const expected = match[3].trim();
-            
+
             issues.push({
                 type: `Assertion Failure - ${type.charAt(0).toUpperCase() + type.slice(1)}`,
                 category: 'Assertion Error',
@@ -481,7 +496,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if ((match = /expected\s+(.+?)\s+(not\s+)?to\s+exist/i.exec(coreMessage)) !== null) {
             const subject = match[1].trim();
             const shouldNotExist = !!match[2];
-            
+
             issues.push({
                 type: 'Assertion Failure - Existence',
                 category: 'Assertion Error',
@@ -489,7 +504,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
                 subject: subject,
                 shouldNotExist: shouldNotExist,
                 errorMessage: coreMessage,
-                recommendation: shouldNotExist 
+                recommendation: shouldNotExist
                     ? `Expected '${subject}' not to exist but it does. Check:\n  1. Verify element is properly removed\n  2. Check if delete action completed\n  3. Review cleanup operations`
                     : `Expected '${subject}' to exist but it doesn't. Check:\n  1. Verify element is rendered\n  2. Check if creation completed\n  3. Review permissions/feature flags`,
                 test: testTitle,
@@ -501,7 +516,7 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
         else if ((match = /expected\s+(.+?)\s+to\s+(.+)/i.exec(coreMessage)) !== null) {
             const subject = match[1].trim();
             const expectation = match[2].trim();
-            
+
             issues.push({
                 type: 'Assertion Failure - General',
                 category: 'Assertion Error',
@@ -529,11 +544,10 @@ function analyzeTestFailure(errorMessage, testTitle, suiteName) {
             });
         }
     }
-    
+
     console.log(`[Test Quality] Returning ${issues.length} issue(s) from analyzeTestFailure`);
     if (issues.length > 0) {
         console.log(`[Test Quality] Issue types:`, issues.map(i => i.type));
     }
     return issues;
 }
-

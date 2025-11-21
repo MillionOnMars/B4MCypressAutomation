@@ -56,7 +56,7 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
     if (Array.isArray(answers)) {
         if (logic === 'or') {
             // OR logic: at least one answer should be visible
-            cy.get(selector, { timeout }).then(($element) => {
+            cy.get(selector, { timeout }).should(($element) => {
                 const elementText = matchCase ? $element.text() : $element.text().toLowerCase();
                 const found = answers.some((answer) => {
                     const searchText = matchCase ? answer : answer.toLowerCase();
