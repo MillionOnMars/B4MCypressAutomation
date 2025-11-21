@@ -387,13 +387,13 @@ const logCreditsToJSON = (models, responseData, successfulRuns, totalRuns) => {
 const uploadFile = (promptType) => {
     const testCase = prompts[promptType];
     // Click the upload button
-    cy.get('[aria-label="Attach Files"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="attach-files-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
 
     //Upload from computer
-    cy.get('[role="button"]', { timeout: DEFAULT_TIMEOUT }).eq(2)
+    cy.get('[data-testid="upload-from-device-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -652,8 +652,8 @@ const verifyImageResponse = (promptType) => {
                 cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
             }
 
-            // Verify it's a proper AWS S3 image URL
-            expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
+            // Verify it's a proper generated image URL
+            expect(imgSrc).to.match(/.*\.bike4mind\.com\/.*\.(jpg|jpeg|png|gif|webp)/i);
         });
 };
 
@@ -749,7 +749,7 @@ const checkFileSide = (promptType) => {
                     cy.log(`Image dimensions: ${$img[0].naturalWidth}x${$img[0].naturalHeight}`);
 
                     // Check for cat-related content in alt text or prompt
-                    const catKeywords = ['cat', 'orange tabby', 'feline', 'kitten', 'tabby', 'ginger cat'];
+                    const catKeywords = ['cat', 'orange', 'orange tabby', 'feline', 'kitten', 'tabby', 'ginger cat'];
                     const textToCheck = `${imgAlt} ${testCase.prompt}`.toLowerCase();
 
                     const hasCatKeyword = catKeywords.some(keyword => textToCheck.includes(keyword));
