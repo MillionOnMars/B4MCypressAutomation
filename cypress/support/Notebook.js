@@ -675,7 +675,7 @@ const checkFileSide = (promptType) => {
     const fileExtension = filename.split('.').pop().toLowerCase();
 
     // Check if Session Files sidebar is visible
-    cy.get('[aria-label="Session Files"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-files-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .click({ force: true });
