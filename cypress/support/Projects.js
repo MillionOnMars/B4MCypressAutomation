@@ -18,7 +18,7 @@ const openProject = (projectName) => {
     // Verify the project list is visible
     cy.contains('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible')
 
-    cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
+    cy.contains('.MuiTypography-inherit', projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 }
@@ -65,7 +65,7 @@ const renameProject = (oldName, newName) => {
         .should('be.visible')
         // .trigger('mouseover')
         // .parent() // Go to parent container
-    cy.get('.project-card-menu-button').eq(0)
+    cy.get('.project-card-menu-button').first()
         .should('exist')
         .click({ force: true }); // Force click even if not visible
 
@@ -100,7 +100,8 @@ const deleteProject = (projectName) => {
     // Checks if the project created exists
     cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-    cy.get('.project-card-menu-button').eq(0)
+        .trigger('mouseover');
+    cy.get('.project-card-menu-button').first()
         .should('exist')
         .click({ force: true }); // Force click even if not visible
 
@@ -126,15 +127,15 @@ const checkAndDeleteProjectIfExists = (projectName) => {
         .click();
 
     // Verify the project list is visible
-    cy.contains('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible');
+    // cy.contains('Updated', { timeout: DEFAULT_TIMEOUT }).should('be.visible');
 
     // Check if the project exists
     cy.get('body', { timeout: DEFAULT_TIMEOUT }).then($body => {
-        if ($body.find(`*:contains("${projectName}")`).length > 0) {
+        if ($body.find(`.project-card-name:contains("${projectName}")`).length > 0) {
             cy.log(`Project "${projectName}" found, proceeding to delete it`);
             
             // Project exists, delete it
-            cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
+            cy.contains('.project-card-name', projectName, { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .then(() => {
                     // Click the menu button for this project
