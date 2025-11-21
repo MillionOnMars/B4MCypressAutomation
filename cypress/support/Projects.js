@@ -439,7 +439,7 @@ const logoutUser = () => {
         .click();
 
     // Wait for logout icon and force click
-    cy.get('[data-testid="LogoutIcon"]')
+    cy.get('[data-testid="logout-btn"]')
         .should('exist')
         .click({ force: true });
 
@@ -559,7 +559,7 @@ class Projects {
             }
 
             if (options.uploadFile) {
-                it("Upload file", () => {
+                it("Add file to project", () => {
                     uploadFileWithFileBrowser(options.uploadFile, projectName, 'Project Files');
                 });
             }

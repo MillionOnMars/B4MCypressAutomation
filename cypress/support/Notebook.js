@@ -651,9 +651,9 @@ const verifyImageResponse = (promptType) => {
             } else {
                 cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
             }
-            
-            // Verify it's a proper AWS S3 image URL
-            expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
+
+            // Verify it's a proper image URL
+            expect(imgSrc).to.match(/.*\.bike4mind\.com\/.*\.(jpg|jpeg|png|gif|webp)/i);
         });
 };
 
@@ -760,9 +760,9 @@ const checkFileSide = (promptType) => {
                     } else {
                         cy.log('⚠️ No explicit dog keywords found, but image is generated successfully');
                     }
-                    
-                    // Verify it's a proper AWS S3 image URL
-                    expect(imgSrc).to.match(/s3.*amazonaws\.com.*\.(jpg|jpeg|png|gif|webp)/i);
+
+                    // Verify it's a proper image URL
+                    expect(imgSrc).to.match(/.*\.bike4mind\.com\/.*\.(jpg|jpeg|png|gif|webp)/i);
                 });
             break;
         case 'doc':

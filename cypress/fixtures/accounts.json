@@ -43,6 +43,13 @@
             "password": "Password12345!",
             "fullname": "Auto Share",
             "code": "n/a"
+        },
+        "aaautomation": {
+            "username": "AAAutomation",
+            "email": "b4m-automation+1@milliononmars.com",
+            "password": "Password12345!",
+            "fullname": "AAAutomation",
+            "code": "n/a"
         }
     }
 }
