@@ -433,6 +433,7 @@ const loginAs = (userKey) => {
 // Log out the user by interacting with the menu
 const logoutUser = () => {
     cy.log('Logging out user...');
+    cy.intercept('GET', '/api/logout').as('logout');
     // Wait for user menu button and force click
     cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
@@ -443,7 +444,8 @@ const logoutUser = () => {
         .should('exist')
         .click({ force: true });
 
-    cy.wait(3000); // Wait for 3 seconds to ensure logout is complete
+    // wait for the request to complete
+    cy.wait('@logout', { timeout: DEFAULT_TIMEOUT });
 
     // Verify logout by checking the welcome message and URL
     cy.contains('Bike4Mind', { timeout: DEFAULT_TIMEOUT }).should('exist');
