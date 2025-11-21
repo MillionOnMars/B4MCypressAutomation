@@ -9,6 +9,8 @@ before(() => {
     });
 });
 
+const projectTabButtonSelector = '[data-testid="project-tab-list"] button[role="tab"]'
+
 const openProject = (projectName) => {
     // Click the "Project" button
     cy.get('[data-testid="notebook-sidenav-projects-button"]', { timeout: DEFAULT_TIMEOUT })
@@ -167,7 +169,7 @@ const addNotebook = (notebookName, projectName) => {
     openProject(projectName);
 
     // Click the Notebooks tab
-    cy.contains('.MuiTab-variantPlain', 'Notebooks', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('Notebook')
         .should('be.visible')
         .click();
 
@@ -230,7 +232,7 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
     const filename = testCase.filepath.split("/").pop();
 
     //Click appropriate tab based on tabType
-    cy.contains('.MuiTab-variantPlain', tabType, { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains(tabType)
         .should('be.visible')
         .click();
 
@@ -245,7 +247,7 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
         .type(filename);
 
     //Checks if file is present
-    cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="file-browser-list-item"]', { timeout: DEFAULT_TIMEOUT }).contains(filename)
         .should("be.visible")
         .click();
 
@@ -300,7 +302,7 @@ const clickMembersTab = (projectName) => {
     //open project
     openProject(projectName);
     // Click the Members button
-    cy.contains('.MuiTab-variantPlain', 'Members', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('Members')
         .should('be.visible')
         .click();
 
@@ -340,7 +342,7 @@ const clickSystemPromptsTab = (projectName) => {
     openProject(projectName);
 
     // Click the System Prompt tab
-    cy.contains('.MuiTab-variantPlain', 'System Prompts', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('System Prompts')
         .should('be.visible')
         .click();
 
@@ -354,7 +356,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
     openProject(projectName);
 
     // Click the System Prompt tab
-    cy.contains('.MuiTab-variantPlain', 'System Prompts', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('System Prompts')
         .should('be.visible')
         .click();
 
@@ -512,7 +514,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
     openProject(projectName);
 
     // Click the Notebooks tab
-    cy.contains('.MuiTab-variantPlain', 'Notebooks', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('Notebook')
         .should('be.visible')
         .click();
 
@@ -521,7 +523,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
         .should('be.visible');
 
        //Click Project Files Tab
-    cy.contains('.MuiTab-variantPlain', 'Project Files', { timeout: DEFAULT_TIMEOUT })
+       cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('Project Files')
         .should('be.visible')
         .click();
 
@@ -531,7 +533,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
         .should('be.visible');
 
     //Click members Tab
-    cy.contains('.MuiTab-variantPlain', 'Members', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('Members')
         .should('be.visible')
         .click();
 
@@ -540,7 +542,7 @@ const validateSharedProjects = (projectName, notebook, user) => {
         .should('be.visible');
 
     //Click System prompts Tab
-    cy.contains('.MuiTab-variantPlain', 'System Prompts', { timeout: DEFAULT_TIMEOUT })
+    cy.get(projectTabButtonSelector, { timeout: DEFAULT_TIMEOUT }).contains('System Prompts')
         .should('be.visible')
         .click()
 
