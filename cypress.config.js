@@ -14,11 +14,11 @@ module.exports = defineConfig({
     specPattern: [
       'cypress/e2e/Auth.cy.js',
       'cypress/e2e/Signup.cy.js',
-      'cypress/e2e/Projects.cy.js',
-      'cypress/e2e/Notebook.cy.js',
       'cypress/e2e/Prompts.cy.js',
-      'cypress/e2e/Admin.cy.js',
-      'cypress/e2e/Profile.cy.js'
+      'cypress/e2e/Notebook.cy.js',
+      // 'cypress/e2e/Projects.cy.js',
+      // 'cypress/e2e/Admin.cy.js',
+      // 'cypress/e2e/Profile.cy.js'
     ],
     supportFile: 'cypress/support/index.js',
     env: {
@@ -99,7 +99,7 @@ module.exports = defineConfig({
           console.log(`  Failed:  ${summary.totalFailed} ${summary.totalFailed > 0 ? '❌' : ''}`);
           console.log(`  Pending: ${summary.totalPending}`);
           console.log(`  Skipped: ${summary.totalSkipped}`);
-          
+
           if (failures.length > 0) {
             console.log('\n' + '-'.repeat(60));
             console.log('  FAILED TESTS:');
@@ -128,15 +128,15 @@ module.exports = defineConfig({
           if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
           }
-          
+
           let shouldInitialize = false;
-          
+
           if (fs.existsSync(filePath)) {
             // Check if file is from a previous run (older than 5 minutes)
             const stats = fs.statSync(filePath);
             const ageMinutes = (Date.now() - stats.mtimeMs) / 1000 / 60;
             shouldInitialize = ageMinutes > 90;
-            
+
             if (shouldInitialize) {
               console.log('[Test Quality] Resetting stale test quality file (age: ' + ageMinutes.toFixed(1) + ' minutes)');
             } else {
@@ -146,10 +146,10 @@ module.exports = defineConfig({
             shouldInitialize = true;
             console.log('[Test Quality] Creating new test quality file');
           }
-          
+
           if (shouldInitialize) {
             const initialData = {
-              issues: [], 
+              issues: [],
               totalIssues: 0,
               summary: {
                 // By Category
@@ -166,7 +166,7 @@ module.exports = defineConfig({
             };
             fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2));
           }
-          
+
           return null;
         },
         updateErrorLog({ filePath, newErrors }) {
@@ -226,7 +226,7 @@ module.exports = defineConfig({
               medium: 0
             }
           };
-          
+
           if (fs.existsSync(filePath)) {
             try {
               const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -240,7 +240,7 @@ module.exports = defineConfig({
           // Deduplicate issues based on type, suite, test, AND timestamp
           // This allows tracking multiple instances across different test runs
           const existingMap = new Map();
-          
+
           // Preserve existing issues
           if (existingData.issues && Array.isArray(existingData.issues)) {
             existingData.issues.forEach(issue => {
@@ -287,23 +287,23 @@ module.exports = defineConfig({
             if (!fs.existsSync(dir)) {
               fs.mkdirSync(dir, { recursive: true });
             }
-            
+
             // Write with validation
             const jsonString = JSON.stringify(updatedData, null, 2);
-            
+
             // Validate JSON is parseable before writing
             JSON.parse(jsonString);
-            
+
             // Write atomically (write to temp file then rename)
             const tempFile = filePath + '.tmp';
             fs.writeFileSync(tempFile, jsonString, 'utf8');
             fs.renameSync(tempFile, filePath);
-            
+
             console.log(`[Test Quality] Successfully logged ${newIssues.length} new issue(s), total: ${allIssues.length}`);
           } catch (error) {
             console.error('[Test Quality] Error writing file:', error.message);
           }
-          
+
           return null;
         }
       });

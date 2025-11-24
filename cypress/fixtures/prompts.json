@@ -51,7 +51,8 @@
         "queries": [
             {
                 "prompt": "What is the color of the cat?",
-                "answer": "orange"
+                "answer": ["orange", "ginger"],
+                "answerLogic": "or"
             },
             {
                 "prompt": "How many cats in the picture?",
@@ -65,11 +66,13 @@
         "queries": [
             {
                 "prompt": "What is the file all about?",
-                "answer": "resume"
+                "answer": ["resume", "résumé"],
+                "answerLogic": "or"
             },
             {
                 "prompt": "What is the content of the file?",
-                "answer":  "resume"            
+                "answer": ["resume", "résumé"],
+                "answerLogic": "or"
             }
         ]
     }

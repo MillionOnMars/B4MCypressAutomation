@@ -1,8 +1,8 @@
 const DEFAULT_TIMEOUT = 30000;
 
 export const openProfileTabs = (tab) => {
-    // Click profile button 
-    cy.get('[aria-label="Profile"]', { timeout: DEFAULT_TIMEOUT }
+    // Click profile button
+    cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', { timeout: DEFAULT_TIMEOUT }
     ).should('be.visible')
         .click();
     // Click on the specified tab
@@ -15,7 +15,7 @@ Cypress.Commands.add('setProfileSettings', openProfileTabs);
 
 const navigateToProfileSettings = () => {
     // Navigate to Profile Settings
-    cy.get('[aria-label="Profile"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     // Ensure the profile page is loaded
@@ -47,10 +47,9 @@ const UpdateUserSettings = (user) => {
         .clear()
         .type(user.phone);
     //Select Preferred Contact Method
-    cy.get('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
-        .contains('None')
+    cy.get('[data-testid="preferred-contact-selectbox"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .click();
+        .click({ force: true });
     cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
         .contains(user["preferredContactMethod"])
         .should('be.visible')
@@ -86,11 +85,9 @@ const RevertUserSettings = (user) => {
     cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT })
         .clear()
     //Select Preferred Contact Method
-    cy.contains('.profile-data-form-label', 'Preferred Contact:', { timeout: DEFAULT_TIMEOUT })
-        .parent()
-        .find('button[role="combobox"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="preferred-contact-selectbox"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .click();
+        .click({ force: true });
     // Select T-shirt Size
     cy.contains('.profile-data-form-label', 'T-shirt Size:', { timeout: DEFAULT_TIMEOUT })
         .parent()
