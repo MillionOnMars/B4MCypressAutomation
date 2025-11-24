@@ -228,8 +228,8 @@ class Agents {
     }
 
     static validateAgentPrompt(agentName, promptType, model, triggerWord = '@auto') {
-        describe.skip(`Agent Prompt Validation for: ${agentName}`, () => {
-            it(`${model}: Should validate agent prompt content.`, () => {
+        describe(`Agent Prompt Validation for: ${agentName}`, () => {
+            it.skip(`${model}: Should validate agent prompt content.`, () => {
                 setAgentSettings('Settings', true);
                 validateAgentPrompt(agentName, promptType, model, triggerWord);
             });

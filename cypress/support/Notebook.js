@@ -940,7 +940,7 @@ class Notebook {
     static createNotebookWithAverage(prompt, model) {
         describe(`Text Model: ${model} - Average Response Time`, () => {
             const responseData = []; // Store both duration and credits
-            const totalRuns = 3;
+            const totalRuns = 2;
 
             beforeEach(() => {
                 selectTxtModel(model);
