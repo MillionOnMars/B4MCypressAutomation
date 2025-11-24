@@ -2,7 +2,7 @@ const DEFAULT_TIMEOUT = 30000;
 
 export const openProfileTabs = (tab) => {
     // Click profile button
-    cy.get('.notebook-sidenav-footer-profile-button', { timeout: DEFAULT_TIMEOUT }
+    cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', { timeout: DEFAULT_TIMEOUT }
     ).should('be.visible')
         .click();
     // Click on the specified tab
