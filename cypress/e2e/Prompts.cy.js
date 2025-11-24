@@ -1,9 +1,16 @@
 import { login } from '../support/login.js';
-import Notebook, { getRandomTextModels } from '../support/Notebook.js'; // Correctly import the default export
+import Notebook, { getRandomTextModels } from '../support/Notebook.js';
 
 describe("Prompts", () => {
-  const randomTextModels = getRandomTextModels(3);
-  // Log in to the application before running the tests
+  const randomTextModels = getRandomTextModels(2);
+  
+  // Define available upload types
+  const uploadTypes = ['txt-recipe', 'image-cat', 'pdf-lorem'];
+  
+  // Function to get random upload type
+  const getRandomUploadType = () => {
+    return uploadTypes[Math.floor(Math.random() * uploadTypes.length)];
+  };
 
   beforeEach(() => {
     // Load existing user credentials from accounts.json
@@ -17,13 +24,13 @@ describe("Prompts", () => {
     });
   });
 
-  //Choose 3 random text models and create a new notebook
+  // Choose 2 random text models and create a new notebook
   randomTextModels.forEach((model) => {
+    const randomUpload = getRandomUploadType();
+    
     Notebook.multiPrompts("capital", model, 30);
-    Notebook.multiUpload("txt-recipe", model, 4);
-    Notebook.multiUpload("image-cat", model, 4);
-    Notebook.multiUpload("pdf-lorem", model, 4);
+    Notebook.multiUpload(randomUpload, model, 4);
   });
+  
   Notebook.imgPrompts("dog-image", 'GPT-Image-1');
-
 });

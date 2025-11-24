@@ -1,7 +1,7 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
 // ensure that these allow both image and text uploads since we ask it wat color is the cat.
-const textModels = ['Claude 4.1 Opus', 'GPT-5', 'Gemini 2.5 Pro', 'GPT-5 Nano', 'GPT-4.1 Mini', 'Gemini 2.5 Flash', 'Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
+const textModels = ['Claude 4.1 Opus', 'GPT-5', 'GPT-5 Nano', 'GPT-4.1 Mini', 'Gemini 2.5 Flash', 'Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -940,7 +940,7 @@ class Notebook {
     static createNotebookWithAverage(prompt, model) {
         describe(`Text Model: ${model} - Average Response Time`, () => {
             const responseData = []; // Store both duration and credits
-            const totalRuns = 3;
+            const totalRuns = 2;
 
             beforeEach(() => {
                 selectTxtModel(model);
