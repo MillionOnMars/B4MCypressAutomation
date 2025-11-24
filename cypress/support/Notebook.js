@@ -426,7 +426,7 @@ const uploadFile = (promptType) => {
 
 const findAndClickFile = (filename) => {
     // First try to find the file directly
-    cy.get('.file-browser-list-item').then($body => {
+    cy.get('[data-testid="file-browser-list-item"]', { timeout: DEFAULT_TIMEOUT }).then($body => {
         if ($body.find(`*:contains("${filename}")`).length > 0) {
             // File is visible, click it
             cy.contains(filename, { timeout: DEFAULT_TIMEOUT })

@@ -1,11 +1,11 @@
-import  { login }  from '../support/login.js';
-import Notebook, { getRandomTextModels }  from '../support/Notebook.js'; // Correctly import the default export
-import  Agents  from '../support/Tools/agents.js';
+import { login } from '../support/login.js';
+import Notebook, { getRandomTextModels } from '../support/Notebook.js'; // Correctly import the default export
+import Agents from '../support/Tools/agents.js';
 
 describe('Notebook Operations', () => {
-    const randomTextModels = getRandomTextModels(4); 
+    const randomTextModels = getRandomTextModels(4);
     // Log in to the application before running the tests
-    
+
     beforeEach(() => {
         // Load existing user credentials from accounts.json
         cy.fixture('accounts.json').then((accounts) => {
@@ -36,6 +36,6 @@ describe('Notebook Operations', () => {
     Agents.manageAgent('Test Agent', 'Renamed Agent');
     // Validate agent prompt with random model
     const randomIndex = Math.floor(Math.random() * randomTextModels.length);
-     // Validate agent prompt content
+    // Validate agent prompt content
     Agents.validateAgentPrompt('Renamed Agent', 'movie', randomTextModels[randomIndex])
 });
