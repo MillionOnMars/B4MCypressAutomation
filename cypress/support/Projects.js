@@ -609,6 +609,8 @@ class Projects {
     static deleteProject(projectName) {
         describe('Delete Project', () => {
             it('Should delete a project', () => {
+                logoutUser();
+                loginAs('admin');
                 deleteProject(projectName);
             });
         });
