@@ -3,7 +3,7 @@ const TIMEOUT = 30000;
 // Navigate to the login page
 const navigateToLoginPage = () => {
     cy.visit(Cypress.env('appUrl'));
-    
+
     // Wait for page to fully load and potentially redirect
     cy.wait(2000); // Give time for any automatic redirects
 
@@ -49,16 +49,20 @@ const verifyLogout = () => {
 };
 
 // Log out the user by interacting with the menu
-const logoutUser = () => {
+export const logoutUser = () => {
+    cy.intercept('GET', '/api/logout').as('logout');
     // Wait for user menu button and force click
     cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: TIMEOUT })
-        .should('exist')
+        .should('be.visible')
         .click();
 
     // Wait for logout icon and force click
-    cy.get('[data-testid="LogoutIcon"]')
+    cy.get('[data-testid="logout-btn"]', { timeout: TIMEOUT })
         .should('exist')
         .click({ force: true });
+
+    // wait for the request to complete
+    cy.wait('@logout', { timeout: TIMEOUT });
 };
 
 class Auth {
@@ -96,8 +100,8 @@ class Auth {
                 const shareUser = accounts.existingUsers['auto-share'];
                 authenticateUser(shareUser.username, shareUser.password);
                 verifySuccessfulLogin(shareUser.username);
-                // logoutUser();
-                // verifyLogout();
+                logoutUser();
+                verifyLogout();
             });
         });
     }
