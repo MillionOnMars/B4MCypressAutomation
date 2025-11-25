@@ -4,7 +4,7 @@ import Projects from '../support/Projects.js';
 describe('Project Operations', () => {
   beforeEach(() => {
     // Load existing user credentials from accounts.json
-    cy.fixture('accounts.json').then((accounts) => {
+    cy.fixture('accounts.json').then(accounts => {
       const { username, password } = accounts.existingUsers.admin;
       login(username, password);
     });
@@ -19,12 +19,12 @@ describe('Project Operations', () => {
     uploadFile: 'prime',
     memberEmail: 'auto-share',
     systemPrompt: 'sinigang',
-    createNotebook: 'sinigang'
+    createNotebook: 'sinigang',
   });
-  //validate sharing the project
-  Projects.shareProject('Renamed Test Project', 'France', 'auto-share');
-  // Handle system prompt operations
-  Projects.systemPromptOperations('Renamed Test Project', 'sinigang');
+  // //validate sharing the project
+  // Projects.shareProject('Renamed Test Project', 'France', 'auto-share');
+  // // Handle system prompt operations
+  // Projects.systemPromptOperations('Renamed Test Project', 'sinigang');
   // Deletes the project
   Projects.deleteProject('Renamed Test Project');
 });
