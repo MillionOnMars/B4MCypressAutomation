@@ -37,7 +37,7 @@ const createNote = (promptType, model) => {
         .should('be.visible')
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']", { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="start-new-chat-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -90,7 +90,7 @@ const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']", { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="start-new-chat-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 

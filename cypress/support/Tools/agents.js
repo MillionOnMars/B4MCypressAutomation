@@ -30,7 +30,7 @@ const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) =
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.xpath("//button[normalize-space()='Chat']", { timeout: 20000 })
+    cy.get('[data-testid="start-new-chat-btn"]', { timeout: 20000 })
         .should('be.visible')
         .click();
 

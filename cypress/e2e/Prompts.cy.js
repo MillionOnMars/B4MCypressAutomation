@@ -18,7 +18,7 @@ describe("Prompts", () => {
       const { username, password } = accounts.existingUsers.admin;
       login(username, password);
       // create a new notebook
-      cy.xpath("//button[normalize-space()='Chat']", { timeout: 60000 })
+      cy.get('[data-testid="start-new-chat-btn"]', { timeout: 60000 })
         .should('be.visible')
         .click();
     });
