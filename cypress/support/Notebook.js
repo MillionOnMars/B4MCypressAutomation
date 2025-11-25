@@ -441,6 +441,7 @@ const findAndClickFile = (filename) => {
         if ($body.find(`*:contains("${filename}")`).length > 0) {
             // File is visible, click it
             cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should("be.visible")
                 .click();
         } else {
@@ -449,6 +450,7 @@ const findAndClickFile = (filename) => {
 
             cy.get('input[placeholder="Search files..."]', { timeout: DEFAULT_TIMEOUT })
                 .eq(1)
+                .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should('be.visible')
                 .type(filename);
 
@@ -457,6 +459,7 @@ const findAndClickFile = (filename) => {
 
             // Now click the file from search results
             cy.contains(filename, { timeout: DEFAULT_TIMEOUT })
+                .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should("be.visible")
                 .click();
 
@@ -946,6 +949,10 @@ class Notebook {
             uploadFile(promptType);
             checkFileSide(promptType);
             sendPrompt(promptType, promptNo, model);
+            
+            // Delete the uploaded file after sending prompts
+            fileOperation("deleteFile", promptType);
+        
         });
     }
     static createNotebookWithAverage(prompt, model) {
