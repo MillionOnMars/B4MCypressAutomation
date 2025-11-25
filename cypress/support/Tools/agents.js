@@ -14,16 +14,27 @@ before(() => {
 const setAgentSettings = (settings, enable) => {
     cy.log(`Opening profile tab: ${settings}`);
     openProfileTabs(settings);
-    //verify that button agent name exists
+    
+    // Verify that Agents feature exists
     cy.get('.experimental-feature-title', { timeout: DEFAULT_TIMEOUT })
         .eq(3)
         .contains('Agents')
         .should('be.visible');
-    //Enable Agents feature
-    cy.get('.absolute.rounded-sm', { timeout: DEFAULT_TIMEOUT })
-        .eq(3) //should be same with .experimental-feature-description
-        .should('be.visible')
-        .click({ force: true });
+    
+    // Get all toggle buttons
+    cy.get('[data-testid="experimental-feature-toggle-container"] button[role="switch"]', { timeout: DEFAULT_TIMEOUT })
+        .eq(3) // Get the 4th toggle (Agents)
+        .then($toggle => {
+            const isEnabled = $toggle.attr('aria-checked') === 'true';
+            
+            if ((enable && !isEnabled) || (!enable && isEnabled)) {
+                cy.wrap($toggle).click({ force: true });
+                cy.wait(1000);
+                cy.log(`Agents feature ${enable ? 'enabled' : 'disabled'}`);
+            } else {
+                cy.log(`Agents feature already ${enable ? 'enabled' : 'disabled'}`);
+            }
+        });
 };
 
 const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) => {
