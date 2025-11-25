@@ -1,7 +1,18 @@
 const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
+
+export const TEXT_MODELS = {
+    Opus_4_1: 'Claude 4.1 Opus',
+    Sonnet_4_5: 'Claude 4.5 Sonnet',
+    Haiku_4_5: 'Claude 4.5 Haiku',
+    GPT_5: 'GPT-5',
+    GPT_5_Nano: 'GPT-5 Nano',
+    GPT_4_1_Mini: 'GPT-4.1 Mini',
+    Gemini_2_5_Flash: 'Gemini 2.5 Flash',
+}
+
 // ensure that these allow both image and text uploads since we ask it wat color is the cat.
-const textModels = ['Claude 4.1 Opus', 'GPT-5', 'GPT-5 Nano', 'GPT-4.1 Mini', 'Gemini 2.5 Flash', 'Claude 4.5 Sonnet', 'Claude 4.5 Haiku']; // Add your text models here
+const textModels = Object.values(TEXT_MODELS)
 
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 
@@ -13,8 +24,8 @@ before(() => {
     });
 });
 
-const getRandomTextModels = (count) => {
-    return textModels.sort(() => 0.5 - Math.random()).slice(0, count);
+const getRandomTextModels = (count, exclude = []) => {
+    return textModels.filter(model => !exclude.includes(model)).sort(() => 0.5 - Math.random()).slice(0, count);
 };
 
 const createNote = (promptType, model) => {
