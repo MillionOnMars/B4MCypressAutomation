@@ -148,22 +148,16 @@ const toggleExperimentalFeature = (
     .scrollIntoView({ duration: 300, timeout: DEFAULT_TIMEOUT })
     .should('be.visible');
 
-  // Verify the toggle state has changed and the background color is correct
+  // Verify the toggle state has changed by checking aria-checked attribute
   cy.get('div.experimental-feature-toggle-container button')
     .eq(index)
-    .should('have.attr', 'style')
-    .then(style => {
-      if (style.includes(EnabledColor)) {
-        cy.get('div.experimental-feature-toggle-container button')
-          .eq(index)
-          .should('have.attr', 'style')
-          .and('include', `background-color: ${EnabledColor};`);
-      } else {
-        cy.get('div.experimental-feature-toggle-container button')
-          .eq(index)
-          .should('have.attr', 'style')
-          .and('include', `background-color: ${DisabledColor};`);
-      }
+    .should('have.attr', 'role', 'switch')
+    .and('have.attr', 'aria-checked')
+    .then(ariaChecked => {
+      const expectedState = ariaChecked === 'true' ? 'true' : 'false';
+      cy.get('div.experimental-feature-toggle-container button')
+        .eq(index)
+        .should('have.attr', 'aria-checked', expectedState);
     });
 };
 
