@@ -79,3 +79,12 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
             .should('be.visible');
     }
 });
+
+/**
+ * Navigate to a new chat by clicking the "New Chat" button
+ */
+Cypress.Commands.add('navigateToNewChat', () => {
+    cy.get('[data-testid="start-new-chat-btn"]', { timeout: 60000 })
+        .should('be.visible')
+        .click();
+});

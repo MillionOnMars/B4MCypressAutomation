@@ -8,7 +8,9 @@
     "clean:reports": "rm -rf cypress/reports/* || true",
     "cypress:run": "npm run clean:reports && cypress run",
     "test:slack": "SLACK_WEBHOOK_URL='https://hooks.slack.com/services/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' node scripts/run-tests.js",
-    "analyze:selectors": "node scripts/analyze-selector-quality.js"
+    "analyze:selectors": "node scripts/analyze-selector-quality.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -26,7 +28,8 @@
     "mochawesome": "^7.1.3",
     "mochawesome-merge": "^4.4.1",
     "mochawesome-report-generator": "^6.2.0",
-    "ngrok": "^5.0.0-beta.2"
+    "ngrok": "^5.0.0-beta.2",
+    "prettier": "^3.6.2"
   },
   "main": "cypress.config.js",
   "dependencies": {
