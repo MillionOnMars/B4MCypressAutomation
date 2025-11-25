@@ -946,6 +946,11 @@ class Notebook {
             uploadFile(promptType);
             checkFileSide(promptType);
             sendPrompt(promptType, promptNo, model);
+            
+            // Delete the uploaded file after sending prompts
+            fileOperation("deleteFile", promptType);
+            
+            cy.log(`File for ${promptType} has been deleted after prompt completion.`);
         });
     }
     static createNotebookWithAverage(prompt, model) {
