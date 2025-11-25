@@ -37,9 +37,7 @@ const createNote = (promptType, model) => {
         .should('be.visible')
 
     // Click the "New Chat" button
-    cy.get('[data-testid="start-new-chat-btn"]', { timeout: DEFAULT_TIMEOUT })
-        .should('be.visible')
-        .click();
+    cy.navigateToNewChat();
 
     // Type the question in the textarea
     cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
@@ -90,9 +88,7 @@ const sendPrompt = (promptType, promptNo, model) => {
     const testCase = prompts[promptType];
 
     // Click the "New Chat" button
-    cy.get('[data-testid="start-new-chat-btn"]', { timeout: DEFAULT_TIMEOUT })
-        .should('be.visible')
-        .click();
+    cy.navigateToNewChat();
 
     // Send multiple prompts using recursion since Cypress commands are async
     const sendSinglePrompt = (currentPrompt) => {

@@ -235,9 +235,7 @@ const verifArtifactsFeature = (EnabledColor, DisabledColor) => {
 
   // Helper function to send a message and verify artifact generation
   const sendMessageAndVerifyArtifact = shouldGenerateArtifact => {
-    cy.get('[data-testid="start-new-chat-btn"]', { timeout: DEFAULT_TIMEOUT })
-      .should('be.visible')
-      .click();
+    cy.navigateToNewChat();
 
     cy.intercept('POST', '/api/ai/llm').as('llmApi');
 
