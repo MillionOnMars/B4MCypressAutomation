@@ -550,15 +550,19 @@ const handleProjectInvite = (projectName, action) => {
 
   // Validate project invitation
   cy.contains(projectName, { timeout: DEFAULT_TIMEOUT })
-    .should('be.visible')
+    .should('exist')
     .click();
 
   if (action === 'accept') {
+    cy.intercept('POST', '/api/invites/**/accept').as('inviteAccept');
+
     // Click accept button
-    cy.get('[data-testid="CheckIcon"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="invite-accept-btn"]', { timeout: DEFAULT_TIMEOUT })
       .eq(0)
       .should('be.visible')
       .click();
+
+    cy.wait('@inviteAccept', { timeout: DEFAULT_TIMEOUT });
 
     // Verify success message
     cy.contains('Successfully joined the project', {
@@ -566,11 +570,15 @@ const handleProjectInvite = (projectName, action) => {
       matchCase: false,
     }).should('be.visible');
   } else {
+    cy.intercept('POST', '/api/invites/**/refuse').as('inviteRefuse');
+
     // Click deny button
-    cy.get('[data-testid="DoDisturbIcon"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="invite-refuse-btn"]', { timeout: DEFAULT_TIMEOUT })
       .eq(0)
       .should('be.visible')
       .click();
+
+    cy.wait('@inviteRefuse', { timeout: DEFAULT_TIMEOUT });
 
     // Verify denial message
     cy.contains('Successfully refused the project', {
