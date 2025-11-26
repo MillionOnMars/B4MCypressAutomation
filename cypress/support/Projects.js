@@ -726,8 +726,23 @@ class Projects {
 
   static systemPromptOperations(projectName, promptName) {
     describe(`System Prompt Operations for ${projectName}`, () => {
-      logoutUser();
-      loginAs('admin');
+      before(() => {
+        cy.clearCookies();
+        cy.clearLocalStorage();
+        // Clears all IndexedDB databases for the current origin
+        cy.window().then(win => {
+          if (win.indexedDB && win.indexedDB.databases) {
+            // Modern browsers: list and delete all
+            return win.indexedDB.databases().then(dbs => {
+              dbs.forEach(dbInfo => {
+                if (!dbInfo.name) return;
+                win.indexedDB.deleteDatabase(dbInfo.name);
+              });
+            });
+          }
+        });
+        loginAs('admin');
+      });
 
       it(`Should view system prompt: ${promptName}`, () => {
         handleSystemPrompt(projectName, 'view', promptName);
