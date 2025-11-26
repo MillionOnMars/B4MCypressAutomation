@@ -715,7 +715,7 @@ class Projects {
   static shareProject(projectName, notebook, user) {
     describe(`Logging in to user --${user}`, () => {
       it(`Should share project: ${projectName}`, () => {
-        logoutUser();
+        cy.clearAllStorage();
         loginAs(user);
         checkInbox(projectName);
         handleProjectInvite(projectName, 'accept');
@@ -727,20 +727,7 @@ class Projects {
   static systemPromptOperations(projectName, promptName) {
     describe(`System Prompt Operations for ${projectName}`, () => {
       before(() => {
-        cy.clearCookies();
-        cy.clearLocalStorage();
-        // Clears all IndexedDB databases for the current origin
-        cy.window().then(win => {
-          if (win.indexedDB && win.indexedDB.databases) {
-            // Modern browsers: list and delete all
-            return win.indexedDB.databases().then(dbs => {
-              dbs.forEach(dbInfo => {
-                if (!dbInfo.name) return;
-                win.indexedDB.deleteDatabase(dbInfo.name);
-              });
-            });
-          }
-        });
+        cy.clearAllStorage();
         loginAs('admin');
       });
 

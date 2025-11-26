@@ -88,3 +88,23 @@ Cypress.Commands.add('navigateToNewChat', () => {
         .should('be.visible')
         .click();
 });
+
+/**
+ * Clear all browser storage including cookies, localStorage, and IndexedDB
+ */
+Cypress.Commands.add('clearAllStorage', () => {
+    cy.clearCookies();
+    cy.clearLocalStorage();
+    // Clears all IndexedDB databases for the current origin
+    cy.window().then(win => {
+        if (win.indexedDB && win.indexedDB.databases) {
+            // Modern browsers: list and delete all
+            return win.indexedDB.databases().then(dbs => {
+                dbs.forEach(dbInfo => {
+                    if (!dbInfo.name) return;
+                    win.indexedDB.deleteDatabase(dbInfo.name);
+                });
+            });
+        }
+    });
+});
