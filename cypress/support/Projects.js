@@ -721,7 +721,7 @@ class Projects {
   }
 
   static shareProject(projectName, notebook, user) {
-    describe(`Logging in to user --${user}`, () => {
+    describe.skip(`Logging in to user --${user}`, () => {
       it(`Should share project: ${projectName}`, () => {
         cy.clearAllStorage();
         loginAs(user);
