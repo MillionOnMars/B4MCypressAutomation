@@ -22,9 +22,9 @@ describe('Project Operations', () => {
     createNotebook: 'sinigang',
   });
   // //validate sharing the project
-  // Projects.shareProject('Renamed Test Project', 'France', 'auto-share');
+  Projects.shareProject('Renamed Test Project', 'France', 'auto-share');
   // // Handle system prompt operations
-  // Projects.systemPromptOperations('Renamed Test Project', 'sinigang');
+  Projects.systemPromptOperations('Renamed Test Project', 'sinigang');
   // Deletes the project
   Projects.deleteProject('Renamed Test Project');
 });

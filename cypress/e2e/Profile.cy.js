@@ -3,20 +3,7 @@ import Profile from '../support/profile.js';
 
 describe('Profile Tests', () => {
   before(() => {
-    cy.clearCookies();
-    cy.clearLocalStorage();
-    // Clears all IndexedDB databases for the current origin
-    cy.window().then(win => {
-      if (win.indexedDB && win.indexedDB.databases) {
-        // Modern browsers: list and delete all
-        return win.indexedDB.databases().then(dbs => {
-          dbs.forEach(dbInfo => {
-            if (!dbInfo.name) return;
-            win.indexedDB.deleteDatabase(dbInfo.name);
-          });
-        });
-      }
-    });
+    cy.clearAllStorage();
   });
 
   beforeEach(() => {
