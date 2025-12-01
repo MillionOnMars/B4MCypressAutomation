@@ -1,11 +1,11 @@
-const { defineConfig } = require("cypress");
+const { defineConfig } = require('cypress');
 const fs = require('fs');
 const path = require('path');
 
 // Define global environment URLs
 const environments = {
   staging: 'https://app.staging.bike4mind.com/',
-  production: 'https://app.bike4mind.com/'
+  production: 'https://app.bike4mind.com/',
 };
 
 module.exports = defineConfig({
@@ -17,18 +17,18 @@ module.exports = defineConfig({
       'cypress/e2e/Prompts.cy.js',
       'cypress/e2e/Notebook.cy.js',
       'cypress/e2e/Projects.cy.js',
-      'cypress/e2e/Profile.cy.js'
+      'cypress/e2e/Profile.cy.js',
       // 'cypress/e2e/Admin.cy.js',
     ],
     supportFile: 'cypress/support/index.js',
     env: {
       //set appURL to production or staging
-      appUrl: process.env.CYPRESS_APP_URL || environments.staging
+      appUrl: process.env.CYPRESS_APP_URL || environments.staging,
     },
     viewportWidth: 1920,
     viewportHeight: 1080,
     setupNodeEvents(on, config) {
-      on('after:run', (results) => {
+      on('after:run', results => {
         if (results) {
           // Extract detailed failure information
           const failures = [];
@@ -41,12 +41,16 @@ module.exports = defineConfig({
                   if (lastAttempt && lastAttempt.error) {
                     failures.push({
                       specName: run.spec.name,
-                      suite: test.title.join(' > ').split(' > ').slice(0, -1).join(' > '),
+                      suite: test.title
+                        .join(' > ')
+                        .split(' > ')
+                        .slice(0, -1)
+                        .join(' > '),
                       testName: test.title[test.title.length - 1],
                       fullTitle: test.title.join(' > '),
                       error: lastAttempt.error.message,
                       stack: lastAttempt.error.stack,
-                      attempt: attempts.length
+                      attempt: attempts.length,
                     });
                   }
                 }
@@ -73,9 +77,9 @@ module.exports = defineConfig({
               passes: run.stats.passes,
               failures: run.stats.failures,
               pending: run.stats.pending,
-              skipped: run.stats.skipped
+              skipped: run.stats.skipped,
             })),
-            failures: failures
+            failures: failures,
           };
 
           // Ensure directory exists
@@ -96,7 +100,9 @@ module.exports = defineConfig({
           console.log('='.repeat(60));
           console.log(`  Total:   ${summary.totalTests}`);
           console.log(`  Passed:  ${summary.totalPassed} ✅`);
-          console.log(`  Failed:  ${summary.totalFailed} ${summary.totalFailed > 0 ? '❌' : ''}`);
+          console.log(
+            `  Failed:  ${summary.totalFailed} ${summary.totalFailed > 0 ? '❌' : ''}`
+          );
           console.log(`  Pending: ${summary.totalPending}`);
           console.log(`  Skipped: ${summary.totalSkipped}`);
 
@@ -138,9 +144,15 @@ module.exports = defineConfig({
             shouldInitialize = ageMinutes > 90;
 
             if (shouldInitialize) {
-              console.log('[Test Quality] Resetting stale test quality file (age: ' + ageMinutes.toFixed(1) + ' minutes)');
+              console.log(
+                '[Test Quality] Resetting stale test quality file (age: ' +
+                  ageMinutes.toFixed(1) +
+                  ' minutes)'
+              );
             } else {
-              console.log('[Test Quality] Preserving existing test quality file from current run');
+              console.log(
+                '[Test Quality] Preserving existing test quality file from current run'
+              );
             }
           } else {
             shouldInitialize = true;
@@ -161,8 +173,8 @@ module.exports = defineConfig({
 
                 // By Severity
                 high: 0,
-                medium: 0
-              }
+                medium: 0,
+              },
             };
             fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2));
           }
@@ -177,11 +189,13 @@ module.exports = defineConfig({
 
           // Deduplicate existing errors
           const existingSet = new Set(
-            existingData.errors.map(err => JSON.stringify({
-              message: err.message,
-              suite: err.suite,
-              test: err.test
-            }))
+            existingData.errors.map(err =>
+              JSON.stringify({
+                message: err.message,
+                suite: err.suite,
+                test: err.test,
+              })
+            )
           );
 
           // Add new unique errors
@@ -190,7 +204,7 @@ module.exports = defineConfig({
             const errorKey = JSON.stringify({
               message: error.message,
               suite: error.suite,
-              test: error.test
+              test: error.test,
             });
 
             if (!existingSet.has(errorKey)) {
@@ -203,7 +217,7 @@ module.exports = defineConfig({
           const updatedData = {
             lastUpdate: new Date().toISOString(),
             totalErrors: allErrors.length,
-            errors: allErrors
+            errors: allErrors,
           };
 
           fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2));
@@ -223,8 +237,8 @@ module.exports = defineConfig({
 
               // By Severity
               high: 0,
-              medium: 0
-            }
+              medium: 0,
+            },
           };
 
           if (fs.existsSync(filePath)) {
@@ -232,7 +246,10 @@ module.exports = defineConfig({
               const fileContent = fs.readFileSync(filePath, 'utf8');
               existingData = JSON.parse(fileContent);
             } catch (error) {
-              console.error('[Test Quality] Error reading file, resetting:', error.message);
+              console.error(
+                '[Test Quality] Error reading file, resetting:',
+                error.message
+              );
               // If file is corrupted, reset to default structure
             }
           }
@@ -262,15 +279,25 @@ module.exports = defineConfig({
           // Calculate summary statistics by category and type
           const summary = {
             // By Category
-            selectorIssues: allIssues.filter(i => i && i.category === 'Selector Issue').length,
-            dataValidation: allIssues.filter(i => i && i.category === 'Data Validation').length,
-            visibilityIssues: allIssues.filter(i => i && i.category === 'Visibility Issue').length,
-            performance: allIssues.filter(i => i && i.category === 'Performance').length,
-            assertionErrors: allIssues.filter(i => i && i.category === 'Assertion Error').length,
+            selectorIssues: allIssues.filter(
+              i => i && i.category === 'Selector Issue'
+            ).length,
+            dataValidation: allIssues.filter(
+              i => i && i.category === 'Data Validation'
+            ).length,
+            visibilityIssues: allIssues.filter(
+              i => i && i.category === 'Visibility Issue'
+            ).length,
+            performance: allIssues.filter(
+              i => i && i.category === 'Performance'
+            ).length,
+            assertionErrors: allIssues.filter(
+              i => i && i.category === 'Assertion Error'
+            ).length,
 
             // By Severity
             high: allIssues.filter(i => i && i.severity === 'high').length,
-            medium: allIssues.filter(i => i && i.severity === 'medium').length
+            medium: allIssues.filter(i => i && i.severity === 'medium').length,
           };
 
           // Write deduplicated issues with validation
@@ -278,7 +305,7 @@ module.exports = defineConfig({
             lastUpdate: new Date().toISOString(),
             totalIssues: allIssues.length,
             summary,
-            issues: allIssues
+            issues: allIssues,
           };
 
           try {
@@ -299,16 +326,18 @@ module.exports = defineConfig({
             fs.writeFileSync(tempFile, jsonString, 'utf8');
             fs.renameSync(tempFile, filePath);
 
-            console.log(`[Test Quality] Successfully logged ${newIssues.length} new issue(s), total: ${allIssues.length}`);
+            console.log(
+              `[Test Quality] Successfully logged ${newIssues.length} new issue(s), total: ${allIssues.length}`
+            );
           } catch (error) {
             console.error('[Test Quality] Error writing file:', error.message);
           }
 
           return null;
-        }
+        },
       });
 
       return config;
-    }
+    },
   },
 });

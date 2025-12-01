@@ -92,6 +92,7 @@ class Auth {
 
   static directNotebookAccessWithoutLogin() {
     it('Should redirect to login when accessing notebook without authentication', () => {
+      cy.clearAllStorage();
       cy.visit(`${Cypress.env('appUrl')}notebooks/67e0b7c5995108235f62b359`);
       verifyLogout();
     });
