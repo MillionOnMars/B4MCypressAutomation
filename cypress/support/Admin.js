@@ -71,8 +71,14 @@ const CreateUser = userDetails => {
   cy.get('textarea[placeholder="Paste CSV data here..."]')
     .should('be.visible')
     .type(userDetails);
+
+  cy.intercept('POST', '**/api/admin/bulk-create-users').as(
+    'bulkImportUsersRequest'
+  );
   //Click Import Users
   cy.contains('button', 'Import Users').should('be.visible').click();
+
+  cy.wait('@bulkImportUsersRequest', { timeout: DEFAULT_TIMEOUT });
   //Verify success message
   cy.contains('User created successfully', { timeout: DEFAULT_TIMEOUT }).should(
     'be.visible'
@@ -132,15 +138,22 @@ const DeleteUser = username => {
   cy.get('input[placeholder="Search users"]')
     .should('be.visible')
     .type(username);
+  cy.wait(3000);
   cy.contains(username, { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
     .click();
   //Click admin button
-  cy.xpath("//button[normalize-space()='Admin']").should('be.visible').click();
+  cy.xpath("//button[normalize-space()='Admin']")
+    .eq(0)
+    .should('be.visible')
+    .click();
   //Type DELETE in confirmation box
   cy.get('input[placeholder="type DELETE"]')
     .should('be.visible')
     .type('DELETE');
+
+  cy.intercept('DELETE', '/api/users/**/delete').as('deleteUserRequest');
+
   //Click Delete User button
   cy.contains('button', 'Delete User').should('be.visible').click();
   //Click Delete button in popup
@@ -149,6 +162,9 @@ const DeleteUser = username => {
     .last() // Target the last matching element
     .should('be.visible')
     .click();
+
+  cy.wait('@deleteUserRequest', { timeout: DEFAULT_TIMEOUT });
+
   //Verify success message
   cy.contains('User deleted successfully', { timeout: DEFAULT_TIMEOUT }).should(
     'be.visible'
