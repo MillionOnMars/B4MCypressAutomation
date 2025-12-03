@@ -3,6 +3,10 @@ import Auth from '../support/Auth.js';
 
 // Test suite for authentication-related functionality
 describe('Auth', () => {
+  beforeEach(() => {
+    cy.clearAllStorage();
+  });
+
   // Test case for logging in with correct credentials
   Auth.correctCredentials();
 
