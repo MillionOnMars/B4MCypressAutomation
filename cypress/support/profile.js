@@ -214,6 +214,33 @@ const verifyMementosFeature = () => {
   toggleExperimentalFeature(index, 'Mementos');
   verifyMementosState(false);
 };
+const selectTxtModel = () => {
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
+        .eq(0)
+        .should('be.visible')
+        .click();
+
+    //input text model
+    cy.get("input[placeholder='Search models']", { timeout: DEFAULT_TIMEOUT })
+        .eq(1)
+        .should('exist')
+        .type('Claude 4.5 Opus')
+        .type('{enter}');
+
+    //select text model
+    cy.contains('div', 'Claude 4.5 Opus', { timeout: DEFAULT_TIMEOUT, matchCase: false })
+        .should('exist')
+        .click({ force: true });
+
+    // clicks close button
+    cy.get("[data-testid='CloseIcon']", { timeout: DEFAULT_TIMEOUT })
+        .last()
+        .should('be.visible')
+        .click();
+    // Verify the model is visible
+    cy.contains('Claude 4.5 Opus', { timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+}
 
 const verifArtifactsFeature = () => {
   navigateToProfileSettings();
@@ -227,6 +254,8 @@ const verifArtifactsFeature = () => {
     cy.navigateToNewChat();
 
     cy.intercept('POST', '/api/ai/llm').as('llmApi');
+
+    selectTxtModel();
 
     cy.get('[data-testid="lexical-chat-input-container"]', {
       timeout: DEFAULT_TIMEOUT,
