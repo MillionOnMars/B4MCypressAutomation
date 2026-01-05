@@ -194,15 +194,15 @@ const verifyMementosFeature = () => {
 
   // Helper function to verify Mementos toggle state
   const verifyMementosState = shouldBeEnabled => {
-    const mementosButtonSelector = 'button[aria-label="Mementos"]';
+    const mementosButtonSelector = 'button[role="tab"]';
 
     if (shouldBeEnabled) {
       cy.contains('button', 'Mementos')
         .scrollIntoView({ duration: 300, timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
-      cy.get(mementosButtonSelector).should('be.visible');
+      cy.contains(mementosButtonSelector, 'Mementos').should('be.visible');
     } else {
-      cy.get(mementosButtonSelector).should('not.exist');
+      cy.contains(mementosButtonSelector, 'Mementos').should('not.exist');
     }
   };
 
