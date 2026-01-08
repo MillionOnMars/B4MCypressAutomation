@@ -402,6 +402,20 @@ const uploadFile = (promptType) => {
         .should('be.visible')
         .click();
 
+    // Enable Add as Notebook Context
+    cy.get('input[role="switch"]', { timeout: DEFAULT_TIMEOUT })
+        .first()
+        .should('exist')
+        .then($switch => {
+            const isChecked = $switch.attr('aria-checked') === 'true';
+             
+            if (!isChecked) {
+                cy.log('Switch is not checked, clicking to enable');
+                cy.wrap($switch).click({ force: true });
+            } else {
+                cy.log('Switch is already checked, skipping click');
+            }
+        });
 
     //Upload from computer
     cy.get('[data-testid="upload-from-device-btn"]', { timeout: DEFAULT_TIMEOUT })
