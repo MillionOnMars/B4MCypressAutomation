@@ -118,6 +118,7 @@ Cypress.Commands.add('clearAllStorage', () => {
  * Check if "What's New" modal is present and close it
  */
 Cypress.Commands.add('handleWhatsNewModal', () => {
+  cy.wait(3000)
   cy.get('body', { timeout: 5000 }).then($body => {
     if (
       $body.find('button[aria-label="Close What\'s New announcements"]')
