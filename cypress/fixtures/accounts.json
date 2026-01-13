@@ -32,6 +32,7 @@
     "existingUsers": {
         "admin": {
             "username": "b4m-autoa",
+            "name": "Automation",
             "email": "b4m-automationa@milliononmars.com",
             "password": "Password12345!",
             "fullname": "Test User",
@@ -39,6 +40,7 @@
         },
         "auto-share": {
             "username": "auto-share",
+            "name": "Auto Share",
             "email": "auto-share@milliononmars.com",
             "password": "Password12345!",
             "fullname": "Auto Share",

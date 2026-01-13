@@ -74,7 +74,7 @@ class Auth {
         const admin = accounts.existingUsers.admin;
         navigateToLoginPage();
         authenticateUser(admin.username, admin.password);
-        verifySuccessfulLogin(admin.username);
+        verifySuccessfulLogin(admin.name);
       });
     });
   }
@@ -104,8 +104,8 @@ class Auth {
         navigateToLoginPage();
         const shareUser = accounts.existingUsers['auto-share'];
         authenticateUser(shareUser.username, shareUser.password);
-        verifySuccessfulLogin(shareUser.username);
         cy.handleWhatsNewModal();
+        verifySuccessfulLogin(shareUser.name);
         logoutUser();
         verifyLogout();
       });
