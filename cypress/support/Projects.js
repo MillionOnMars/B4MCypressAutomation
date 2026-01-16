@@ -326,15 +326,15 @@ const createNotebook = (promptType, projectName) => {
   let startTime;
 
   //Click Add Notebooks button
-  cy.xpath("//button[normalize-space()='Add Notebooks']")
+  cy.xpath("//button[normalize-space()='Add Notebooks']", { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
     .click();
 
   // Click Create Notebook
-  cy.xpath("//a[normalize-space()='Create']").should('be.visible').click();
+  cy.xpath("//a[normalize-space()='Create']", { timeout: DEFAULT_TIMEOUT }).should('be.visible').click();
 
   // Type the question in the textarea
-  cy.get('[data-testid="lexical-chat-input-container"]')
+  cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
     .type(testCase.prompt)
     .type('{enter}');
