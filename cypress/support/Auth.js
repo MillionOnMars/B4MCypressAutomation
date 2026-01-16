@@ -7,9 +7,9 @@ const navigateToLoginPage = () => {
   // Wait for page to fully load and potentially redirect
   cy.wait(2000); // Give time for any automatic redirects
 
-  // if the url is not /login, then logout the user
-  cy.url({ timeout: TIMEOUT }).then(url => {
-    if (!url.includes('/login')) {
+  // Wait for URL to stabilize and check if we're on login page
+  cy.location('pathname', { timeout: TIMEOUT }).then(pathname => {
+    if (!pathname.includes('/login')) {
       // User is logged in, need to logout first
       logoutUser();
       cy.url({ timeout: TIMEOUT }).should('contain', '/login');
