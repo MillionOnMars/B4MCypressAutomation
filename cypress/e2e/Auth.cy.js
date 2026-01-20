@@ -5,6 +5,7 @@ import Auth from '../support/Auth.js';
 describe('Auth', () => {
   beforeEach(() => {
     cy.clearAllStorage();
+    cy.clearCookies();
   });
 
   // Test case for logging in with correct credentials
