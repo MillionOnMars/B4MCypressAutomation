@@ -105,6 +105,7 @@ class Auth {
         const shareUser = accounts.existingUsers['auto-share'];
         authenticateUser(shareUser.username, shareUser.password);
         cy.handleWhatsNewModal();
+        cy.handleTestModal();
         verifySuccessfulLogin(shareUser.name);
         logoutUser();
         verifyLogout();
