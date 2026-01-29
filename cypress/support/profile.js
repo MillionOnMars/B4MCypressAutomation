@@ -168,9 +168,9 @@ const verifyQuestMasterFeature = () => {
     cy.contains('button', 'Chat').click();
     cy.contains('button', 'Tools').click();
     if (shouldExist) {
-      cy.contains('div', 'Quest Master').should('be.visible');
+      cy.contains('p.tool-label', 'Quest Master').should('be.visible');
     } else {
-      cy.contains('div', 'Quest Master').should('not.exist');
+      cy.contains('p.tool-label', 'Quest Master').should('not.exist');
     }
   };
 
