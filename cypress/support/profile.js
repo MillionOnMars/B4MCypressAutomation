@@ -167,8 +167,16 @@ const verifyQuestMasterFeature = () => {
   const verifyQuestMasterFunctionality = shouldExist => {
     cy.contains('button', 'Chat').click();
     cy.contains('button', 'Tools').click();
+    cy.contains('Individual tools').click();
+
     if (shouldExist) {
-      cy.contains('p.tool-label', 'Quest Master').should('be.visible');
+      // Scroll the tools section container to make Quest Master visible
+      cy.contains('.tools-section-grid .tool-item', 'Quest Master')
+        .scrollIntoView({ duration: 300, timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .within(() => {
+          cy.contains('p.tool-label', 'Quest Master').should('be.visible');
+        });
     } else {
       cy.contains('p.tool-label', 'Quest Master').should('not.exist');
     }
