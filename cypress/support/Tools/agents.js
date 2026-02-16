@@ -169,6 +169,14 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .clear()
                 .type(newName);
 
+            // Input Max Tokens
+            cy.get('[data-testid="model-config-max-tokens-input"] input', { timeout: DEFAULT_TIMEOUT })
+                .scrollIntoView({ easing: 'linear', duration: 500 })
+                .should('be.visible')
+                .clear()
+                .invoke('val', '')
+                .type('1');
+
             // Click update agent button
             cy.contains('.MuiButton-sizeMd', 'Save Changes', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
