@@ -118,7 +118,7 @@ Cypress.Commands.add('clearAllStorage', () => {
  * Check if "What's New" modal is present and close it
  */
 Cypress.Commands.add('handleWhatsNewModal', () => {
-  cy.wait(3000)
+  cy.wait(1000)
   cy.get('body', { timeout: 5000 }).then($body => {
     if (
       $body.find('button[aria-label="Close What\'s New announcements"]')
@@ -134,6 +134,30 @@ Cypress.Commands.add('handleWhatsNewModal', () => {
       cy.log("What's New modal closed successfully");
     } else {
       cy.log("What's New modal not found, continuing...");
+    }
+  });
+});
+
+/**
+ * Check if "Test Modal" is present and close it
+ */
+Cypress.Commands.add('handleTestModal', () => {
+  cy.wait(2000)
+  cy.get('body', { timeout: 5000 }).then($body => {
+    if (
+      $body.find('[data-testid="generic-modal-close-button-icon-container"]')
+        .length > 0
+    ) {
+      cy.log("Test Modal found, closing it");
+      cy.get('[data-testid="generic-modal-close-button-icon-container"]', {
+        timeout: 10000,
+      })
+        .should('be.visible')
+        .click({ force: true });
+      cy.wait(1000);
+      cy.log("Test Modal closed successfully");
+    } else {
+      cy.log("Test Modal not found, continuing...");
     }
   });
 });
