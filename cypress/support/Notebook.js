@@ -2,13 +2,12 @@ const prime = ['2', '3', '5', '7', '11'];
 const capital = "Paris"
 
 export const TEXT_MODELS = {
-    Opus_4_1: 'Claude 4.1 Opus',
-    Sonnet_4_5: 'Claude 4.5 Sonnet',
+    Opus_4_6: 'Claude 4.6 Opus',
+    Sonnet_4_6: 'Claude 4.6 Sonnet',
     Haiku_4_5: 'Claude 4.5 Haiku',
-    GPT_5: 'GPT-5',
+    GPT_5_2: 'GPT-5.2',
     GPT_5_Nano: 'GPT-5 Nano',
     GPT_4_1_Mini: 'GPT-4.1 Mini',
-    Gemini_2_5_Flash: 'Gemini 2.5 Flash',
 }
 
 // ensure that these allow both image and text uploads since we ask it wat color is the cat.
@@ -486,6 +485,13 @@ const fileOperation = (operation, promptType, newName) => {
     cy.get('[aria-label="Files"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
+
+    //click on List tab
+    cy.get('.file-browser-view-actions-container', { timeout: DEFAULT_TIMEOUT })
+        .eq(1)
+        .contains('List', { matchCase: false, timeout: DEFAULT_TIMEOUT })
+        .should('be.visible')
+        .click({ force: true });
 
     cy.get(".MuiModalDialog-root", { timeout: DEFAULT_TIMEOUT }).within(() => {
         // Click the date header twice to sort descending
