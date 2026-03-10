@@ -37,5 +37,5 @@ describe('Notebook Operations', () => {
     // Validate agent prompt with random model
     const randomIndex = Math.floor(Math.random() * randomTextModels.length);
     // Validate agent prompt content
-    Agents.validateAgentPrompt('Renamed Agent', 'movie', 'Claude 4.5 Haiku')
+    Agents.validateAgentPrompt('Renamed Agent', 'movie', 'Claude 4.5 Haiku') s
 });
