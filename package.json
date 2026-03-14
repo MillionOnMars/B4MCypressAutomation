@@ -195,7 +195,7 @@
     "which": "^2.0.2",
     "wrap-ansi": "^7.0.0",
     "wrappy": "^1.0.2",
-    "yauzl": "^2.10.0"
+    "yauzl": "^3.2.1"
   },
   "repository": {
     "type": "git",
