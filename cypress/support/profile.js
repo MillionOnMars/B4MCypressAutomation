@@ -53,9 +53,10 @@ const UpdateUserSettings = user => {
     .clear()
     .type(user.phone);
   //Select Preferred Contact Method
-  cy.get('[data-testid="preferred-contact-selectbox"]', {
+  cy.get('[data-testid="profile-form-select"]', {
     timeout: DEFAULT_TIMEOUT,
   })
+    .first()
     .should('be.visible')
     .click({ force: true });
   cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
@@ -88,9 +89,10 @@ const RevertUserSettings = user => {
   //Edit phone
   cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT }).clear();
   //Select Preferred Contact Method
-  cy.get('[data-testid="preferred-contact-selectbox"]', {
+  cy.get('[data-testid="profile-form-select"]', {
     timeout: DEFAULT_TIMEOUT,
   })
+    .first()
     .should('be.visible')
     .click({ force: true });
   // Select T-shirt Size

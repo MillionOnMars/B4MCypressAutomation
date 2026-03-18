@@ -230,7 +230,7 @@ const addNotebook = (notebookName, projectName) => {
     .click();
 
   // Select the notebook checkbox
-  cy.contains('[data-testid="generic-add-items-item"]', notebookName, {
+  cy.contains('[data-testid="generic-add-item-item"]', notebookName, {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -381,7 +381,7 @@ const addMembers = memberEmail => {
     .type(memberEmail);
 
   // Select the member's checkbox
-  cy.contains('[data-testid="generic-add-items-item"]', memberEmail, {
+  cy.contains('[data-testid="generic-add-item-item"]', memberEmail, {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -464,7 +464,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
         .click();
 
       // Confirm deletion
-      cy.get('.confirmation-modal-confirm-btn').should('be.visible').click();
+      cy.get('[data-testid="confirmation-modal-confirm-btn"]').should('be.visible').click();
 
       // Verify deletion message
       cy.contains('System prompt removed successfully', {
