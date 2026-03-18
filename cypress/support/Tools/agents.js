@@ -118,6 +118,7 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
 
             // Input description
             cy.get('[data-testid="agent-form-description"] textarea', { timeout: DEFAULT_TIMEOUT })
+                .first()
                 .should('be.visible')
                 .type(agentName)
                 .click();
