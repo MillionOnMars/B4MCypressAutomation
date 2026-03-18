@@ -223,7 +223,7 @@ const verifyMementosFeature = () => {
   verifyMementosState(false);
 };
 const selectTxtModel = () => {
-    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-btn"]', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();

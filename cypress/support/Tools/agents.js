@@ -100,7 +100,7 @@ const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) =
 
 const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto') => {
     // Click Agents tab
-    cy.get('[data-testid="notebook-sidenav-agents-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-agents-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click({ force: true });
 

@@ -129,7 +129,7 @@ const sendPrompt = (promptType, promptNo, model) => {
 
 const renameNote = (newName) => {
     // Check if any notebook is currently selected/active
-    cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="sidenav-item-session-btn"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .then($button => {
             // Check for active/selected state using various possible class names or attributes
@@ -141,7 +141,7 @@ const renameNote = (newName) => {
                 // Click the notebook if not already selected
                 cy.log('Notebook not selected, clicking to select');
                 // Use scrollIntoView and force click to handle visibility issues
-                cy.get('[data-testid="sidenav-item-session-button"]')
+                cy.get('[data-testid="sidenav-item-session-btn"]')
                     .first()
                     .scrollIntoView()
                     .click({ force: true });
@@ -152,7 +152,7 @@ const renameNote = (newName) => {
         });
 
     // Force click the menu button
-    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="sidenav-item-menu-btn"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .click({ force: true });
 
@@ -175,12 +175,12 @@ const renameNote = (newName) => {
 const editNotebookInfo = (tags) => {
     // Check if the menu button is already visible (indicates notebook is selected)
     cy.get('body').then($body => {
-        const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
+        const $menuButton = $body.find('[data-testid="sidenav-item-menu-btn"]:visible');
 
         if ($menuButton.length === 0) {
             // Menu button not visible, need to select notebook first
             cy.log('Menu button not visible, selecting notebook');
-            cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="sidenav-item-session-btn"]', { timeout: DEFAULT_TIMEOUT })
                 .first()
                 .scrollIntoView()
                 .click({ force: true });
@@ -191,7 +191,7 @@ const editNotebookInfo = (tags) => {
     });
 
     // Click ellipsis menu button
-    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="sidenav-item-menu-btn"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .click({ force: true });
 
@@ -227,12 +227,12 @@ const editNotebookInfo = (tags) => {
 const deleteNote = (name) => {
     // Check if the menu button is already visible (indicates notebook is selected)
     cy.get('body').then($body => {
-        const $menuButton = $body.find('[data-testid="sidenav-item-menu-button"]:visible');
+        const $menuButton = $body.find('[data-testid="sidenav-item-menu-btn"]:visible');
 
         if ($menuButton.length === 0) {
             // Menu button not visible, need to select notebook first
             cy.log('Menu button not visible, selecting notebook');
-            cy.get('[data-testid="sidenav-item-session-button"]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="sidenav-item-session-btn"]', { timeout: DEFAULT_TIMEOUT })
                 .first()
                 .scrollIntoView()
                 .click({ force: true });
@@ -243,7 +243,7 @@ const deleteNote = (name) => {
     });
 
     // Click ellipsis menu button (force click if visibility is conditional)
-    cy.get('[data-testid="sidenav-item-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="sidenav-item-menu-btn"]', { timeout: DEFAULT_TIMEOUT })
         .first()
         .click({ force: true });
 
@@ -267,7 +267,7 @@ const deleteNote = (name) => {
 };
 
 const selectTxtModel = (model) => {
-    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-btn"]', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();
@@ -295,7 +295,7 @@ const selectTxtModel = (model) => {
 }
 
 const selectImgModel = (model) => {
-    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-btn"]', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();
@@ -632,7 +632,7 @@ const handleResearchAgent = (action, agent) => {
                 .should('be.visible')
                 .click();
 
-            cy.get('.confirmation-modal-confirm-button', { timeout: DEFAULT_TIMEOUT })
+            cy.get('.confirmation-modal-confirm-btn', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .click();
 
@@ -705,7 +705,7 @@ const checkFileSide = (promptType) => {
     const fileExtension = filename.split('.').pop().toLowerCase();
 
     // Check if Session Files sidebar is visible
-    cy.get('[data-testid="session-files-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-files-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .and('be.visible')
         .click({ force: true });

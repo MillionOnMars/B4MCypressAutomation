@@ -5,7 +5,7 @@ const DEFAULT_TIMEOUT = 20000;
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
     // Wait for user menu button and force click
-    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-footer-menu-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .click();
     // Click admin option

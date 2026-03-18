@@ -52,7 +52,7 @@ const verifyLogout = () => {
 export const logoutUser = () => {
   cy.intercept('GET', '/api/logout').as('logout');
   // Wait for user menu button and force click
-  cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-menu-btn"]', {
     timeout: TIMEOUT,
   })
     .should('be.visible')
