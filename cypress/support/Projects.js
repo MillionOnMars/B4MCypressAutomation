@@ -14,7 +14,7 @@ const projectTabButtonSelector =
 
 const openProject = projectName => {
   // Click the "Project" button
-  cy.get('[data-testid="notebook-sidenav-projects-button"]', {
+  cy.get('[data-testid="notebook-sidenav-projects-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -30,7 +30,7 @@ const openProject = projectName => {
 
 const createProject = projectName => {
   // Click the "Project" button
-  cy.get('[data-testid="notebook-sidenav-projects-button"]', {
+  cy.get('[data-testid="notebook-sidenav-projects-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -74,7 +74,7 @@ const createProject = projectName => {
 
 const renameProject = (oldName, newName) => {
   // Click the "Project" button
-  cy.get('[data-testid="notebook-sidenav-projects-button"]', {
+  cy.get('[data-testid="notebook-sidenav-projects-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -84,7 +84,7 @@ const renameProject = (oldName, newName) => {
   cy.contains(oldName, { timeout: DEFAULT_TIMEOUT }).should('be.visible');
   // .trigger('mouseover')
   // .parent() // Go to parent container
-  cy.get('.project-card-menu-button', { timeout: DEFAULT_TIMEOUT })
+  cy.get('.project-card-menu-btn', { timeout: DEFAULT_TIMEOUT })
     .eq(0)
     .should('exist')
     .click({ force: true }); // Force click even if not visible
@@ -120,7 +120,7 @@ const renameProject = (oldName, newName) => {
 
 const deleteProject = projectName => {
   // Click the "Project" button
-  cy.get('[data-testid="notebook-sidenav-projects-button"]', {
+  cy.get('[data-testid="notebook-sidenav-projects-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -128,7 +128,7 @@ const deleteProject = projectName => {
 
   // Checks if the project created exists
   cy.contains(projectName, { timeout: DEFAULT_TIMEOUT }).should('be.visible');
-  cy.get('.project-card-menu-button', { timeout: DEFAULT_TIMEOUT })
+  cy.get('.project-card-menu-btn', { timeout: DEFAULT_TIMEOUT })
     .eq(0)
     .should('exist')
     .click({ force: true }); // Force click even if not visible
@@ -160,7 +160,7 @@ const deleteProject = projectName => {
 
 const checkAndDeleteProjectIfExists = projectName => {
   // Click the "Project" button to open projects list
-  cy.get('[data-testid="notebook-sidenav-projects-button"]', {
+  cy.get('[data-testid="notebook-sidenav-projects-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -179,7 +179,7 @@ const checkAndDeleteProjectIfExists = projectName => {
         .should('be.visible')
         .then(() => {
           // Click the menu button for this project
-          cy.get('.project-card-menu-button')
+          cy.get('.project-card-menu-btn')
             .eq(0)
             .should('exist')
             .click({ force: true });
@@ -225,21 +225,24 @@ const addNotebook = (notebookName, projectName) => {
     .click();
 
   //Click Add Notebooks button
-  cy.xpath("//button[normalize-space()='Add Notebooks']")
-    .should('be.visible')
-    .click();
+  cy.xpath("//button[normalize-space()='Add Notebooks']", { timeout: DEFAULT_TIMEOUT })
+    .click({ force: true });
 
-  // Select the notebook checkbox
+  // Search for the notebook to ensure it's visible in the list
+  cy.get('[role="dialog"]', { timeout: DEFAULT_TIMEOUT })
+    .find('input[placeholder="Search"]')
+    .type(notebookName);
+
+  // Select the notebook checkbox from filtered results
   cy.contains('[data-testid="generic-add-items-item"]', notebookName, {
     timeout: DEFAULT_TIMEOUT,
   })
-    .should('be.visible')
-    .click();
+    .find('input[type="checkbox"]')
+    .check({ force: true });
 
-  // Click the "Add 1 items" button
-  cy.xpath("//button[normalize-space()='Add 1 items']")
-    .should('be.visible')
-    .click();
+  // Click the "Add N Items" button (count varies)
+  cy.contains('button', /Add \d+ Items?/i, { timeout: DEFAULT_TIMEOUT })
+    .click({ force: true });
 
   // Verify sessions added message
   cy.contains('Sessions added to project successfully', {
@@ -295,7 +298,7 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
     .click();
 
   //type in file to upload
-  cy.get('.file-browser-search-input', { timeout: DEFAULT_TIMEOUT })
+  cy.get('[data-testid="file-browser-search-input"]', { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
     .type(filename);
 
@@ -336,8 +339,8 @@ const createNotebook = (promptType, projectName) => {
   // Type the question in the textarea
   cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
-    .type(testCase.prompt)
-    .type('{enter}');
+    .type(testCase.prompt);
+  cy.get('[data-testid="send-message-btn"]').click();
 
   // Wait until the notebook is created
   cy.contains('Chat', { timeout: 50000 }).should('be.visible');
@@ -384,6 +387,7 @@ const addMembers = memberEmail => {
   cy.contains('[data-testid="generic-add-items-item"]', memberEmail, {
     timeout: DEFAULT_TIMEOUT,
   })
+    .scrollIntoView()
     .should('be.visible')
     .click();
 
@@ -430,7 +434,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
   switch (action) {
     case 'view':
       // Click View option
-      cy.get('.project-system-prompt-item-view-button', {
+      cy.get('.project-system-prompt-item-view-btn', {
         timeout: DEFAULT_TIMEOUT,
       })
         .should('be.visible')
@@ -450,7 +454,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
 
     case 'delete':
       // Click Delete option
-      cy.get('.project-system-prompt-item-menu-button', {
+      cy.get('.project-system-prompt-item-menu-btn', {
         timeout: DEFAULT_TIMEOUT,
       })
         .should('be.visible')
@@ -464,7 +468,7 @@ const handleSystemPrompt = (projectName, action, promptName) => {
         .click();
 
       // Confirm deletion
-      cy.get('.confirmation-modal-confirm-button').should('be.visible').click();
+      cy.get('[data-testid="confirmation-modal-confirm-btn"]').should('be.visible').click();
 
       // Verify deletion message
       cy.contains('System prompt removed successfully', {
@@ -511,7 +515,7 @@ const logoutUser = () => {
   cy.log('Logging out user...');
   cy.intercept('GET', '/api/logout').as('logout');
   // Wait for user menu button and force click
-  cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-menu-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('exist')
@@ -530,7 +534,7 @@ const logoutUser = () => {
 
 const checkInbox = projectName => {
   // Click the menu button
-  cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-menu-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')

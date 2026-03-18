@@ -80,8 +80,8 @@ const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) =
     const messageToSend = triggerWord ? `${triggerWord} ${testCase.prompt}` : testCase.prompt;
     cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
-        .type(messageToSend)
-        .type('{enter}');
+        .type(messageToSend);
+    cy.get('[data-testid="send-message-btn"]').click();
 
     // Check if agent response is visible
     cy.contains('Response:', { timeout: 50000 })
@@ -100,7 +100,7 @@ const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) =
 
 const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto') => {
     // Click Agents tab
-    cy.get('[data-testid="notebook-sidenav-agents-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-agents-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click({ force: true });
 
@@ -112,24 +112,34 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click({ force: true });
 
             // Input agent name
-            cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="agent-form-name"] input', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .type(agentName);
 
+            //select project
+            cy.contains('button[role="combobox"]', 'Select a project', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+            cy.contains('[role="option"]', 'Renamed Test Project', { timeout: DEFAULT_TIMEOUT })
+                .first()
+                .should('be.visible')
+                .click({ force: true });
+
             // Input description
-            cy.get('textarea[placeholder="Describe what this agent does..."]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="agent-form-description"] textarea', { timeout: DEFAULT_TIMEOUT })
+                .first()
                 .should('be.visible')
                 .type(agentName)
                 .click();
 
             // Input trigger word if provided
             if (triggerWord) {
-                cy.get('input[placeholder="Add trigger word"]', { timeout: DEFAULT_TIMEOUT })
+                cy.get('[data-testid="agent-form-trigger-word"]', { timeout: DEFAULT_TIMEOUT })
                     .should('be.visible')
                     .type(triggerWord);
 
                 //click add trigger word button
-                cy.contains('button', 'Add', { timeout: DEFAULT_TIMEOUT })
+                cy.get('[data-testid="agent-form-trigger-word-add"]', { timeout: DEFAULT_TIMEOUT })
                     .should('be.visible')
                     .click();
             }
@@ -140,8 +150,7 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click();
 
             // Click create agent button
-            cy.get('.MuiButton-sizeMd')
-                .contains('Create Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('button', 'Create Agent', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should('be.visible')
                 .click({ force: true });
@@ -163,9 +172,9 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click({ force: true });
 
             // Input new agent name
-            cy.get('input[placeholder="E.g., Research Assistant"]', { timeout: DEFAULT_TIMEOUT })
-                .should('be.visible')
+            cy.get('[data-testid="agent-form-name"] input', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
+                .should('be.visible')
                 .clear()
                 .type(newName);
 
@@ -214,13 +223,11 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click({ force: true });
 
             // Confirm deletion in modal
-            cy.get('[role="alertdialog"]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="confirmation-dialog"]', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible');
+            cy.get('[data-testid="confirmation-confirm-btn"]')
                 .should('be.visible')
-                .within(() => {
-                    cy.contains('button', /Delete|Confirm/i)
-                        .should('be.visible')
-                        .click();
-                });
+                .click();
 
             // Verify success message
             cy.contains('Agent deleted successfully', { timeout: DEFAULT_TIMEOUT })

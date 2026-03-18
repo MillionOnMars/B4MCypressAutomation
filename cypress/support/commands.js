@@ -70,18 +70,22 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
         ).to.be.true;
       });
     } else {
-      // AND logic: all answers should be visible
+      // AND logic: all answers must be present in container text
       answers.forEach(answer => {
-        cy.get(selector, { timeout })
-          .contains(answer, { timeout, matchCase })
-          .should('be.visible');
+        cy.get(selector, { timeout }).should($el => {
+          const text = matchCase ? $el.text() : $el.text().toLowerCase();
+          const search = matchCase ? answer : answer.toLowerCase();
+          expect(text, `Expected "${answer}" to be found in ${selector}`).to.include(search);
+        });
       });
     }
   } else {
-    // Single answer
-    cy.get(selector, { timeout })
-      .contains(answers, { timeout, matchCase })
-      .should('be.visible');
+    // Single answer: check container text content (handles overflow-clipped elements)
+    cy.get(selector, { timeout }).should($el => {
+      const text = matchCase ? $el.text() : $el.text().toLowerCase();
+      const search = matchCase ? answers : answers.toLowerCase();
+      expect(text, `Expected "${answers}" to be found in ${selector}`).to.include(search);
+    });
   }
 });
 

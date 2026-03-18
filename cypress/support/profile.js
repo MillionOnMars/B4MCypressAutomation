@@ -4,7 +4,7 @@ const DEFAULT_TIMEOUT = 30000;
 
 export const openProfileTabs = tab => {
   // Click profile button
-  cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-profile-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -20,7 +20,7 @@ Cypress.Commands.add('setProfileSettings', openProfileTabs);
 
 const navigateToProfileSettings = () => {
   // Navigate to Profile Settings
-  cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-profile-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -53,9 +53,10 @@ const UpdateUserSettings = user => {
     .clear()
     .type(user.phone);
   //Select Preferred Contact Method
-  cy.get('[data-testid="preferred-contact-selectbox"]', {
+  cy.get('[data-testid="profile-form-select"]', {
     timeout: DEFAULT_TIMEOUT,
   })
+    .first()
     .should('be.visible')
     .click({ force: true });
   cy.get('[role="listbox"]', { timeout: DEFAULT_TIMEOUT })
@@ -88,9 +89,10 @@ const RevertUserSettings = user => {
   //Edit phone
   cy.get('input[name="phone"]', { timeout: DEFAULT_TIMEOUT }).clear();
   //Select Preferred Contact Method
-  cy.get('[data-testid="preferred-contact-selectbox"]', {
+  cy.get('[data-testid="profile-form-select"]', {
     timeout: DEFAULT_TIMEOUT,
   })
+    .first()
     .should('be.visible')
     .click({ force: true });
   // Select T-shirt Size
@@ -223,7 +225,7 @@ const verifyMementosFeature = () => {
   verifyMementosState(false);
 };
 const selectTxtModel = () => {
-    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-bottom-container"] [data-testid="ai-settings-btn"]', { timeout: DEFAULT_TIMEOUT })
         .eq(0)
         .should('be.visible')
         .click();

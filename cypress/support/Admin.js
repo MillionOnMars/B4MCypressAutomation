@@ -5,7 +5,7 @@ const DEFAULT_TIMEOUT = 20000;
 // Function to navigate to the Admin Dashboard
 const navigateToAdminDashboard = () => {
     // Wait for user menu button and force click
-    cy.get('[data-testid="notebook-sidenav-footer-menu-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="notebook-sidenav-footer-menu-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('exist')
         .click();
     // Click admin option
@@ -20,7 +20,7 @@ const navigateToAdminDashboard = () => {
 const searchUser = (username, email) => {
     navigateToAdminDashboard(); // Call the navigation function
     // Search for the user
-    cy.get('input[placeholder="Search users"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="admin-search-users-input"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(username);
     // Verify the user appears in the search results
@@ -51,7 +51,7 @@ const sortname = (username, sortBy) => {
         .click({ force: true });
 
     //Click order to change to A-Z
-    cy.get('[data-testid="admin-sort-order-button"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="admin-sort-order-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -81,14 +81,14 @@ const CreateUser = (userDetails) => {
 const EditUser = (user) => {
     navigateToAdminDashboard();
     // Search for the user to edit
-    cy.get('input[placeholder="Search users"]')
+    cy.get('[data-testid="admin-search-users-input"]')
         .should('be.visible')
         .type(user.oldName);
     cy.contains(user.oldName, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click profile button
-    cy.xpath("//button[normalize-space()='Profile']")
+    cy.get('[data-testid="admin-user-profile-btn"]')
         .should('be.visible')
         .click();
     // Edit name
@@ -136,18 +136,18 @@ const EditUser = (user) => {
 const DeleteUser = (username) => {
     navigateToAdminDashboard();
     // Search for the user to delete
-    cy.get('input[placeholder="Search users"]')
+    cy.get('[data-testid="admin-search-users-input"]')
         .should('be.visible')
         .type(username);
     cy.contains(username, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click admin button
-    cy.xpath("//button[normalize-space()='Admin']")
+    cy.get('[data-testid="admin-user-admin-btn"]')
         .should('be.visible')
         .click();
     //Type DELETE in confirmation box
-    cy.get('input[placeholder="type DELETE"]')
+    cy.get('[data-testid="delete-user-confirm-input"]')
         .should('be.visible')
         .type('DELETE');
     //Click Delete User button
@@ -155,9 +155,7 @@ const DeleteUser = (username) => {
         .should('be.visible')
         .click();
     //Click Delete button in popup
-    cy.get('div[role="dialog"]')
-        .find('button.MuiButton-colorDanger')
-        .last() // Target the last matching element
+    cy.get('[data-testid="confirm-delete-btn"]')
         .should('be.visible')
         .click();
     //Verify success message
@@ -173,11 +171,11 @@ const CreateInviteCode = (createdby) => {
         .should('be.visible')
         .click();
     //Click Create button
-    cy.xpath("//button[normalize-space()='Create']", { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="invite-create-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
     //Click submit button
-    cy.contains('button', 'Submit')
+    cy.get('[data-testid="create-invite-submit-btn"]')
         .should('be.visible')
         .click();
     //Verify success message
@@ -187,7 +185,7 @@ const CreateInviteCode = (createdby) => {
     cy.contains(createdby, { timeout: DEFAULT_TIMEOUT })
         .should('be.visible');
     //Copy invite code
-    cy.get('div[aria-label="Click to Copy"]')
+    cy.get('[data-testid="invite-code-value"]')
         .eq(0) // Get the first invite code in the list
         .invoke('text')
         .then((text) => {
