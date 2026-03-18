@@ -116,6 +116,15 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .should('be.visible')
                 .type(agentName);
 
+            //select project
+            cy.contains('button[role="combobox"]', 'Select a project', { timeout: DEFAULT_TIMEOUT })
+                .should('be.visible')
+                .click();
+            cy.contains('[role="option"]', 'Renamed Test Project', { timeout: DEFAULT_TIMEOUT })
+                .first()
+                .should('be.visible')
+                .click({ force: true });
+
             // Input description
             cy.get('[data-testid="agent-form-description"] textarea', { timeout: DEFAULT_TIMEOUT })
                 .first()
@@ -141,8 +150,7 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click();
 
             // Click create agent button
-            cy.get('.MuiButton-sizeMd')
-                .contains('Create Agent', { timeout: DEFAULT_TIMEOUT })
+            cy.contains('button', 'Create Agent', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
                 .should('be.visible')
                 .click({ force: true });

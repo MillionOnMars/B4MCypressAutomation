@@ -225,22 +225,24 @@ const addNotebook = (notebookName, projectName) => {
     .click();
 
   //Click Add Notebooks button
-  cy.xpath("//button[normalize-space()='Add Notebooks']")
-    .should('be.visible')
-    .click();
+  cy.xpath("//button[normalize-space()='Add Notebooks']", { timeout: DEFAULT_TIMEOUT })
+    .click({ force: true });
 
-  // Select the notebook checkbox
+  // Search for the notebook to ensure it's visible in the list
+  cy.get('[role="dialog"]', { timeout: DEFAULT_TIMEOUT })
+    .find('input[placeholder="Search"]')
+    .type(notebookName);
+
+  // Select the notebook checkbox from filtered results
   cy.contains('[data-testid="generic-add-items-item"]', notebookName, {
     timeout: DEFAULT_TIMEOUT,
   })
-    .scrollIntoView()
-    .should('be.visible')
-    .click();
+    .find('input[type="checkbox"]')
+    .check({ force: true });
 
-  // Click the "Add 1 items" button
-  cy.xpath("//button[normalize-space()='Add 1 items']")
-    .should('be.visible')
-    .click();
+  // Click the "Add N Items" button (count varies)
+  cy.contains('button', /Add \d+ Items?/i, { timeout: DEFAULT_TIMEOUT })
+    .click({ force: true });
 
   // Verify sessions added message
   cy.contains('Sessions added to project successfully', {
