@@ -4,7 +4,7 @@ const DEFAULT_TIMEOUT = 30000;
 
 export const openProfileTabs = tab => {
   // Click profile button
-  cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-profile-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')
@@ -20,7 +20,7 @@ Cypress.Commands.add('setProfileSettings', openProfileTabs);
 
 const navigateToProfileSettings = () => {
   // Navigate to Profile Settings
-  cy.get('[data-testid="notebook-sidenav-footer-profile-button"]', {
+  cy.get('[data-testid="notebook-sidenav-footer-profile-btn"]', {
     timeout: DEFAULT_TIMEOUT,
   })
     .should('be.visible')

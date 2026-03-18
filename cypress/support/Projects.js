@@ -295,7 +295,7 @@ const uploadFileWithFileBrowser = (promptType, projectName, tabType) => {
     .click();
 
   //type in file to upload
-  cy.get('.file-browser-search-input', { timeout: DEFAULT_TIMEOUT })
+  cy.get('[data-testid="file-browser-search-input"]', { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
     .type(filename);
 

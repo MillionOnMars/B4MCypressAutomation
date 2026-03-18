@@ -201,13 +201,13 @@ const editNotebookInfo = (tags) => {
         .click();
 
     // Wait for the info modal/panel to be visible
-    cy.get('input[placeholder="Add a tag"]', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-metadata-tag-input"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .clear()
         .type(tags);
 
     // Click "Add Tag" button
-    cy.contains('button', 'Add Tag', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-metadata-tag-add-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -217,7 +217,7 @@ const editNotebookInfo = (tags) => {
         .should('be.visible');
 
     // Close the info modal/panel
-    cy.get('.session-metadata-close-button', { timeout: DEFAULT_TIMEOUT })
+    cy.get('[data-testid="session-metadata-close-btn"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .click();
 
@@ -512,7 +512,7 @@ const fileOperation = (operation, promptType, newName) => {
                 break;
 
             case "renameFile":
-                cy.get('button.file-browser-actions-menu-button', { timeout: DEFAULT_TIMEOUT })
+                cy.get('[data-testid="file-browser-actions-menu-btn"]', { timeout: DEFAULT_TIMEOUT })
                     .first()
                     .should('be.visible')
                     .click();
