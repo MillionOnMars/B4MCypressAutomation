@@ -80,8 +80,8 @@ const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) =
     const messageToSend = triggerWord ? `${triggerWord} ${testCase.prompt}` : testCase.prompt;
     cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
-        .type(messageToSend)
-        .type('{enter}');
+        .type(messageToSend);
+    cy.get('[data-testid="send-message-btn"]').click();
 
     // Check if agent response is visible
     cy.contains('Response:', { timeout: 50000 })
@@ -112,12 +112,12 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click({ force: true });
 
             // Input agent name
-            cy.get('[data-testid="agent-form-name"]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="agent-form-name"] input', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .type(agentName);
 
             // Input description
-            cy.get('[data-testid="agent-form-description"]', { timeout: DEFAULT_TIMEOUT })
+            cy.get('[data-testid="agent-form-description"] textarea', { timeout: DEFAULT_TIMEOUT })
                 .should('be.visible')
                 .type(agentName)
                 .click();
@@ -163,9 +163,9 @@ const handleAgentOperations = (action, agentName, newName, triggerWord = '@auto'
                 .click({ force: true });
 
             // Input new agent name
-            cy.get('[data-testid="agent-form-name"]', { timeout: DEFAULT_TIMEOUT })
-                .should('be.visible')
+            cy.get('[data-testid="agent-form-name"] input', { timeout: DEFAULT_TIMEOUT })
                 .scrollIntoView({ easing: 'linear', duration: 500 })
+                .should('be.visible')
                 .clear()
                 .type(newName);
 

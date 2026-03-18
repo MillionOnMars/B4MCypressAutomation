@@ -230,9 +230,10 @@ const addNotebook = (notebookName, projectName) => {
     .click();
 
   // Select the notebook checkbox
-  cy.contains('[data-testid="generic-add-item-item"]', notebookName, {
+  cy.contains('[data-testid="generic-add-items-item"]', notebookName, {
     timeout: DEFAULT_TIMEOUT,
   })
+    .scrollIntoView()
     .should('be.visible')
     .click();
 
@@ -336,8 +337,8 @@ const createNotebook = (promptType, projectName) => {
   // Type the question in the textarea
   cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
-    .type(testCase.prompt)
-    .type('{enter}');
+    .type(testCase.prompt);
+  cy.get('[data-testid="send-message-btn"]').click();
 
   // Wait until the notebook is created
   cy.contains('Chat', { timeout: 50000 }).should('be.visible');
@@ -381,9 +382,10 @@ const addMembers = memberEmail => {
     .type(memberEmail);
 
   // Select the member's checkbox
-  cy.contains('[data-testid="generic-add-item-item"]', memberEmail, {
+  cy.contains('[data-testid="generic-add-items-item"]', memberEmail, {
     timeout: DEFAULT_TIMEOUT,
   })
+    .scrollIntoView()
     .should('be.visible')
     .click();
 

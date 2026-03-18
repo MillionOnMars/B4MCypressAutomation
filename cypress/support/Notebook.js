@@ -41,8 +41,8 @@ const createNote = (promptType, model) => {
     // Type the question in the textarea
     cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .type(testCase.prompt)
-        .type('{enter}');
+        .type(testCase.prompt);
+    cy.get('[data-testid="send-message-btn"]').click();
 
     // Wait until the notebook is created
     cy.contains('Chat', { timeout: DEFAULT_TIMEOUT })
@@ -106,9 +106,9 @@ const sendPrompt = (promptType, promptNo, model) => {
         //enter prompt
         cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
-            .type(currentPromptData.prompt)
-            .type('{enter}')
-            .wait(2000);
+            .type(currentPromptData.prompt);
+        cy.get('[data-testid="send-message-btn"]').click();
+        cy.wait(2000);
 
         cy.wait('@llmApi', { timeout: DEFAULT_TIMEOUT });
 
@@ -653,9 +653,9 @@ const verifyImageResponse = (promptType) => {
     //send prompt that generates image
     cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
-        .type(testCase.prompt)
-        .type('{enter}')
-        .wait(2000);
+        .type(testCase.prompt);
+    cy.get('[data-testid="send-message-btn"]').click();
+    cy.wait(2000);
 
     cy.wait('@generateImage', { timeout: DEFAULT_TIMEOUT });
 
