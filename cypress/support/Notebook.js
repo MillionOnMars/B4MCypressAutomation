@@ -31,9 +31,12 @@ const createNote = (promptType, model) => {
     const testCase = prompts[promptType];
     let startTime;
 
-    //Verify if models is selected
-    cy.contains(model, { timeout: DEFAULT_TIMEOUT })
-        .should('be.visible')
+    //Verify the AI model is loaded
+    cy.get('.session-bottom-actions [data-testid="ai-settings-btn"]', {
+      timeout: DEFAULT_TIMEOUT,
+    })
+      .should('be.visible')
+      .should('have.text', model);
 
     // Click the "New Chat" button
     cy.navigateToNewChat();
