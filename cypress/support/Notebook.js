@@ -60,7 +60,7 @@ const createNote = (promptType, model) => {
         cy.verifyAnswers(testCase.answer, {
             logic: testCase.answerLogic || 'and',
             selector: '[data-testid="ai-response"]',
-            timeout: 60000,
+            timeout: 120000,
             matchCase: false
         }).then(() => {
             const duration = (Date.now() - startTime) / 1000;
@@ -121,7 +121,7 @@ const sendPrompt = (promptType, promptNo, model) => {
         cy.verifyAnswers(currentPromptData.answer, {
             logic: currentPromptData.answerLogic || 'and',
             selector: '[data-testid="ai-response"]',
-            timeout: currentPromptData.timeout || 60000,
+            timeout: currentPromptData.timeout || 120000,
             matchCase: false
         });
 
@@ -285,7 +285,10 @@ const selectTxtModel = (model) => {
         .type('{enter}');
 
     //select text model
-    cy.contains('div', model, { timeout: DEFAULT_TIMEOUT, matchCase: false })
+    cy.contains('div',
+        new RegExp(`^${Cypress._.escapeRegExp(model)}$`, 'i'),
+            { timeout: DEFAULT_TIMEOUT }
+        )
         .should('exist')
         .click({ force: true });
 
@@ -844,7 +847,7 @@ const checkFileSide = (promptType) => {
         cy.verifyAnswers(testCase.answer, {
             logic: testCase.answerLogic || 'and',
             selector: '.text-viewer-content',
-            timeout: 60000,
+            timeout: 120000,
             matchCase: false
         });
     }

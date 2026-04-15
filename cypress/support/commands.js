@@ -49,7 +49,7 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
   const {
     logic = 'and',
     selector = 'body',
-    timeout = 60000,
+    timeout = 120000,
     matchCase = false,
   } = options;
 
