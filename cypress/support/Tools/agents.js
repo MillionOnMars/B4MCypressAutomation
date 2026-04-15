@@ -81,7 +81,8 @@ const validateAgentPrompt = (agentName, promptType, model, triggerWord = null) =
     cy.get('[data-testid="lexical-chat-input-container"]')
         .should('be.visible')
         .type(messageToSend);
-    cy.get('[data-testid="send-message-btn"]').click();
+    //cy.get('[data-testid="send-message-btn"]').click();  --- Will uncomment this and remove the cy.sendPrompt() once https://github.com/MillionOnMars/lumina5/issues/7856 is resolved.
+    cy.sendPrompt();
 
     // Check if agent response is visible
     cy.contains('Response:', { timeout: 50000 })

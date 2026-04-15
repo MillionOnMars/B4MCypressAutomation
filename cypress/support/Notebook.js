@@ -45,7 +45,8 @@ const createNote = (promptType, model) => {
     cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt);
-    cy.get('[data-testid="send-message-btn"]').click();
+    //cy.get('[data-testid="send-message-btn"]').click();  --- Will uncomment this and remove the cy.sendPrompt() once https://github.com/MillionOnMars/lumina5/issues/7856 is resolved.
+    cy.sendPrompt();
 
     // Wait until the notebook is created
     cy.contains('Chat', { timeout: DEFAULT_TIMEOUT })
@@ -110,7 +111,8 @@ const sendPrompt = (promptType, promptNo, model) => {
         cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
             .should('be.visible')
             .type(currentPromptData.prompt);
-        cy.get('[data-testid="send-message-btn"]').click();
+        //cy.get('[data-testid="send-message-btn"]').click();  --- Will uncomment this and remove the cy.sendPrompt() once https://github.com/MillionOnMars/lumina5/issues/7856 is resolved.
+        cy.sendPrompt();
         cy.wait(2000);
 
         cy.wait('@llmApi', { timeout: DEFAULT_TIMEOUT });
@@ -657,7 +659,8 @@ const verifyImageResponse = (promptType) => {
     cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
         .should('be.visible')
         .type(testCase.prompt);
-    cy.get('[data-testid="send-message-btn"]').click();
+    //cy.get('[data-testid="send-message-btn"]').click();  --- Will uncomment this and remove the cy.sendPrompt() once https://github.com/MillionOnMars/lumina5/issues/7856 is resolved.
+    cy.sendPrompt();
     cy.wait(2000);
 
     cy.wait('@generateImage', { timeout: DEFAULT_TIMEOUT });

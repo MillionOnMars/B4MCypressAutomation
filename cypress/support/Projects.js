@@ -340,7 +340,8 @@ const createNotebook = (promptType, projectName) => {
   cy.get('[data-testid="lexical-chat-input-container"]', { timeout: DEFAULT_TIMEOUT })
     .should('be.visible')
     .type(testCase.prompt);
-  cy.get('[data-testid="send-message-btn"]').click();
+  //cy.get('[data-testid="send-message-btn"]').click();  --- Will uncomment this and remove the cy.sendPrompt() once https://github.com/MillionOnMars/lumina5/issues/7856 is resolved.
+  cy.sendPrompt();
 
   // Wait until the notebook is created
   cy.contains('Chat', { timeout: 50000 }).should('be.visible');

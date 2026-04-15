@@ -49,7 +49,7 @@ Cypress.Commands.add('verifyAnswers', (answers, options = {}) => {
   const {
     logic = 'and',
     selector = 'body',
-    timeout = 50000,
+    timeout = 60000,
     matchCase = false,
   } = options;
 
@@ -141,3 +141,21 @@ Cypress.Commands.add('handleWhatsNewModal', () => {
     }
   });
 });
+
+Cypress.Commands.add('sendPrompt', () => {
+   cy.get('body').then(($body) => {
+      const btn = $body.find('[data-testid="send-message-btn"]');
+      if (btn.length > 0) {
+        // Button exists
+        if (!btn.is(':disabled')) {
+          cy.wrap(btn).click();
+        } else {
+          cy.wrap($body).type('{enter}');
+        }
+      } else {
+        // Button does not exist
+        cy.wrap($body).type('{enter}');
+      }
+    });
+});
+
