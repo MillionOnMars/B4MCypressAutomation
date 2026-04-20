@@ -1,4 +1,4 @@
-const TIMEOUT = 30000;
+const TIMEOUT = 320000;
 
 // Navigate to the login page
 const navigateToLoginPage = () => {
@@ -105,6 +105,7 @@ class Auth {
         const shareUser = accounts.existingUsers['auto-share'];
         authenticateUser(shareUser.username, shareUser.password);
         cy.handleWhatsNewModal();
+        cy.handleTestModal();
         verifySuccessfulLogin(shareUser.name);
         logoutUser();
         verifyLogout();

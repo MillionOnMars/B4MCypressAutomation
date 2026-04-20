@@ -36,6 +36,9 @@ export function login(username, password) {
 
       // Check if "What's New" modal is present and close it
       cy.handleWhatsNewModal();
+
+      // Check Test modal is present and close it
+      cy.handleTestModal();
     });
   });
 }
